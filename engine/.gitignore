@@ -1,2 +1,5 @@
 # Rust Cache
 target/
+
+# IDEs
+.idea/
