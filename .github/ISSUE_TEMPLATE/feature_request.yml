@@ -1,0 +1,43 @@
+name: Feature request
+description: Propose a new capability within jsonette's defined scope (editor / viewer / query)
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > **Scope check first.** jsonette is intentionally *not* a 30-tool bundle. If the feature is not an editor, viewer, or query improvement — or a planned engine extension (converters, test-data generator) — it is out of scope and will be declined. See `CONTRIBUTING.md`.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem being solved
+      description: What can't you do today, or what is painful to do?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What should the feature do? Where should the logic live — engine or shell?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: true
+      options:
+        - engine
+        - macos
+        - bridge
+    validations:
+      required: true

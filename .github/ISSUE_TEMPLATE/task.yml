@@ -1,0 +1,81 @@
+name: Task
+description: A scoped, trackable unit of work (M0–M4 backlog)
+labels: []
+body:
+  - type: dropdown
+    id: milestone
+    attributes:
+      label: Milestone
+      options:
+        - "M0: Foundations"
+        - "M1: Editor"
+        - "M2: Tree Viewer"
+        - "M3: Query Tool"
+        - "M4: macOS v1.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: true
+      options:
+        - engine
+        - macos
+        - bridge
+        - ci
+        - perf
+        - governance
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Why does this work exist? What problem does it solve? Reference the relevant PLANNING.md section or ADR if applicable.
+    validations:
+      required: true
+
+  - type: textarea
+    id: changes
+    attributes:
+      label: Changes needed
+      description: List the specific files, functions, or configs that need to be created or modified.
+      placeholder: |
+        - `engine/src/lib.rs`: add `pub fn parse(...)`
+        - `engine/Cargo.toml`: add `serde_json` dependency
+    validations:
+      required: true
+
+  - type: textarea
+    id: dod
+    attributes:
+      label: Definition of done
+      description: Precise, binary conditions. Each line should be checkable without ambiguity.
+      placeholder: |
+        - [ ] `cargo test` passes
+        - [ ] `cargo clippy -- -D warnings` is clean
+        - [ ] public API documented with doc comments
+    validations:
+      required: true
+
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification / validation
+      description: How do you confirm this works end-to-end beyond tests passing?
+      placeholder: |
+        - Run `cargo test -- parse` and confirm all cases pass
+        - Manually open a 50 MB JSON file and confirm no panic
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes / constraints
+      description: Risks, known unknowns, dependencies on other issues, or links to ADRs.
+    validations:
+      required: false

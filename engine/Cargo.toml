@@ -2,5 +2,11 @@
 name = "jsonette"
 version = "0.1.0"
 edition = "2024"
+description = "JSON editor, viewer, and query tool — lightweight, local-only, native"
+repository = "https://github.com/dev-ette/jsonette"
+license = "MIT OR Apache-2.0"
+homepage = "https://github.com/dev-ette/jsonette"
+keywords = ["json", "editor", "viewer", "jsonpath", "query"]
+categories = ["parser-implementations", "command-line-utilities"]
 
 [dependencies]

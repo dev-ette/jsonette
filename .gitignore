@@ -1,2 +1,22 @@
 # macOS
 .DS_Store
+.DS_Store?
+
+# Rust
+engine/target/
+
+# Xcode / Swift
+macos/*.xcodeproj/xcuserdata/
+macos/*.xcworkspace/xcuserdata/
+macos/*.xcworkspace/xcshareddata/
+DerivedData/
+*.ipa
+*.xcarchive
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Generated UniFFI bindings
+macos/generated/

@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Architecture & design discussion
+    url: https://github.com/dev-ette/jsonette/discussions
+    about: For open-ended architectural questions, open a discussion before filing an issue.
