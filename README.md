@@ -86,4 +86,4 @@ This is a small, deliberately-scoped project that values correctness and stabili
 
 ## License
 
-Dual-licensed under MIT or Apache-2.0, at your option.
+Dual-licensed under MIT or Apache-2.0, `LICENSE-MIT`, and `LICENSE-APACHE`
