@@ -2,11 +2,18 @@
 name = "jsonette"
 version = "0.1.0"
 edition = "2024"
-description = "JSON editor, viewer, and query tool — lightweight, local-only, native"
+description = "JSON parse, format, query, and diagnostics engine — core library for the jsonette tool"
 repository = "https://github.com/dev-ette/jsonette"
 license = "MIT OR Apache-2.0"
 homepage = "https://github.com/dev-ette/jsonette"
-keywords = ["json", "editor", "viewer", "jsonpath", "query"]
-categories = ["parser-implementations", "command-line-utilities"]
+keywords = ["json", "jsonpath", "parser", "format", "query"]
+categories = ["parser-implementations", "encoding"]
+
+# NOTE: When issue #2 adds LICENSE-MIT and LICENSE-APACHE to the repo root,
+# copies must also be placed in engine/ — cargo package only bundles files
+# within the crate directory, so the root-level files are invisible to it.
+#
+# NOTE: UniFFI crate-type (staticlib + cdylib) will be added in the bridge
+# setup issue (#13). Default lib crate-type is correct until then.
 
 [dependencies]
