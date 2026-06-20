@@ -28,6 +28,7 @@ docs/      ADRs and architecture notes
 
 - **Engine:** standard `cargo build` / `cargo test`. Run `cargo clippy` and `cargo fmt` before pushing.
 - **macOS app:** open the `macos/` Xcode project; it links the engine via UniFFI (build step documented in M0).
+- `engine/rust-toolchain.toml` is used to configure the supported Rust version as the source of truth.
 - The CI **performance gate** must stay green — see the budgets in `ROADMAP.md`. PRs that regress cold start, idle RAM, large-file handling, or typing latency will be flagged.
 
 ## Pull requests
