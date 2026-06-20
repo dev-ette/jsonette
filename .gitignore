@@ -1,17 +1,23 @@
 # macOS
 .DS_Store
-.DS_Store?
 
-# Rust
+# Rust — target/ is also in engine/.gitignore; root entry is a safety net
 engine/target/
+# Library crates don't commit Cargo.lock — downstream consumers manage their own
+engine/Cargo.lock
 
 # Xcode / Swift
 macos/*.xcodeproj/xcuserdata/
+macos/*.xcodeproj/project.xcworkspace/xcuserdata/
 macos/*.xcworkspace/xcuserdata/
 macos/*.xcworkspace/xcshareddata/
-DerivedData/
+**/DerivedData/
 *.ipa
 *.xcarchive
+*.xcresult
+
+# Swift Package Manager (used by macos/ dependencies e.g. CodeEditSourceEditor)
+macos/.build/
 
 # IDE
 .idea/
