@@ -41,13 +41,61 @@ jobs:
         run: cargo build --workspace
         working-directory: ./engine
 
+  # -------------------------------------------------------------------------- #
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "engine -> target"
+
       - name: Test
         run: cargo test --workspace
         working-directory: ./engine
 
+  # -------------------------------------------------------------------------- #
+  clippy:
+    name: clippy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "engine -> target"
+
       - name: Clippy
         run: cargo clippy --workspace -- -D warnings
         working-directory: ./engine
+
+  # -------------------------------------------------------------------------- #
+  fmt:
+    name: fmt
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "engine -> target"
 
       - name: Fmt
         run: cargo fmt --check
