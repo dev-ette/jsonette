@@ -151,7 +151,7 @@ jobs:
           thresholds: '60 80'
       
       - name: Upload to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7.0.0
         if: github.event_name == 'push'
         with:
           files: engine/coverage.xml
