@@ -10,7 +10,7 @@
 name: Engine
 
 on:
-  pull_requests:
+  pull_request:
     branches: [main]
   push:
     branches: [main]
@@ -28,48 +28,28 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "engine -> target"
 
       - name: Build
-        uses: dtolnay/rust-toolchain@stable
         run: cargo build --workspace
         working-directory: ./engine
 
-  # -------------------------------------------------------------------------- #
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Test
-        uses: dtolnay/rust-toolchain@stable
         run: cargo test --workspace
         working-directory: ./engine
-  
-  # -------------------------------------------------------------------------- #
-  Clippy:
-    name: Clippy
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
 
       - name: Clippy
-        uses: dtolnay/rust-toolchain@stable
-        run: cargo clippy -- -D warnings
+        run: cargo clippy --workspace -- -D warnings
         working-directory: ./engine
 
-  # -------------------------------------------------------------------------- #
-  Fmt:
-    name: Fmt
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Fmt
-        uses: dtolnay/rust-toolchain@stable
-        run: cargo fmt --checkout
+        run: cargo fmt --check
         working-directory: ./engine
 

@@ -1,5 +1,7 @@
 # jsonette
 
+[![Engine CI](https://github.com/dev-ette/jsonette/actions/workflows/engine-ci.yml/badge.svg)](https://github.com/dev-ette/jsonette/actions/workflows/engine-ci.yml)
+
 > A focused, fast, native JSON editor, viewer, and query tool. Lightweight by design. Local-only. Open source.
 
 **Status:** 🟡 Planning (pre-M0). No code yet — this repo currently holds the architecture and project plan.
