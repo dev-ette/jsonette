@@ -26,3 +26,6 @@ macos/.build/
 
 # Generated UniFFI bindings
 macos/generated/
+
+# Architecture
+html-docs/
