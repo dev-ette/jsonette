@@ -141,11 +141,19 @@ jobs:
         run: cargo llvm-cov --workspace --cobertura --output-path coverage.xml
         working-directory: ./engine
 
-      - name: Post coverage comment
+      - name: Generate coverage summary
         uses: irongut/CodeCoverageSummary@v1.3.0
         with:
           filename: engine/coverage.xml
           badge: true
           format: markdown
-          output: both
+          output: file
           thresholds: '60 80'
+
+      - name: Post coverage PR comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        if: github.event_name == 'pull_request'
+        with:
+          recreate: true
+          path: code-coverage-results.md
+
