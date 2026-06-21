@@ -149,6 +149,13 @@ jobs:
           format: markdown
           output: file
           thresholds: '60 80'
+      
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v4
+        if: github.event_name == "push"
+        with:
+          files: engine/coverage.xml
+
 
       - name: Post coverage PR comment
         uses: marocchino/sticky-pull-request-comment@v2
