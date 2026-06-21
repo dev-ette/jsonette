@@ -1,5 +1,11 @@
 # jsonette
 
+[![Engine CI](https://github.com/dev-ette/jsonette/actions/workflows/engine-ci.yml/badge.svg)](https://github.com/dev-ette/jsonette/actions/workflows/engine-ci.yml)
+[![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](LICENSE-MIT)
+[![Rust](https://img.shields.io/badge/rust-stable-orange)](engine/rust-toolchain.toml)
+[![Platform](https://img.shields.io/badge/platform-macOS-lightgrey)](https://github.com/dev-ette/jsonette)
+[![codecov](https://codecov.io/gh/dev-ette/jsonette/branch/main/graph/badge.svg)](https://codecov.io/gh/dev-ette/jsonette)
+
 > A focused, fast, native JSON editor, viewer, and query tool. Lightweight by design. Local-only. Open source.
 
 **Status:** 🟡 Planning (pre-M0). No code yet — this repo currently holds the architecture and project plan.
