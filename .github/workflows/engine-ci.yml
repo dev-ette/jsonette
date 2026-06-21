@@ -155,6 +155,7 @@ jobs:
         if: github.event_name == 'push'
         with:
           files: engine/coverage.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Post coverage PR comment
         uses: marocchino/sticky-pull-request-comment@v2
