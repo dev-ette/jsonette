@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.0
       
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -45,9 +45,13 @@ jobs:
   test:
     name: test
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      pull-requests: write
+      contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.0
       
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -57,9 +61,18 @@ jobs:
         with:
           workspaces: "engine -> target"
 
+      - name: Install nextest
+        uses: taiki-e/install-action@nextest
+
       - name: Test
-        run: cargo test --workspace
+        run: cargo nextest run --workspace --profile ci
         working-directory: ./engine
+
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: engine/target/nextest/ci/junit.xml
 
   # -------------------------------------------------------------------------- #
   clippy:
@@ -67,7 +80,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.0
       
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -87,7 +100,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.0
       
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -101,3 +114,38 @@ jobs:
         run: cargo fmt --check
         working-directory: ./engine
 
+  # -------------------------------------------------------------------------- #
+  coverage:
+    name: coverage
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      pull-requests: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.0
+      
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "engine -> target"
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+
+      - name: Generate coverage
+        run: cargo llvm-cov --workspace --cobertura --output-path coverage.xml
+        working-directory: ./engine
+
+      - name: Post coverage comment
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: engine/coverage.xml
+          badge: true
+          format: markdown
+          output: both
+          thresholds: '60 80'
