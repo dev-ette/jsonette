@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2026 DevEtte.
  *
- * This project is dual-licensed under both the MIT License and the 
- * Apache License, Version 2.0 (the "License"). You may not use this 
+ * This project is dual-licensed under both the MIT License and the
+ * Apache License, Version 2.0 (the "License"). You may not use this
  * file except in compliance with one of these licenses.
  *
  * You may obtain a copy of the Licenses at:
@@ -24,7 +24,7 @@ pub mod json_node;
 pub mod types;
 
 pub use json_node::{JsonNode, KeyValuePair};
-pub use types::{Span, Diagnostic, FormatOptions, CompletionItem, LineEnding, FoldingStyle};
+pub use types::{CompletionItem, Diagnostic, FoldingStyle, FormatOptions, LineEnding, Span};
 
 /// Strict parsing: Fails entirely if the JSON is invalid.
 /// Returns the parsed tree or a list of diagnostic errors.
