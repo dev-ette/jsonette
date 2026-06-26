@@ -29,3 +29,6 @@ macos/generated/
 
 # Architecture
 html-docs/
+
+# Generated engine documentation
+engine-docs/
