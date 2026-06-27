@@ -166,7 +166,7 @@
           
           <tr>
             <td>public</td>
-            <td><a href="40accab591a573a3834e090f6e6b437e.html">format(node: JsonNode, opts: FormatOptions): String</a></td>
+            <td><a href="40accab591a573a3834e090f6e6b437e.html">format(node: JsonNode): String</a></td>
             <td><p>Takes the tree, produces pretty-printed text. Shell calls this when the user hits the &quot;Format&quot; button, then replaces the editor&#39;s content.</p></td>
           </tr>
           
@@ -192,6 +192,18 @@
             <td>public</td>
             <td><a href="460277308edbd294c1174a071a8b514a.html">diagnostics(input: String): Vec&lt;Diagnostic&gt;</a></td>
             <td><p>Convenience shortcut: parse and return only errors, no tree. Used to refresh error markers without needing the full tree.</p></td>
+          </tr>
+          
+          <tr>
+            <td>public</td>
+            <td><a href="38483d27fcdd12c584847e28766e31a8.html">get_format_options(): FormatOptions</a></td>
+            <td></td>
+          </tr>
+          
+          <tr>
+            <td>public</td>
+            <td><a href="119d71c7eaee0a3a50d21ea13939397e.html">update_format_options(opts: FormatOptions)</a></td>
+            <td></td>
           </tr>
           
         </table>

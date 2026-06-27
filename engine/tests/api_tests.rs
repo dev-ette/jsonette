@@ -1,4 +1,7 @@
-use jsonette::{FoldingStyle, FormatOptions, JsonNode, LineEnding, Span, parse};
+use jsonette::{FoldingStyle, FormatOptions, JsonNode, LineEnding, Span, format, minify, parse};
+use std::sync::Mutex;
+
+static TEST_LOCK: Mutex<()> = Mutex::new(());
 
 /// **Test Case**: Default Format Options
 ///
@@ -340,4 +343,152 @@ fn test_parse_multibyte_error_inside_object() {
     // The closing brace '}' begins at byte index 26.
     // serde_json reports the error at line 3, column 7 (mapping to index 26).
     assert_eq!(errs[0].span.start, 26);
+}
+
+/// **Test Case**: Format and Minify Integration
+///
+/// ### Description
+/// Verifies public API format and minify functions, including round-trip parity,
+/// idempotence, and nested structure preservation.
+#[test]
+fn test_api_format_and_minify() {
+    let _guard = TEST_LOCK.lock().unwrap();
+    fn eq_ignore_span(a: &JsonNode, b: &JsonNode) -> bool {
+        match (a, b) {
+            (JsonNode::Null(_), JsonNode::Null(_)) => true,
+            (JsonNode::Bool(x, _), JsonNode::Bool(y, _)) => x == y,
+            (JsonNode::Number(x, rx, _), JsonNode::Number(y, ry, _)) => x == y && rx == ry,
+            (JsonNode::String(x, _), JsonNode::String(y, _)) => x == y,
+            (JsonNode::Array(x, _), JsonNode::Array(y, _)) => {
+                if x.len() != y.len() {
+                    return false;
+                }
+                for (elem_a, elem_b) in x.iter().zip(y.iter()) {
+                    if !eq_ignore_span(elem_a, elem_b) {
+                        return false;
+                    }
+                }
+                true
+            }
+            (JsonNode::Object(x, _), JsonNode::Object(y, _)) => {
+                if x.len() != y.len() {
+                    return false;
+                }
+                for (pair_a, pair_b) in x.iter().zip(y.iter()) {
+                    if pair_a.key != pair_b.key || !eq_ignore_span(&pair_a.value, &pair_b.value) {
+                        return false;
+                    }
+                }
+                true
+            }
+            _ => false,
+        }
+    }
+
+    let input = r#"{
+  "name": "DevEtte",
+  "version": 1.0,
+  "unicode": "☺",
+  "nested": {
+    "list": [true, false, null]
+  }
+}"#;
+
+    let parsed = parse(input).expect("parse input");
+
+    // Preserve original global settings and ensure default settings are active
+    let original_settings = jsonette::get_settings();
+    let mut default_settings = original_settings;
+    default_settings.format = FormatOptions::default();
+    jsonette::update_settings(default_settings).expect("reset global settings");
+
+    // Test default formatting using the global settings
+    let formatted = format(&parsed);
+    let parsed_formatted = parse(&formatted).expect("parse formatted");
+
+    // Assert round-trip parsed structure matches exactly (ignoring spans)
+    assert!(eq_ignore_span(&parsed, &parsed_formatted));
+
+    // Test idempotence: format(format(x)) == format(x)
+    let formatted_twice = format(&parsed_formatted);
+    assert_eq!(formatted, formatted_twice);
+
+    // Test minify round-trip
+    let minified = minify(&parsed);
+    assert_eq!(
+        minified,
+        r#"{"name":"DevEtte","version":1.0,"unicode":"☺","nested":{"list":[true,false,null]}}"#
+    );
+
+    // Test global settings manager singleton integration
+    // 1. Current format output matches formatted_global
+    let formatted_global = format(&parsed);
+    assert_eq!(formatted, formatted_global);
+
+    // 2. Change global settings via update_settings to use Compact folding
+    let mut new_settings = default_settings;
+    new_settings.format.folding_style = FoldingStyle::Compact;
+    jsonette::update_settings(new_settings).expect("update global settings");
+
+    // 3. Format -> should now format using the new Compact folding style
+    let formatted_compact = format(&parsed);
+    assert!(formatted_compact.contains("\"list\": [true, false, null]"));
+
+    // Restore original global settings
+    jsonette::update_settings(original_settings).expect("restore global settings");
+}
+
+/// **Test Case**: Parser Options Integration
+///
+/// ### Description
+/// Verifies that parser settings for comments and trailing commas dynamically
+/// affect strict parsing behavior.
+#[test]
+fn test_api_parser_options() {
+    let _guard = TEST_LOCK.lock().unwrap();
+    let original_settings = jsonette::get_settings();
+
+    // --- Part 1: Comments ---
+    let comment_json = r#"{
+        // This is a line comment
+        "key": "value", /* and a block comment */
+        "number": 42
+    }"#;
+
+    // 1. Comments disabled by default -> should fail to parse
+    let mut settings_no_comments = original_settings;
+    settings_no_comments.parser.allow_comments = false;
+    jsonette::update_settings(settings_no_comments).unwrap();
+    assert!(parse(comment_json).is_err());
+
+    // 2. Enable comments -> should parse successfully
+    let mut settings_comments = original_settings;
+    settings_comments.parser.allow_comments = true;
+    jsonette::update_settings(settings_comments).unwrap();
+    let parsed_comments = parse(comment_json).expect("should parse comments");
+    assert_eq!(parsed_comments.node_type(), "object");
+
+    // --- Part 2: Trailing Commas ---
+    let trailing_comma_json = r#"{
+        "array": [1, 2, 3,],
+        "nested": {
+            "key": "val",
+        },
+    }"#;
+
+    // 1. Trailing commas disabled by default -> should fail to parse
+    let mut settings_no_trailing = original_settings;
+    settings_no_trailing.parser.allow_trailing_commas = false;
+    jsonette::update_settings(settings_no_trailing).unwrap();
+    assert!(parse(trailing_comma_json).is_err());
+
+    // 2. Enable trailing commas -> should parse successfully
+    let mut settings_trailing = original_settings;
+    settings_trailing.parser.allow_trailing_commas = true;
+    jsonette::update_settings(settings_trailing).unwrap();
+    let parsed_trailing = parse(trailing_comma_json).expect("should parse trailing commas");
+    assert_eq!(parsed_trailing.node_type(), "object");
+
+    // Restore original settings
+    jsonette::update_settings(original_settings).unwrap();
 }
