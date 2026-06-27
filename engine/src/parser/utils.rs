@@ -35,17 +35,24 @@ pub fn line_col_to_byte_offset(input: &str, line: usize, col: usize) -> usize {
         return 0;
     }
     let mut current_line = 1;
-    let mut current_col = 1;
-    for (offset, c) in input.char_indices() {
-        if current_line == line && current_col == col {
-            return offset;
+    let mut line_start_offset = 0;
+    let bytes = input.as_bytes();
+
+    for (offset, &b) in bytes.iter().enumerate() {
+        if current_line == line {
+            let target_offset = line_start_offset + (col.saturating_sub(1));
+            return target_offset.min(input.len());
         }
-        if c == '\n' {
+        if b == b'\n' {
             current_line += 1;
-            current_col = 1;
-        } else {
-            current_col += 1;
+            line_start_offset = offset + 1;
         }
     }
+
+    if current_line == line {
+        let target_offset = line_start_offset + (col.saturating_sub(1));
+        return target_offset.min(input.len());
+    }
+
     input.len()
 }

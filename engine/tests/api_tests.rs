@@ -1,5 +1,16 @@
 use jsonette::{FoldingStyle, FormatOptions, JsonNode, LineEnding, Span, parse};
 
+/// **Test Case**: Default Format Options
+///
+/// ### Description
+/// Verifies that `FormatOptions` initializes with the correct default JSON formatting choices.
+///
+/// ### Test Procedure
+/// 1. Instantiate `FormatOptions::default()`.
+/// 2. Assert values of each setting (tabs, indent size, line ending, folding style, key sorting, spacing).
+///
+/// ### Expected Result
+/// Default settings are: 2-space indentation, no tabs, LF line endings, expanded folding style, no key sorting, and spaces enabled after colons and commas.
 #[test]
 fn test_format_options_default() {
     let opts = FormatOptions::default();
@@ -12,6 +23,17 @@ fn test_format_options_default() {
     assert_eq!(opts.space_after_comma, true);
 }
 
+/// **Test Case**: JSON AST Node Helpers
+///
+/// ### Description
+/// Verifies the helper functions and variants of the `JsonNode` AST node struct.
+///
+/// ### Test Procedure
+/// 1. Construct `JsonNode` variants (`Null`, `Bool`, `Number`, `String`, `Array`, `Object`) with a dummy `Span`.
+/// 2. Query each node's `node_type()` name and its `span()`.
+///
+/// ### Expected Result
+/// Each helper returns the correct type name string and matched span coordinates.
 #[test]
 fn test_json_node_helpers() {
     let span = Span { start: 5, end: 10 };
@@ -41,6 +63,16 @@ fn test_json_node_helpers() {
     assert_eq!(node_obj.span(), span);
 }
 
+/// **Test Case**: Parse Null Literal
+///
+/// ### Description
+/// Verifies parsing a standard JSON `null` literal.
+///
+/// ### Test Procedure
+/// 1. Parse the string `"null"`.
+///
+/// ### Expected Result
+/// Returns `Ok(JsonNode::Null)` with a span of `0..4`.
 #[test]
 fn test_parse_null() {
     let input = "null";
@@ -48,6 +80,17 @@ fn test_parse_null() {
     assert_eq!(res, JsonNode::Null(Span { start: 0, end: 4 }));
 }
 
+/// **Test Case**: Parse Boolean Literals
+///
+/// ### Description
+/// Verifies parsing standard JSON `true` and `false` boolean literals.
+///
+/// ### Test Procedure
+/// 1. Parse string `"true"`.
+/// 2. Parse string `"false"`.
+///
+/// ### Expected Result
+/// Returns `Ok(JsonNode::Bool)` containing matching boolean state and span coordinates.
 #[test]
 fn test_parse_bool() {
     let input = "true";
@@ -59,6 +102,16 @@ fn test_parse_bool() {
     assert_eq!(res_false, JsonNode::Bool(false, Span { start: 0, end: 5 }));
 }
 
+/// **Test Case**: Parse Number Literals
+///
+/// ### Description
+/// Verifies parsing numbers with floating points and exponents.
+///
+/// ### Test Procedure
+/// 1. Parse string `"123.45e-2"`.
+///
+/// ### Expected Result
+/// Returns `Ok(JsonNode::Number)` representing the evaluated float value `1.2345`, keeping the original raw text.
 #[test]
 fn test_parse_number() {
     let input = "123.45e-2";
@@ -69,6 +122,16 @@ fn test_parse_number() {
     );
 }
 
+/// **Test Case**: Parse String Literals
+///
+/// ### Description
+/// Verifies parsing strings with unicode escape codes (`\u263a` representing `☺`).
+///
+/// ### Test Procedure
+/// 1. Parse string `"\"hello \\u263a world\""`.
+///
+/// ### Expected Result
+/// Returns `Ok(JsonNode::String)` containing the unescaped UTF-8 string `"hello ☺ world"`.
 #[test]
 fn test_parse_string() {
     let input = "\"hello \\u263a world\"";
@@ -79,6 +142,17 @@ fn test_parse_string() {
     );
 }
 
+/// **Test Case**: Parse Array Literals
+///
+/// ### Description
+/// Verifies parsing an array containing mixed types of child elements.
+///
+/// ### Test Procedure
+/// 1. Parse array `"[1, true, null, \"hello\"]"`.
+/// 2. Assert child types, float values, boolean states, and nested spans.
+///
+/// ### Expected Result
+/// Returns `Ok(JsonNode::Array)` containing the 4 elements at exact inner offset spans.
 #[test]
 fn test_parse_array() {
     let input = "[1, true, null, \"hello\"]";
@@ -101,6 +175,17 @@ fn test_parse_array() {
     }
 }
 
+/// **Test Case**: Parse Object Literals
+///
+/// ### Description
+/// Verifies parsing a standard key-value object containing primitive and array values.
+///
+/// ### Test Procedure
+/// 1. Parse object `{"a": 1, "b": [false]}`.
+/// 2. Query keys, values, and inner array item states.
+///
+/// ### Expected Result
+/// Returns `Ok(JsonNode::Object)` with matching keys, values, and child span positions.
 #[test]
 fn test_parse_object() {
     let input = "{\"a\": 1, \"b\": [false]}";
@@ -124,6 +209,16 @@ fn test_parse_object() {
     }
 }
 
+/// **Test Case**: Parse Deeply Nested JSON
+///
+/// ### Description
+/// Verifies that recursive-descent stack parsing can handle deeply nested objects and arrays.
+///
+/// ### Test Procedure
+/// 1. Parse nesting string `{"x": {"y": {"z": [1]}}}`.
+///
+/// ### Expected Result
+/// Returns `Ok(JsonNode::Object)` containing parsed nested sub-structures.
 #[test]
 fn test_parse_deeply_nested() {
     let input = "{\"x\": {\"y\": {\"z\": [1]}}}";
@@ -131,6 +226,16 @@ fn test_parse_deeply_nested() {
     assert_eq!(res.node_type(), "object");
 }
 
+/// **Test Case**: Parse Invalid JSON
+///
+/// ### Description
+/// Verifies correct detection and reporting of structural errors (like a trailing comma in array).
+///
+/// ### Test Procedure
+/// 1. Parse invalid array representation `{"key": [1, 2, ]}`.
+///
+/// ### Expected Result
+/// Returns `Err` with a diagnostic pointing to the incorrect position inside the input.
 #[test]
 fn test_parse_invalid_json() {
     let input = "{\"key\": [1, 2, ]}";
@@ -141,9 +246,98 @@ fn test_parse_invalid_json() {
     assert!(errs[0].span.start > 0);
 }
 
+/// **Test Case**: Parse Empty Input String
+///
+/// ### Description
+/// Verifies parsing behavior when only whitespace is supplied.
+///
+/// ### Test Procedure
+/// 1. Parse string `"   "`.
+///
+/// ### Expected Result
+/// Returns `Err` indicating unexpected EOF/end of input.
 #[test]
 fn test_parse_empty_string() {
     let input = "   ";
     let res = parse(input);
     assert!(res.is_err());
+}
+
+/// **Test Case**: Multibyte Error Span
+///
+/// ### Description
+/// Verifies that standard parser diagnostics correctly calculate the 0-indexed byte span
+/// of a trailing character error immediately following a multi-byte UTF-8 character on the same line.
+///
+/// ### Test Procedure
+/// 1. Parse raw JSON string `"\"é\"x"`.
+/// 2. Extract returned diagnostic list.
+///
+/// ### Expected Result
+/// Returns a single error diagnostic whose span exactly targets `4..5` (the character `x`).
+#[test]
+fn test_parse_multibyte_error_span() {
+    let input = "\"é\"x";
+    let res = parse(input);
+    assert!(res.is_err());
+    let errs = res.unwrap_err();
+    assert_eq!(errs.len(), 1);
+    assert_eq!(errs[0].span.start, 4);
+    assert_eq!(errs[0].span.end, 5);
+}
+
+/// **Test Case**: Multibyte Multiline Error Span
+///
+/// ### Description
+/// Verifies that standard parser diagnostics correctly track byte offsets across multiple lines
+/// when preceding lines contain multi-byte characters (emojis).
+///
+/// ### Test Procedure
+/// 1. Parse multi-value JSON string containing `{"name": "😀"}\n[1, 2, ]`.
+/// 2. Extract returned diagnostic list.
+///
+/// ### Expected Result
+/// Returns an error diagnostic indicating trailing characters at the start of the second line (byte index 17).
+#[test]
+fn test_parse_multibyte_multiline_error_span() {
+    let input = "{\"name\": \"😀\"}\n[1, 2, ]";
+    let res = parse(input);
+    assert!(res.is_err());
+    let errs = res.unwrap_err();
+    assert_eq!(errs.len(), 1);
+    // Line 1: {"name": "😀"}\n is 17 bytes:
+    // '{' (1), '"name"' (6), ':' (1), ' ' (1), '"😀"' (6, with 4-byte emoji), '}' (1), '\n' (1).
+    // Line 2: [1, 2, ]
+    // Since there are multiple top-level values, serde_json reports trailing characters at line 2, column 1.
+    // Line 2 starts at byte index 17.
+    assert_eq!(errs[0].span.start, 17);
+}
+
+/// **Test Case**: Multibyte Error Inside Object
+///
+/// ### Description
+/// Verifies that standard parser diagnostics correctly calculate the 0-indexed byte offset
+/// when a syntax error (missing value for a key) occurs inside an object that contains multi-byte values.
+///
+/// ### Test Procedure
+/// 1. Parse JSON string containing an object with a multibyte value on the previous line and a key with no value on the next.
+/// 2. Extract returned diagnostic list.
+///
+/// ### Expected Result
+/// Returns an error diagnostic indicating a missing value, pointing to the closing brace '}' at byte offset 26.
+#[test]
+fn test_parse_multibyte_error_inside_object() {
+    // Error is key without value on line 3
+    let input = "{\n  \"name\": \"😀\",\n  \"x\"\n}";
+    let res = parse(input);
+    assert!(res.is_err());
+    let errs = res.unwrap_err();
+    assert_eq!(errs.len(), 1);
+
+    // Line 1: {\n (2 bytes)
+    // Line 2:   "name": "😀",\n (18 bytes: 2 spaces, '"name"' (6), ':' (1), ' ' (1), '"😀"' (6), ',' (1), '\n' (1))
+    // Line 3 starts at byte index 20.
+    // The closing brace '}' begins at byte index 26.
+    // serde_json reports the error at line 3, column 7 (mapping to index 26).
+    assert_eq!(errs[0].span.start, 26);
 }

@@ -539,6 +539,18 @@ impl<'a> Parser<'a> {
 mod private_tests {
     use super::*;
 
+    /// **Test Case**: Trailing Characters Check
+    ///
+    /// ### Description
+    /// Verifies that the parser parses a valid JSON value but detects trailing unparsed characters.
+    ///
+    /// ### Test Procedure
+    /// 1. Initialize `Parser` with `"123 abc"`.
+    /// 2. Call `parse_value()` to parse the number `123`.
+    /// 3. Assert that the cursor has not reached the end of the input (trailing characters exist).
+    ///
+    /// ### Expected Result
+    /// The parser parses the number `123` successfully and reports remaining characters at the end.
     #[test]
     fn test_parser_trailing_characters() {
         let mut parser = Parser::new("123 abc");
@@ -548,6 +560,17 @@ mod private_tests {
         assert!(parser.cursor < parser.input.len());
     }
 
+    /// **Test Case**: Unexpected End of Input Error
+    ///
+    /// ### Description
+    /// Verifies that parsing an empty input string produces an "Unexpected end of input" error.
+    ///
+    /// ### Test Procedure
+    /// 1. Initialize `Parser` with an empty string `""`.
+    /// 2. Call `parse_value()`.
+    ///
+    /// ### Expected Result
+    /// Returns `Err` with the message "Unexpected end of input".
     #[test]
     fn test_parser_unexpected_eof() {
         let mut parser = Parser::new("");
@@ -556,6 +579,17 @@ mod private_tests {
         assert_eq!(res.unwrap_err().message, "Unexpected end of input");
     }
 
+    /// **Test Case**: Unexpected Character Error
+    ///
+    /// ### Description
+    /// Verifies that an invalid JSON value starting character produces an "Unexpected character" error.
+    ///
+    /// ### Test Procedure
+    /// 1. Initialize `Parser` with `"x"`.
+    /// 2. Call `parse_value()`.
+    ///
+    /// ### Expected Result
+    /// Returns `Err` with the message "Unexpected character 'x'".
     #[test]
     fn test_parser_unexpected_char() {
         let mut parser = Parser::new("x");
@@ -564,6 +598,17 @@ mod private_tests {
         assert_eq!(res.unwrap_err().message, "Unexpected character 'x'");
     }
 
+    /// **Test Case**: Null Literal Parsing Error
+    ///
+    /// ### Description
+    /// Verifies that a malformed `null` literal results in a parsing error.
+    ///
+    /// ### Test Procedure
+    /// 1. Initialize `Parser` with `"nula"`.
+    /// 2. Call `parse_value()`.
+    ///
+    /// ### Expected Result
+    /// Returns `Err` with the message "Expected 'null'".
     #[test]
     fn test_parser_null_error() {
         let mut parser = Parser::new("nula");
@@ -572,6 +617,17 @@ mod private_tests {
         assert_eq!(res.unwrap_err().message, "Expected 'null'");
     }
 
+    /// **Test Case**: Boolean Literal Parsing Error
+    ///
+    /// ### Description
+    /// Verifies that malformed boolean literals result in parsing errors.
+    ///
+    /// ### Test Procedure
+    /// 1. Initialize `Parser` with `"truf"` and `"falz"`.
+    /// 2. Call `parse_value()` on both.
+    ///
+    /// ### Expected Result
+    /// Both return `Err` with the message "Expected boolean value".
     #[test]
     fn test_parser_bool_error() {
         let mut parser = Parser::new("truf");
@@ -585,6 +641,24 @@ mod private_tests {
         assert_eq!(res.unwrap_err().message, "Expected boolean value");
     }
 
+    /// **Test Case**: String Literal Parsing Errors
+    ///
+    /// ### Description
+    /// Verifies that various malformed string literals (unterminated, unescaped controls, invalid escape sequences) produce correct error messages.
+    ///
+    /// ### Test Procedure
+    /// 1. Test unterminated string `"\"hello"`.
+    /// 2. Test unescaped control character `"\u{08}"`.
+    /// 3. Test invalid escape character `"\x"`.
+    /// 4. Test unterminated string escape `"\`.
+    /// 5. Test invalid unicode escape length `"\u1"`.
+    /// 6. Test invalid hex character in unicode escape `"\u123g"`.
+    /// 7. Test missing low surrogate after high surrogate `"\uD800"`.
+    /// 8. Test invalid low surrogate token after high surrogate `"\uD800\u1234"`.
+    /// 9. Test low surrogate without preceding high surrogate `"\uDC00"`.
+    ///
+    /// ### Expected Result
+    /// All cases return `Err` with their respective parsing/syntax error messages.
     #[test]
     fn test_parser_string_errors() {
         let mut parser = Parser::new("\"hello");
@@ -642,6 +716,17 @@ mod private_tests {
         );
     }
 
+    /// **Test Case**: Number Parsing Errors
+    ///
+    /// ### Description
+    /// Verifies that invalid number formats (e.g., negative sign with no digits) result in a parsing error.
+    ///
+    /// ### Test Procedure
+    /// 1. Initialize `Parser` with `"-"`.
+    /// 2. Call `parse_value()`.
+    ///
+    /// ### Expected Result
+    /// Returns `Err` with the message "Expected digit for number".
     #[test]
     fn test_parser_number_errors() {
         let mut parser = Parser::new("-");
@@ -651,6 +736,18 @@ mod private_tests {
         );
     }
 
+    /// **Test Case**: Array Parsing Errors
+    ///
+    /// ### Description
+    /// Verifies error detection for malformed array declarations (unterminated arrays, trailing commas, missing separators).
+    ///
+    /// ### Test Procedure
+    /// 1. Test unterminated array `"[1"`.
+    /// 2. Test trailing comma `"[1, ]"`.
+    /// 3. Test missing separator `"[1 2]"`.
+    ///
+    /// ### Expected Result
+    /// All cases return `Err` with their respective parsing/syntax error messages.
     #[test]
     fn test_parser_array_errors() {
         let mut parser = Parser::new("[1");
@@ -672,6 +769,20 @@ mod private_tests {
         );
     }
 
+    /// **Test Case**: Object Parsing Errors
+    ///
+    /// ### Description
+    /// Verifies error detection for malformed object declarations (non-string keys, missing colons, trailing commas, missing separators, unterminated objects).
+    ///
+    /// ### Test Procedure
+    /// 1. Test non-string key `"{1: 2}"`.
+    /// 2. Test missing colon `{"key" 1}`.
+    /// 3. Test trailing comma `{"key": 1, }`.
+    /// 4. Test missing separator `{"key": 1 "other": 2}`.
+    /// 5. Test unterminated object `{"key": 1`.
+    ///
+    /// ### Expected Result
+    /// All cases return `Err` with their respective parsing/syntax error messages.
     #[test]
     fn test_parser_object_errors() {
         let mut parser = Parser::new("{1: 2}");
@@ -705,6 +816,21 @@ mod private_tests {
         );
     }
 
+    /// **Test Case**: Offset Mapping Edge Cases
+    ///
+    /// ### Description
+    /// Validates the robustness of the coordinate-to-byte-offset mapping utility
+    /// under common boundary inputs.
+    ///
+    /// ### Test Procedure
+    /// 1. Query an empty input string with line 0, column 0.
+    /// 2. Query a valid multiline string with coordinates referencing the character 'e'.
+    /// 3. Query an out-of-bounds line and column number.
+    ///
+    /// ### Expected Result
+    /// 1. Line 0 returns 0.
+    /// 2. Valid coordinates return the exact byte offset of the character 'e' (5).
+    /// 3. Out-of-bounds queries fall back gracefully to the total input string length.
     #[test]
     fn test_line_col_to_byte_offset_edge_cases() {
         assert_eq!(line_col_to_byte_offset("", 0, 0), 0);
@@ -712,6 +838,17 @@ mod private_tests {
         assert_eq!(line_col_to_byte_offset("abc", 5, 5), 3); // out of bounds
     }
 
+    /// **Test Case**: String Escape Decoding
+    ///
+    /// ### Description
+    /// Verifies that all standard character escapes (quote, backslash, slash, backspace, formfeed, newline, carriage return, tab) are correctly decoded.
+    ///
+    /// ### Test Procedure
+    /// 1. Initialize `Parser` with a string containing all escaped control characters: `\"\\\"\\\\\\/\\b\\f\\n\\r\\t\"`.
+    /// 2. Call `parse_value()`.
+    ///
+    /// ### Expected Result
+    /// Returns `JsonNode::String` containing the correct unescaped string and span.
     #[test]
     fn test_parser_valid_escapes() {
         let mut parser = Parser::new("\"\\\"\\\\\\/\\b\\f\\n\\r\\t\"");
@@ -725,6 +862,17 @@ mod private_tests {
         );
     }
 
+    /// **Test Case**: Unicode Surrogate Pair Decoding
+    ///
+    /// ### Description
+    /// Verifies that Unicode surrogate pairs (e.g., `\uD83D\uDE00` representing 😀) are successfully parsed and decoded into a UTF-8 character.
+    ///
+    /// ### Test Procedure
+    /// 1. Initialize `Parser` with high and low surrogates: `\"\\uD83D\\uDE00\"`.
+    /// 2. Call `parse_value()`.
+    ///
+    /// ### Expected Result
+    /// Returns `JsonNode::String` containing "😀" and span `0..14`.
     #[test]
     fn test_parser_surrogate_pair() {
         let mut parser = Parser::new("\"\\uD83D\\uDE00\"");
@@ -735,6 +883,18 @@ mod private_tests {
         );
     }
 
+    /// **Test Case**: Number Formats Parsing
+    ///
+    /// ### Description
+    /// Verifies successful parsing of various valid numeric formats (integers, decimals, and scientific exponents).
+    ///
+    /// ### Test Procedure
+    /// 1. Test parsing `"0"`.
+    /// 2. Test parsing `"0.1"`.
+    /// 3. Test parsing `"123e4"`.
+    ///
+    /// ### Expected Result
+    /// All cases return correct `JsonNode::Number` containing the correct float value, raw text representation, and span.
     #[test]
     fn test_parser_numbers() {
         let mut parser = Parser::new("0");
@@ -756,6 +916,17 @@ mod private_tests {
         );
     }
 
+    /// **Test Case**: Empty Array and Object Parsing
+    ///
+    /// ### Description
+    /// Verifies that empty arrays `[]` and empty objects `{}` are correctly parsed with precise spans.
+    ///
+    /// ### Test Procedure
+    /// 1. Test parsing `"[]"`.
+    /// 2. Test parsing `"{}"`.
+    ///
+    /// ### Expected Result
+    /// Returns correct empty container nodes with spans starting at 0 and ending at 2.
     #[test]
     fn test_parser_empty_array_and_object() {
         let mut parser = Parser::new("[]");
