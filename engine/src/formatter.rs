@@ -173,10 +173,9 @@ fn format_impl(node: &JsonNode, level: usize) -> String {
             if elements.is_empty() {
                 return "[]".to_string();
             }
-            if opts.folding_style == FoldingStyle::Compact {
-                if let Some(inline) = format_inline(node) {
-                    return inline;
-                }
+            if let (FoldingStyle::Compact, Some(inline)) = (opts.folding_style, format_inline(node))
+            {
+                return inline;
             }
 
             let line_ending = get_line_ending();
@@ -204,10 +203,9 @@ fn format_impl(node: &JsonNode, level: usize) -> String {
             if pairs.is_empty() {
                 return "{}".to_string();
             }
-            if opts.folding_style == FoldingStyle::Compact {
-                if let Some(inline) = format_inline(node) {
-                    return inline;
-                }
+            if let (FoldingStyle::Compact, Some(inline)) = (opts.folding_style, format_inline(node))
+            {
+                return inline;
             }
 
             let mut pairs = pairs.clone();

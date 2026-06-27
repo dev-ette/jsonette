@@ -134,40 +134,36 @@ impl<'a> Parser<'a> {
                 }
             }
             // 2. Skip comments if enabled
-            if allow_comments {
-                if let Some(b'/') = self.peek() {
-                    if let Some(next_b) = self.peek_next() {
-                        if next_b == b'/' {
-                            // Line comment: skip until newline or EOF
-                            self.advance(); // skip '/'
-                            self.advance(); // skip '/'
-                            while let Some(c) = self.peek() {
-                                if c == b'\n' {
-                                    self.advance();
-                                    break;
-                                }
+            if allow_comments && self.peek() == Some(b'/') {
+                match self.peek_next() {
+                    Some(b'/') => {
+                        // Line comment: skip until newline or EOF
+                        self.advance(); // skip '/'
+                        self.advance(); // skip '/'
+                        while let Some(c) = self.peek() {
+                            if c == b'\n' {
                                 self.advance();
+                                break;
                             }
-                            continue;
-                        } else if next_b == b'*' {
-                            // Block comment: skip until '*/' or EOF
-                            self.advance(); // skip '/'
-                            self.advance(); // skip '*'
-                            while let Some(c) = self.peek() {
-                                if c == b'*' {
-                                    if let Some(next_c) = self.peek_next() {
-                                        if next_c == b'/' {
-                                            self.advance(); // skip '*'
-                                            self.advance(); // skip '/'
-                                            break;
-                                        }
-                                    }
-                                }
-                                self.advance();
-                            }
-                            continue;
+                            self.advance();
                         }
+                        continue;
                     }
+                    Some(b'*') => {
+                        // Block comment: skip until '*/' or EOF
+                        self.advance(); // skip '/'
+                        self.advance(); // skip '*'
+                        while let Some(c) = self.peek() {
+                            if c == b'*' && self.peek_next() == Some(b'/') {
+                                self.advance(); // skip '*'
+                                self.advance(); // skip '/'
+                                break;
+                            }
+                            self.advance();
+                        }
+                        continue;
+                    }
+                    _ => {}
                 }
             }
 

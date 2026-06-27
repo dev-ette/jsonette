@@ -88,21 +88,12 @@ impl Default for FormatOptions {
 }
 
 /// Options for the parser.
-#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct ParserOptions {
     /// Whether to allow single-line (`//`) and multi-line (`/* ... */`) comments.
     pub allow_comments: bool,
     /// Whether to tolerate trailing commas in arrays and objects.
     pub allow_trailing_commas: bool,
-}
-
-impl Default for ParserOptions {
-    fn default() -> Self {
-        Self {
-            allow_comments: false,
-            allow_trailing_commas: false,
-        }
-    }
 }
 
 /// Severity level for linting and diagnostics.
@@ -132,7 +123,7 @@ impl Default for LintOptions {
 }
 
 /// The top-level settings structure for the application.
-#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct AppSettings {
     /// Formatter preferences.
     pub format: FormatOptions,
@@ -140,16 +131,6 @@ pub struct AppSettings {
     pub parser: ParserOptions,
     /// Linting and diagnostics preferences.
     pub lint: LintOptions,
-}
-
-impl Default for AppSettings {
-    fn default() -> Self {
-        Self {
-            format: FormatOptions::default(),
-            parser: ParserOptions::default(),
-            lint: LintOptions::default(),
-        }
-    }
 }
 
 /// A single autocomplete suggestion.
