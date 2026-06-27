@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Parser</title>
+    <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,700,300italic,400italic,700italic|Source+Code+Pro:300,400,700' rel='stylesheet' type='text/css'>
+<link rel="stylesheet" href="../assets/css/bootstrap.css">
+<link rel="stylesheet" href="../assets/css/jquery.bonsai.css">
+<link rel="stylesheet" href="../assets/css/main.css">
+<link rel="stylesheet" href="../assets/icon-font/icons.css">
+<script type="text/javascript" src="../assets/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript" src="../assets/js/bootstrap.js"></script>
+<script type="text/javascript" src="../assets/js/jquery.bonsai.js"></script>
+<script type="text/javascript" src="../assets/js/imageMapResizer.min.js"></script>
+
+  </head>
+  <body>
+    <div>
+
+      <!-- Name Title -->
+
+      <h1>Parser</h1>
+
+      <!-- Type and Stereotype -->
+
+      <section style="margin-top: .5em;">
+        <span class="alert alert-info">
+          <span class="node-icon staruml-icon icon-UMLClass"></span>
+          UMLClass
+        </span>
+        
+      </section>
+
+      <!-- Path -->
+
+      <section style="margin-top: 10px">
+        
+        
+        
+          
+          <span class="label label-info"><a href='cf9c8b720f3815adeccaf3ef6e48c6c4.html'><span class='node-icon staruml-icon icon-Project'></span>jsonette</a></span>
+        
+          <span>::</span>
+          <span class="label label-info"><a href='4483edd53db5f8400bfe772b8172a1fe.html'><span class='node-icon staruml-icon icon-UMLModel'></span>model</a></span>
+        
+          <span>::</span>
+          <span class="label label-info"><a href='6c9bc3fa8a9828d895529fca955d3f84.html'><span class='node-icon staruml-icon icon-UMLPackage'></span>Modules</a></span>
+        
+          <span>::</span>
+          <span class="label label-info"><a href='efd9da7c4c79c14ef964c690a18f99a0.html'><span class='node-icon staruml-icon icon-UMLPackage'></span>Parser</a></span>
+        
+          <span>::</span>
+          <span class="label label-info"><a href='5ff1d9a1bf320f14c74819f1304b5f91.html'><span class='node-icon staruml-icon icon-UMLClass'></span>Parser</a></span>
+        
+      </section>
+
+      <!-- Diagram -->
+
+      
+
+      <!-- Description -->
+
+      
+      <section>
+        <h3>Description</h3>
+        <div>
+          
+            <p>A stateful recursive-descent parser for strict JSON documents.
+Keeps track of byte offset locations to generate AST nodes with accurate <code>Span</code> info.</p>
+          
+        </div>
+      </section>
+      
+
+      <!-- Specification -->
+
+      
+
+      <!-- Directed Relationship -->
+
+      
+
+      <!-- Undirected Relationship -->
+
+      
+
+      <!-- Classifier -->
+
+      
+        
+        
+
+
+        
+        
+
+
+        
+        
+
+
+        
+        
+
+
+        
+        
+
+      
+
+      <!-- Interface -->
+
+      
+
+      <!-- Component -->
+
+      
+
+      <!-- Node -->
+
+      
+
+      <!-- Actor -->
+
+      
+
+      <!-- Use Case -->
+
+      
+
+      <!-- Template Parameters -->
+
+      
+
+      <!-- Literals -->
+
+      
+
+      <!-- Attributes -->
+
+      
+      <section>
+        <h3>Attributes</h3>
+        <table class="table table-striped table-bordered">
+          <tr>
+            <th>Visibility</th>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Description</th>
+          </tr>
+          
+          <tr>
+            <td>private</td>
+            <td><a href="a30a5f7788d8f5cbb430a1f8ce10dcba.html">input</a></td>
+            <td>u8 [*]</td>
+            <td><p>The input bytes slice of the JSON document.</p></td>
+          </tr>
+          
+          <tr>
+            <td>private</td>
+            <td><a href="b40f40af65c4bfafb2ffa41a1f8d5918.html">input_raw</a></td>
+            <td>String </td>
+            <td><p>The original input string slice for number parsing and error reporting.</p></td>
+          </tr>
+          
+          <tr>
+            <td>private</td>
+            <td><a href="b00fd777bfd4c44b4bf278636f06810b.html">cursor</a></td>
+            <td>usize </td>
+            <td><p>The current byte offset cursor in the input.</p></td>
+          </tr>
+          
+        </table>
+      </section>
+      
+
+      <!-- Operations -->
+
+      
+      <section>
+        <h3>Operations</h3>
+        <table class="table table-striped table-bordered">
+          <tr>
+            <th>Visibility</th>
+            <th>Name</th>
+            <th>Description</th>
+          </tr>
+          
+          <tr>
+            <td>public</td>
+            <td><a href="b0b066e1e4c2716a59f845148bd76680.html">Parser(input: String): Parser</a></td>
+            <td><p>Creates a new Parser instance for the given JSON input.</p></td>
+          </tr>
+          
+          <tr>
+            <td>public</td>
+            <td><a href="c0c14c8968d70b1b6bafba1cb694a992.html">parse_value(): Result&lt;JsonNode, Diagnostic&gt;</a></td>
+            <td><p>Main entry point to parse a JSON value (null, bool, number, string, array, object).</p></td>
+          </tr>
+          
+          <tr>
+            <td>private</td>
+            <td><a href="c2ac86663f87863670f5d3c18e94aa4a.html">peek(): Option&lt;u8&gt;</a></td>
+            <td><p>Returns the character byte at the current cursor, or <code>None</code> if EOF is reached.</p></td>
+          </tr>
+          
+          <tr>
+            <td>private</td>
+            <td><a href="3b143347ffe97ef8962c5a0a29922727.html">advance()</a></td>
+            <td><p>Advances the cursor by one byte.</p></td>
+          </tr>
+          
+          <tr>
+            <td>private</td>
+            <td><a href="e1ce9e886030513a58363d9cb7dcd2c5.html">skip_whitespace()</a></td>
+            <td><p>Skips any ASCII whitespace characters (spaces, tabs, newlines, carriage returns).</p></td>
+          </tr>
+          
+          <tr>
+            <td>private</td>
+            <td><a href="3525b61ccdcace2c675dd2d073c727c6.html">error(pos: usize, msg: String): Diagnostic</a></td>
+            <td><p>Helper to create a single-character <code>Diagnostic</code> error starting at the given position.</p></td>
+          </tr>
+          
+          <tr>
+            <td>private</td>
+            <td><a href="5372dead622a49f69209604e860f0567.html">parse_null(): Result&lt;JsonNode, Diagnostic&gt;</a></td>
+            <td><p>Parses a JSON null value.</p></td>
+          </tr>
+          
+          <tr>
+            <td>private</td>
+            <td><a href="70af843d9cb61ab5b10fe1a4a998717d.html">parse_bool(): Result&lt;JsonNode, Diagnostic&gt;</a></td>
+            <td><p>Parses a JSON boolean value (true or false).</p></td>
+          </tr>
+          
+          <tr>
+            <td>private</td>
+            <td><a href="0b1832b3ece916a033531f51c66fb303.html">parse_string_raw(): Result&lt;(String, Span), Diagnostic&gt;</a></td>
+            <td><p>Parses a raw string value, decoding escape characters and surrogate pairs,
+and returns the decoded string and its source span.</p></td>
+          </tr>
+          
+          <tr>
+            <td>private</td>
+            <td><a href="cd2caa2371f7cea6136fe1733699fbca.html">parse_string_node(): Result&lt;JsonNode, Diagnostic&gt;</a></td>
+            <td><p>Parses a JSON string value.</p></td>
+          </tr>
+          
+          <tr>
+            <td>private</td>
+            <td><a href="5fc73b00da678ca34c5c0ad0c306a5f4.html">parse_number(): Result&lt;JsonNode, Diagnostic&gt;</a></td>
+            <td><p>Parses a JSON number value.</p></td>
+          </tr>
+          
+          <tr>
+            <td>private</td>
+            <td><a href="89685362f4a3795039a5fe4f16276646.html">parse_array(): Result&lt;JsonNode, Diagnostic&gt;</a></td>
+            <td><p>Parses a JSON array value.</p></td>
+          </tr>
+          
+          <tr>
+            <td>private</td>
+            <td><a href="6a586c1a96606dfd08fcb88b977a1d80.html">parse_object(): Result&lt;JsonNode, Diagnostic&gt;</a></td>
+            <td><p>Parses a JSON object value.</p></td>
+          </tr>
+          
+        </table>
+      </section>
+      
+
+      <!-- Receptions -->
+
+      
+
+      <!-- Extension Points -->
+
+      
+
+      <!-- Parameters -->
+
+      
+
+      <!-- Diagrams -->
+
+      
+      
+
+      <!-- Behavior -->
+
+      
+
+      <!-- Action -->
+
+      
+
+      <!-- Interaction -->
+
+      
+
+      <!-- CombinedFragment -->
+
+      
+
+      <!-- Activity -->
+
+      
+
+      <!-- State Machine -->
+
+      
+
+      <!-- State Machine -->
+
+      
+
+      <!-- State -->
+
+      
+
+      <!-- Vertex -->
+
+      
+
+      <!-- Transition -->
+
+      
+
+      <!-- Data Model (ERD) -->
+
+      
+
+      <!-- Columns (ERD) -->
+
+      
+
+      <!-- Related Entities (ERD) -->
+
+      
+
+      <!-- Data Flows (DFD) -->
+
+      
+
+      <!-- Flows (Flowchart) -->
+
+      
+
+      <!-- Properties -->
+
+      <section>
+        <h3>Properties</h3>
+        
+        <table class="table table-striped table-bordered">
+    <tr>
+        <th width="50%">Name</th>
+        <th width="50%">Value</th>
+    </tr>
+    
+    
+    
+    
+    
+    
+    
+    <tr>
+        <td>name</td>
+        <td>Parser</td>
+    </tr>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <tr>
+        <td>stereotype</td>
+        <td><span class='label label-info'>null</span></td>
+    </tr>
+    
+    
+    
+    
+    
+    <tr>
+        <td>visibility</td>
+        <td>public</td>
+    </tr>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <tr>
+        <td>isAbstract</td>
+        <td><span class='label label-info'>false</span></td>
+    </tr>
+    
+    
+    
+    
+    
+    <tr>
+        <td>isFinalSpecialization</td>
+        <td><span class='label label-info'>false</span></td>
+    </tr>
+    
+    
+    
+    
+    
+    <tr>
+        <td>isLeaf</td>
+        <td><span class='label label-info'>false</span></td>
+    </tr>
+    
+    
+    
+    
+    
+    <tr>
+        <td>isActive</td>
+        <td><span class='label label-info'>false</span></td>
+    </tr>
+    
+    
+    
+</table>                
+
+      </section>
+
+      <!-- Tags -->
+
+      
+
+      <!-- Constraints, Dependencies, Dependants -->
+
+      
+        
+        
+
+
+        
+        
+
+
+        
+        
+
+      
+
+      <!-- Relationships -->
+
+      
+      
+<section class="element-list">
+    <h3>Relationships</h3>
+    <ul class="nav nav-list">
+        
+        <li><a href='61475f6c8ac3535b9b9e05ec14304164.html'><span class='node-icon staruml-icon icon-UMLAssociation'></span>(Diagnostic—Parser)</a></li>
+        
+        <li><a href='b61c4d07e046649af56cffa03fc55508.html'><span class='node-icon staruml-icon icon-UMLAssociation'></span>(JsonNode—Parser)</a></li>
+        
+    </ul>
+</section>
+
+
+
+      <!-- Owned Elements -->
+
+      
+      
+
+
+      <!-- Diagrams -->
+      
+      
+      
+<section class="element-list">
+    <h3>Diagrams</h3>
+    <ul class="nav nav-list">
+        
+        <li><a href='2ef6b2905d5763b1896eb361092634a5.html'><span class='node-icon staruml-icon icon-UMLClassDiagram'></span>ParserTypes</a></li>
+        
+    </ul>
+</section>
+
+
+      
+      
+      <!-- Image Map Resizer (https://github.com/davidjbradshaw/image-map-resizer) -->
+      <script>
+      imageMapResize();
+      </script>
+    </div>
+  </body>
+</html>

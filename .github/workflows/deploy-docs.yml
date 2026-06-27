@@ -1,0 +1,90 @@
+name: Deploy Documentation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+      - 'engine/**'
+      - 'mkdocs.yml'
+      - '.github/workflows/deploy-docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install MkDocs dependencies
+        run: |
+          pip install mkdocs-material
+
+      - name: Build MkDocs Site
+        run: mkdocs build --clean
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo Dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "engine -> target"
+
+      - name: Build Rust Engine Documentation
+        run: cargo doc --no-deps
+        working-directory: ./engine
+
+      - name: Assemble Documentation Pages
+        run: |
+          # Copy StarUML architecture HTML docs (if present in the repo)
+          if [ -d "docs/architecture/html-docs" ]; then
+            echo "Copying StarUML html-docs..."
+            mkdir -p site/architecture/html-docs
+            cp -R docs/architecture/html-docs/* site/architecture/html-docs/
+          else
+            echo "Warning: docs/architecture/html-docs not found. Skipping."
+          fi
+          
+          # Copy Rust engine API documentation
+          if [ -d "engine/target/doc" ]; then
+            echo "Copying Rust engine-docs..."
+            mkdir -p site/engine-docs
+            cp -R engine/target/doc/* site/engine-docs/
+            # Create a redirect from engine-docs/index.html to the crate documentation index page
+            echo '<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0; url=jsonette/index.html" /><title>Redirecting</title></head><body><p>Redirecting to <a href="jsonette/index.html">jsonette/index.html</a>...</p></body></html>' > site/engine-docs/index.html
+          else
+            echo "Error: Rust engine docs were not generated."
+            exit 1
+          fi
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'site'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

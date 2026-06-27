@@ -1,95 +1,120 @@
 # jsonette
 
 [![Engine CI](https://github.com/dev-ette/jsonette/actions/workflows/engine-ci.yml/badge.svg)](https://github.com/dev-ette/jsonette/actions/workflows/engine-ci.yml)
+[![Docs Portal](https://img.shields.io/badge/docs-portal-blue)](https://dev-ette.github.io/jsonette/)
 [![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](LICENSE-MIT)
 [![Rust](https://img.shields.io/badge/rust-stable-orange)](engine/rust-toolchain.toml)
 [![Platform](https://img.shields.io/badge/platform-macOS-lightgrey)](https://github.com/dev-ette/jsonette)
-[![codecov](https://codecov.io/gh/dev-ette/jsonette/branch/main/graph/badge.svg)](https://codecov.io/gh/dev-ette/jsonette)
 
-> A focused, fast, native JSON editor, viewer, and query tool. Lightweight by design. Local-only. Open source.
-
-**Status:** 🟡 Planning (pre-M0). No code yet — this repo currently holds the architecture and project plan.
-**License:** MIT OR Apache-2.0
-**First platform:** macOS (native, SwiftUI). Linux and Windows to follow (see Roadmap).
+> A focused, fast, native desktop JSON editor, viewer, and query tool. Lightweight by design, 100% local, and open source.
 
 ---
 
-## What jsonette is
+## 🎯 Project Philosophy
 
-A small desktop app that does three things better than anyone, instead of thirty things adequately:
+Unlike bundled "swiss-army-knife" developer utilities, `jsonette` is designed to do three core tasks exceptionally well, focusing on native-tier quality, performance, and user privacy:
 
-1. **Edit** — a real code-editor experience for JSON: syntax highlighting, error highlighting, auto-format, stable on large files.
-2. **View** — a collapsible tree with click-to-navigate, collapse, search, and datatype-aware rendering (object, array, string, number, boolean, null).
-3. **Query** — JSONPath with intelligent autocomplete, inline syntax/error highlighting, and a live results pane.
+1. **Edit**: High-performance text editor experience with syntax highlighting, inline diagnostic error indicators, and instant formatting.
+2. **View**: High-speed, virtualized, collapsible outline tree view with click-to-navigate structural exploration.
+3. **Query**: Real-time RFC 9535 JSONPath evaluator featuring intelligent key autocomplete and a live results panel.
 
-## What jsonette is **not**
+### Core Guarantees
+- **Strict Privacy**: 100% local processing. Zero telemetry, zero external trackers, and zero network calls.
+- **Extreme Performance**: Enforced startup and memory budgets (e.g., fast cold start, under 30MB idle RAM).
+- **Native Experience**: Standard native controls and performance over bloated multi-gigabyte Electron apps.
 
-No HTTP client, no regex tester, no JWT decoder, no color pickers, no port scanner. Feature count is not the goal — **focus, native quality, privacy, and being free are.** Bundled "developer Swiss-army-knife" apps already exist; jsonette is the opposite bet.
+---
 
-## Why it exists
+## 🏛️ System Architecture
 
-- **Free & open source** — auditable, no license fees.
-- **Private by design** — 100% local processing, zero network calls, zero telemetry. Your JSON never leaves your machine. (A real feature for anyone pasting sensitive data.)
-- **Lightweight** — strict, CI-enforced performance budgets (see `ROADMAP.md`).
-- **Cross-platform path** — one portable engine, native shells; macOS first, then Linux, then Windows.
-
-## Architecture in one picture
+To ensure multi-platform capability without duplicating business logic, `jsonette` enforces a strict separation of concerns between its core engine and the native application shells.
 
 ```
-        ┌──────────────────────────────────────────────┐
-        │  ENGINE (Rust crate, zero UI deps)            │
-        │  parse · tree model · format · JSONPath ·     │
-        │  autocomplete data · diagnostics              │
-        └───────────────────────┬──────────────────────┘
-                                │  written once, reused everywhere
-          ┌──────────────────────┴───────────────────────┐
-          ▼                                               ▼
-   macOS shell (SwiftUI)                          (later) Tauri shell
-   via UniFFI                                     Rust engine is native here
+┌──────────────────────────────────────────────────────────────┐
+│                  CORE ENGINE (Rust Crate)                    │
+│   Parsers · Tree Model · Formatter · JSONPath · Autocomplete │
+└──────────────────────────────┬───────────────────────────────┘
+                               │
+                Compiles via FFI (UniFFI / Rust ABI)
+                               │
+        ┌──────────────────────┴──────────────────────┐
+        ▼                                             ▼
+   macOS Shell (SwiftUI)                       Future Shells (Tauri / Web)
+   Native rendering, outline views.            Tauri webview, CodeMirror.
 ```
 
-The **engine owns all the logic**; each **shell only renders**. This is what makes the platform expansion (and the later Tauri performance comparison) cheap — the hard 60% carries over untouched. See `PLANNING.md` §3.
+- **The Engine (Rust)**: Owns parsing logic, query computation, autocomplete schema inference, diagnostics generation, and data transformations.
+- **The Shell (Native Swift / Tauri)**: Focuses purely on native system integrations, input handling, and high-performance UI rendering.
 
-## Tech stack (v1, macOS)
+---
 
-| Layer | Choice |
-|---|---|
-| Engine | Rust (`serde_json`, `serde_json_path`), exposed to Swift via UniFFI |
-| UI | SwiftUI (+ AppKit where needed), macOS 14+ |
-| Editor | `CodeEditSourceEditor` (tree-sitter), with `CodeEditTextView` as the lower-level fallback |
-| Tree | `NSOutlineView` (lazy, virtualized) |
-| Packaging | signed + notarized `.dmg`, Homebrew cask |
+## 🛠️ Technology Stack
 
-Full rationale and alternatives in `docs/architecture/decisions/0000-register.md`.
+| Layer | Technology | Rationale |
+|---|---|---|
+| **Core Engine** | Rust | Portable compiled library, native speed, memory safety. Shared via UniFFI wrapper. |
+| **macOS UI** | SwiftUI + AppKit | Deeply integrated native macOS 14+ look-and-feel. |
+| **macOS Editor** | Tree-sitter / AppKit | Native text view with high-speed syntax coloring. |
+| **macOS Tree View** | Virtualized outline view | Handles multi-gigabyte JSON hierarchies lazily without lag. |
 
-## Planned repo structure
+---
 
+## 📂 Repository Structure
+
+- **/engine**: Core Rust library crate (`jsonette`) containing all data processing logic and FFI configurations.
+- **/macos**: SwiftUI client application (Xcode project) consuming the engine.
+- **/docs**: Unified documentation portal config, architecture ADRs, and decision records.
+- **/.github**: CI/CD pipelines (Engine validation, docs deployment, crates.io publishing).
+
+---
+
+## 🚀 Getting Started & Building
+
+### Prerequisites
+- **Rust Toolchain**: Install via [rustup](https://rustup.rs/) (version details in [rust-toolchain.toml](file:///Users/aharbi/workset/jsonette/engine/rust-toolchain.toml)).
+- **Xcode**: Required for macOS application compilation.
+
+### Building the Engine & Running Tests
+```bash
+# Navigate to the engine
+cd engine
+
+# Run tests
+cargo test
+
+# Run quality checks
+cargo clippy --workspace -- -D warnings
+cargo fmt --check
 ```
-jsonette/
-├── engine/        # Rust core crate (UI-agnostic) + UniFFI bindings
-├── macos/         # SwiftUI app (Xcode project)
-├── docs/          # ADRs, architecture notes
-├── .github/       # CI workflows, issue/PR templates
-├── README.md
-├── PLANNING.md    # architecture + strategy (master plan)
-├── ROADMAP.md     # milestones + backlog
-└── CONTRIBUTING.md
+
+### Developing documentation portal locally
+To generate the Rust engine API documentation locally:
+```bash
+# Execute the docs script
+./docs/build-docs.sh
+
+# Open generated index in browser
+open docs/index.html
 ```
 
-## Roadmap at a glance
+---
 
-- **Phase 1 — macOS to v1.0:** M0 foundations → M1 editor → M2 viewer → M3 query → M4 release (Homebrew).
-- **Decision gate:** build a Tauri spike reusing the same engine; measure; go/no-go on a cross-platform pivot.
-- **Phase 3 — expansion:** Linux → Windows (either via Tauri, or native shells over the same engine).
-- **Later:** converters (JSON ↔ YAML/XML/TOML/CSV), SQL-schema → test-data generator.
-- **Parked:** mobile (only if an experienced native mobile dev joins).
+## 🚢 CI/CD Pipelines
 
-See `ROADMAP.md` for milestone exit criteria and the M0 backlog.
+- **PR Validation**: Tests build, clippy, and unit tests.
+- **Documentation Deployment**: Pushes to `main` compile Rust API docs, bundle StarUML html-docs, and deploy to [GitHub Pages](https://dev-ette.github.io/jsonette/).
+- **Crates.io Release**: Pushing a tag (e.g. `v0.1.0`) triggers a publication of the `jsonette` crate to [crates.io](https://crates.io/crates/jsonette).
 
-## Contributing
+---
 
-This is a small, deliberately-scoped project that values correctness and stability over feature breadth. Read `CONTRIBUTING.md` and the ADRs before opening a PR — especially the **engine/shell separation** rule, which is the backbone of the whole design.
+## 🤝 Contributing
 
-## License
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) to understand our coding standards, the strict engine/shell separation rule, and performance budgets before opening a pull request.
 
-Dual-licensed under MIT or Apache-2.0, `LICENSE-MIT`, and `LICENSE-APACHE`
+---
+
+## 📄 License
+
+Dual-licensed under either:
+- **MIT License** ([LICENSE-MIT](LICENSE-MIT))
+- **Apache License, Version 2.0** ([LICENSE-APACHE](LICENSE-APACHE))
