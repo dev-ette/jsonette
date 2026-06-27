@@ -35,19 +35,24 @@ use crate::types::{Diagnostic, Span};
 /// * `Ok(JsonNode)` - The parsed JSON abstract syntax tree (AST) on successful parse.
 /// * `Err(Vec<Diagnostic>)` - A list of syntax or structural errors found during parsing.
 pub fn parse(input: &str) -> Result<JsonNode, Vec<Diagnostic>> {
-    // 1. Validate with serde_json to ensure standard compliance
-    if let Err(err) = serde_json::from_str::<serde_json::Value>(input) {
-        let line = err.line();
-        let col = err.column();
-        let offset = line_col_to_byte_offset(input, line, col);
-        let diag = Diagnostic {
-            span: Span {
-                start: offset,
-                end: (offset + 1).min(input.len()),
-            },
-            message: err.to_string(),
-        };
-        return Err(vec![diag]);
+    let parser_opts = crate::settings::get_settings().parser;
+    let run_serde_validation = !parser_opts.allow_comments && !parser_opts.allow_trailing_commas;
+
+    if run_serde_validation {
+        // 1. Validate with serde_json to ensure standard compliance
+        if let Err(err) = serde_json::from_str::<serde_json::Value>(input) {
+            let line = err.line();
+            let col = err.column();
+            let offset = line_col_to_byte_offset(input, line, col);
+            let diag = Diagnostic {
+                span: Span {
+                    start: offset,
+                    end: (offset + 1).min(input.len()),
+                },
+                message: err.to_string(),
+            };
+            return Err(vec![diag]);
+        }
     }
 
     // 2. Parse with our hand-rolled parser to build the AST with correct spans
@@ -98,6 +103,15 @@ impl<'a> Parser<'a> {
         }
     }
 
+    /// Returns the character byte at one position ahead of the current cursor, or `None` if EOF is reached.
+    fn peek_next(&self) -> Option<u8> {
+        if self.cursor + 1 < self.input.len() {
+            Some(self.input[self.cursor + 1])
+        } else {
+            None
+        }
+    }
+
     /// Advances the cursor by one byte.
     fn advance(&mut self) {
         if self.cursor < self.input.len() {
@@ -105,12 +119,55 @@ impl<'a> Parser<'a> {
         }
     }
 
-    /// Skips any ASCII whitespace characters (spaces, tabs, newlines, carriage returns).
+    /// Skips any ASCII whitespace characters (spaces, tabs, newlines, carriage returns)
+    /// and single-line/multi-line comments if they are allowed in configuration.
     fn skip_whitespace(&mut self) {
-        while let Some(b) = self.peek() {
-            if b == b' ' || b == b'\t' || b == b'\n' || b == b'\r' {
-                self.advance();
-            } else {
+        let allow_comments = crate::settings::get_settings().parser.allow_comments;
+        loop {
+            let start = self.cursor;
+            // 1. Skip standard whitespace
+            while let Some(b) = self.peek() {
+                if b == b' ' || b == b'\t' || b == b'\n' || b == b'\r' {
+                    self.advance();
+                } else {
+                    break;
+                }
+            }
+            // 2. Skip comments if enabled
+            if allow_comments && self.peek() == Some(b'/') {
+                match self.peek_next() {
+                    Some(b'/') => {
+                        // Line comment: skip until newline or EOF
+                        self.advance(); // skip '/'
+                        self.advance(); // skip '/'
+                        while let Some(c) = self.peek() {
+                            if c == b'\n' {
+                                self.advance();
+                                break;
+                            }
+                            self.advance();
+                        }
+                        continue;
+                    }
+                    Some(b'*') => {
+                        // Block comment: skip until '*/' or EOF
+                        self.advance(); // skip '/'
+                        self.advance(); // skip '*'
+                        while let Some(c) = self.peek() {
+                            if c == b'*' && self.peek_next() == Some(b'/') {
+                                self.advance(); // skip '*'
+                                self.advance(); // skip '/'
+                                break;
+                            }
+                            self.advance();
+                        }
+                        continue;
+                    }
+                    _ => {}
+                }
+            }
+
+            if self.cursor == start {
                 break;
             }
         }
@@ -423,9 +480,13 @@ impl<'a> Parser<'a> {
                     self.advance();
                     self.skip_whitespace();
                     if self.peek() == Some(b']') {
-                        return Err(
-                            self.error(self.cursor, "Trailing commas are not allowed in JSON")
-                        );
+                        if !crate::settings::get_settings().parser.allow_trailing_commas {
+                            return Err(
+                                self.error(self.cursor, "Trailing commas are not allowed in JSON")
+                            );
+                        }
+                        self.advance();
+                        break;
                     }
                 }
                 Some(b']') => {
@@ -501,9 +562,13 @@ impl<'a> Parser<'a> {
                     self.advance();
                     self.skip_whitespace();
                     if self.peek() == Some(b'}') {
-                        return Err(
-                            self.error(self.cursor, "Trailing commas are not allowed in JSON")
-                        );
+                        if !crate::settings::get_settings().parser.allow_trailing_commas {
+                            return Err(
+                                self.error(self.cursor, "Trailing commas are not allowed in JSON")
+                            );
+                        }
+                        self.advance();
+                        break;
                     }
                 }
                 Some(b'}') => {

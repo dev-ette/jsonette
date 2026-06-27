@@ -37,7 +37,7 @@ pub struct Diagnostic {
 }
 
 /// The line ending style to use when formatting text.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum LineEnding {
     /// Unix line ending (Line Feed: `\n`).
     LF,
@@ -46,7 +46,7 @@ pub enum LineEnding {
 }
 
 /// The folding (wrapping) style to use for JSON arrays and objects.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum FoldingStyle {
     /// Always expand elements and key-value pairs onto new lines.
     Expanded,
@@ -55,7 +55,7 @@ pub enum FoldingStyle {
 }
 
 /// Options for the formatter.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct FormatOptions {
     /// Whether to use tab characters (`\t`) for indentation
     pub use_tabs: bool,
@@ -85,6 +85,52 @@ impl Default for FormatOptions {
             space_after_comma: true,
         }
     }
+}
+
+/// Options for the parser.
+#[derive(Debug, Default, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct ParserOptions {
+    /// Whether to allow single-line (`//`) and multi-line (`/* ... */`) comments.
+    pub allow_comments: bool,
+    /// Whether to tolerate trailing commas in arrays and objects.
+    pub allow_trailing_commas: bool,
+}
+
+/// Severity level for linting and diagnostics.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub enum Severity {
+    /// Report as an error (prevents compilation/execution).
+    Error,
+    /// Report as a warning.
+    Warning,
+    /// Ignore the issue completely.
+    Ignore,
+}
+
+/// Options for diagnostics and linting.
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct LintOptions {
+    /// Severity level for duplicate keys in objects.
+    pub duplicate_keys_severity: Severity,
+}
+
+impl Default for LintOptions {
+    fn default() -> Self {
+        Self {
+            duplicate_keys_severity: Severity::Warning,
+        }
+    }
+}
+
+/// The top-level settings structure for the application.
+#[derive(Debug, Default, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct AppSettings {
+    /// Formatter preferences.
+    pub format: FormatOptions,
+    /// Parser preferences.
+    pub parser: ParserOptions,
+    /// Linting and diagnostics preferences.
+    pub lint: LintOptions,
 }
 
 /// A single autocomplete suggestion.
