@@ -16,22 +16,21 @@
  * limitations under the License.
  */
 
-//! Shell owns rendering only. All logic lives here.
+//! JSONPath auto-completion and suggestion engine.
 
-#![allow(unused_variables)]
+use crate::json_node::JsonNode;
+use crate::types::CompletionItem;
 
-pub mod completion;
-pub mod formatter;
-pub mod json_node;
-pub mod parser;
-pub mod query;
-pub mod types;
-
-pub use json_node::{JsonNode, KeyValuePair};
-pub use types::{CompletionItem, Diagnostic, FoldingStyle, FormatOptions, LineEnding, Span};
-
-// Re-export public API functions
-pub use completion::completions_at;
-pub use formatter::{format, minify};
-pub use parser::{diagnostics, parse, tolerant_parse};
-pub use query::{diagnostics_for_path, evaluate_path};
+/// Provides autocomplete suggestions for a JSONPath prefix given the current document state.
+///
+/// # Arguments
+///
+/// * `node` - A reference to the parsed root `JsonNode` context.
+/// * `path_prefix` - The incomplete JSONPath prefix string slice typed by the user.
+///
+/// # Returns
+///
+/// A list of `CompletionItem` candidates suitable for autocomplete suggestions.
+pub fn completions_at(node: &JsonNode, path_prefix: &str) -> Vec<CompletionItem> {
+    todo!("Autocomplete suggestion logic will be implemented in subsequent issues")
+}

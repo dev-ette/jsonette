@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+//! JsonNode types definition
+
 use crate::types::Span;
 
 /// A key-value pair in a JSON object. Used to represent objects as lists of pairs
