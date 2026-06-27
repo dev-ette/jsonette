@@ -35,7 +35,9 @@ macos/.build/
 macos/generated/
 
 # Architecture
-html-docs/
+# Comment out html-docs/ to allow tracking StarUML architecture exports in Git
+# html-docs/
 
 # Generated engine documentation
+docs/engine-docs/
 engine-docs/

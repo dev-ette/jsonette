@@ -1,0 +1,74 @@
+site_name: jsonette
+site_description: Native JSON editor, viewer, and query tool — project documentation
+site_author: jsonette Team
+site_url: https://aharbii.github.io/jsonette/
+repo_url: https://github.com/aharbii/jsonette
+repo_name: aharbii/jsonette
+edit_uri: edit/main/docs/
+copyright: Dual-licensed under MIT or Apache-2.0
+
+docs_dir: docs
+site_dir: site
+
+# ─────────────────────────────────────────────────────────────
+# Exclude files that are not MkDocs pages or handled separately
+# ─────────────────────────────────────────────────────────────
+exclude_docs: |
+  README.md
+  build-docs.sh
+  architecture/architecture.mdj
+  architecture/html-docs/**
+  engine-docs/**
+
+# ─────────────────────────────────────────────────────────────
+# Theme Configuration
+# ─────────────────────────────────────────────────────────────
+theme:
+  name: material
+  language: en
+  palette:
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - toc
+
+# ─────────────────────────────────────────────────────────────
+# Navigation
+# ─────────────────────────────────────────────────────────────
+nav:
+  - Home: index.md
+  - Architecture Decisions:
+    - Overview: architecture/decisions/0000-register.md
+    - 0001 - Native per-OS, macOS First: architecture/decisions/0001-native-per-os-macos-first-with-tauri-comparison.md
+    - 0002 - Rust Core Engine: architecture/decisions/0002-engine-written-in-rust-shared-via-uniffi.md
+    - 0003 - Strict Separation: architecture/decisions/0003-strict-engine-shell-separation.md
+    - 0004 - macOS Editor Selection: architecture/decisions/0004-macos-editor-selection-with-fallback.md
+    - 0005 - JSONPath Querying: architecture/decisions/0005-jsonpath-primary-query-language.md
+    - 0006 - Project Name Selection: architecture/decisions/0006-project-name-selection.md
+    - 0007 - Licensing: architecture/decisions/0007-licensing.md
+  - System Architecture Blueprint: architecture/blueprint.md
+  - Rust Engine API Reference: engine-api.md

@@ -6,6 +6,7 @@ description = "JSON parse, format, query, and diagnostics engine — core librar
 repository = "https://github.com/dev-ette/jsonette"
 license = "MIT OR Apache-2.0"
 homepage = "https://github.com/dev-ette/jsonette"
+readme = "README.md"
 keywords = ["json", "jsonpath", "parser", "format", "query"]
 categories = ["parser-implementations", "encoding"]
 

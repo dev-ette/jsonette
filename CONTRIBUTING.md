@@ -1,49 +1,79 @@
 # Contributing to jsonette
 
-Thanks for your interest. jsonette is a small, deliberately-scoped project that values **correctness, stability, and a clean native experience over feature breadth.** Please read this and `docs/ADR.md` before opening a PR.
+Thank you for your interest in contributing to `jsonette`! 
 
-## The two rules that matter most
+`jsonette` is a small, deliberately scoped project that values **correctness, stability, extreme performance, and a clean native user experience over feature breadth**. Before you begin working on a contribution, please read this guide and review the active Architecture Decision Records (ADRs) under `/docs/architecture/decisions/`.
 
-1. **Respect the engine/shell boundary (ADR-0003).**
-   All logic — parsing, the tree model, formatting, JSONPath, autocomplete data, and error diagnostics — lives in the **Rust engine**. Shells (SwiftUI now, possibly Tauri later) **only render**. Do not add parsing or validation in Swift "because it's quick." If you find yourself wanting to, the feature belongs in the engine.
+---
 
-2. **Stay in scope.** jsonette is an *editor / viewer / query* tool for JSON. It is intentionally **not** a 30-tool bundle. Proposals to add unrelated utilities (HTTP client, regex tester, JWT, etc.) will be declined. Converters and a test-data generator are the only planned expansions, and they live in the engine.
+## 🧭 The Golden Rules
 
-## Project shape
+Every contribution must adhere to these three core principles:
 
+### 1. Respect the Engine / Shell Boundary (ADR-0003)
+All business logic—parsing, tree model representation, formatting, JSONPath evaluation, autocomplete schema inference, and error diagnostics—lives entirely in the **Rust core engine**. 
+- Shell applications (SwiftUI, Tauri, etc.) **only render**. 
+- **Do not** add JSON parsing, regex queries, or schema validation inside a shell. If a feature involves data processing, it belongs in `/engine`.
+
+### 2. Privacy First
+`jsonette` is 100% local. 
+- **No network calls** are allowed.
+- **No telemetry, logging services, or crash reporters** that connect to external servers may be added.
+- Pull requests that introduce network connectivity of any kind will be rejected.
+
+### 3. Strict Performance Budgets
+Performance is a core feature. We enforce limits on cold start times, idle RAM consumption, and input latency.
+- Avoid pulling in heavy crates with large transitive dependency trees in `/engine/Cargo.toml`.
+- Any PR that regresses typing latency in the editor or parsing speeds on files larger than 10MB will be flagged for optimization.
+
+---
+
+## 🛠️ Local Development Setup
+
+### 1. Working on the Rust Engine (`/engine`)
+The engine is a standard Rust library crate. Ensure you have the version specified in `rust-toolchain.toml` installed.
+
+```bash
+# Build the engine in debug mode
+cargo build
+
+# Run the unit and property tests
+cargo test
+
+# Run lints and formatting checks (CI-enforced)
+cargo clippy --workspace -- -D warnings
+cargo fmt --check
 ```
-engine/    Rust core crate (UI-agnostic) + UniFFI bindings  ← most logic PRs go here
-macos/     SwiftUI app                                       ← rendering / UX PRs
-docs/      ADRs and architecture notes
-.github/   CI, issue/PR templates
+
+### 2. Working on the macOS Shell (`/macos`)
+- Open the Xcode workspace under `/macos`.
+- The macOS project is configured to link the Rust engine via UniFFI. Setting up and compiling the project automatically runs the UniFFI bridge compiler.
+
+### 3. Documentation
+To generate and view the combined API documentation portal locally:
+```bash
+./docs/build-docs.sh
+open docs/index.html
 ```
 
-## Before you start
+---
 
-- Check the **Roadmap** (`ROADMAP.md`) and the milestone labels. Early on, most work is the **M0 backlog**.
-- Look for `good first issue`.
-- For anything architectural, open an issue first — significant decisions are recorded as **ADRs**, so we discuss before we build.
+## 📋 Pull Request Process
 
-## Building (once code exists)
+We value focused, incremental progress:
 
-- **Engine:** standard `cargo build` / `cargo test`. Run `cargo clippy` and `cargo fmt` before pushing.
-- **macOS app:** open the `macos/` Xcode project; it links the engine via UniFFI (build step documented in M0).
-- `engine/rust-toolchain.toml` is used to configure the supported Rust version as the source of truth.
-- The CI **performance gate** must stay green — see the budgets in `ROADMAP.md`. PRs that regress cold start, idle RAM, large-file handling, or typing latency will be flagged.
+1. **One Focus Per PR**: Avoid bundling multiple features or unrelated refactors into a single pull request. Keep your changes targeted.
+2. **Issue Association**: Ensure there is an open issue discussing the feature or bug, and link it to your PR. For substantial design changes, discuss them first on an issue before drafting code.
+3. **Robust Testing**:
+   - Engine logic changes require unit test coverage.
+   - For parsing and formatting roundtrips, prefer writing property-based tests (using `proptest`).
+4. **Code Quality**:
+   - Keep public FFI API surfaces stable and well-documented.
+   - Document any new module, struct, or public function.
+   - Ensure `cargo clippy` passes without warnings.
 
-## Pull requests
+---
 
-- One focused change per PR. Reference the issue and milestone.
-- Add/adjust tests: engine logic needs `cargo test` coverage (property tests with `proptest` where round-trips apply).
-- Update docs/ADRs if your change alters a decision.
-- Keep commits clean and messages descriptive.
+## 📜 Code of Conduct
 
-## Quality bar
-
-- Engine changes: prefer correctness and clear types; the public API is consumed across an FFI boundary, so keep it stable and well-shaped.
-- UI changes: match native macOS conventions — keyboard-first, proper menus/shortcuts, accessibility.
-- Privacy is a feature: **no network calls, no telemetry.** PRs introducing either will be rejected.
-
-## Code of conduct
-
-Be respectful and constructive. See `CODE_OF_CONDUCT.md`.
+Be constructive, respectful, and collaborative. Please review and adhere to the [Code of Conduct](CODE_OF_CONDUCT.MD).
