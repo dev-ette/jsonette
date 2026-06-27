@@ -170,7 +170,7 @@ impl<'a> Parser<'a> {
                     }
                 }
             }
-            
+
             if self.cursor == start {
                 break;
             }

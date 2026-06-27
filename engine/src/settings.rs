@@ -18,10 +18,10 @@
 
 //! Thread-safe global settings singleton and configuration cache manager.
 
+use crate::types::AppSettings;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::{OnceLock, RwLock};
-use crate::types::AppSettings;
 
 /// Global static container holding the active application preferences in-memory.
 /// Wrapped in `OnceLock` for safe initialization and `RwLock` for thread-safe read/write access.
@@ -104,7 +104,10 @@ impl Settings {
         #[cfg(test)]
         {
             let mut path = std::env::temp_dir();
-            path.push(format!("jsonette_test_settings_{}.json", std::process::id()));
+            path.push(format!(
+                "jsonette_test_settings_{}.json",
+                std::process::id()
+            ));
             Some(path)
         }
         #[cfg(not(test))]
@@ -122,7 +125,8 @@ impl Settings {
     ///
     /// A `Result` containing the loaded `AppSettings` or an error string.
     fn load_settings_from_disk() -> Result<AppSettings, String> {
-        let path = Self::get_settings_path().ok_or_else(|| "Unable to locate home directory".to_string())?;
+        let path = Self::get_settings_path()
+            .ok_or_else(|| "Unable to locate home directory".to_string())?;
         if !path.exists() {
             let defaults = AppSettings::default();
             Self::save_settings_to_disk(&defaults)?;
@@ -145,11 +149,11 @@ impl Settings {
     ///
     /// A `Result` indicating success or containing an error string.
     fn save_settings_to_disk(settings: &AppSettings) -> Result<(), String> {
-        let path = Self::get_settings_path().ok_or_else(|| "Unable to locate home directory".to_string())?;
+        let path = Self::get_settings_path()
+            .ok_or_else(|| "Unable to locate home directory".to_string())?;
         let content = serde_json::to_string_pretty(settings)
             .map_err(|e| format!("Failed to serialize settings: {}", e))?;
-        fs::write(&path, content)
-            .map_err(|e| format!("Failed to write settings file: {}", e))?;
+        fs::write(&path, content).map_err(|e| format!("Failed to write settings file: {}", e))?;
         Ok(())
     }
 }

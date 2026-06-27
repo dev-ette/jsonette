@@ -30,8 +30,8 @@ pub mod types;
 
 pub use json_node::{JsonNode, KeyValuePair};
 pub use types::{
-    AppSettings, CompletionItem, Diagnostic, FoldingStyle, FormatOptions,
-    LineEnding, LintOptions, ParserOptions, Severity, Span
+    AppSettings, CompletionItem, Diagnostic, FoldingStyle, FormatOptions, LineEnding, LintOptions,
+    ParserOptions, Severity, Span,
 };
 
 // Re-export public API functions
@@ -39,4 +39,4 @@ pub use completion::completions_at;
 pub use formatter::{format, minify};
 pub use parser::{diagnostics, parse, tolerant_parse};
 pub use query::{diagnostics_for_path, evaluate_path};
-pub use settings::{get_settings, update_settings, Settings};
+pub use settings::{Settings, get_settings, update_settings};
