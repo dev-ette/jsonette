@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+//! Public API types definitions
+
 /// A byte-offset range in the source text.
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct Span {
