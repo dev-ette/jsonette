@@ -427,3 +427,114 @@ fn test_cli_query_missing_file_reports_error() {
         .failure()
         .stderr(predicate::str::contains("Error").or(predicate::str::contains("error")));
 }
+
+// ──────────────────────────── explore subcommand ──────────────────────────────
+
+/// **Test Case**: Explore Root Object Prints Sorted Keys
+///
+/// ### Description
+/// Verifies that exploring a JSON object outputs its keys sorted alphabetically.
+///
+/// ### Test Procedure
+/// 1. Write `{"b": 2, "a": 1, "c": 3}` to a file.
+/// 2. Run `jsonette explore '$' <file>`.
+///
+/// ### Expected Result
+/// Exits with code 0. Stdout contains `a\nb\nc\n`.
+#[test]
+fn test_cli_explore_object_keys_sorted() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("test.json");
+    fs::write(&json_file, r#"{"b": 2, "a": 1, "c": 3}"#).unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("explore")
+        .arg("$")
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("a\nb\nc"));
+}
+
+/// **Test Case**: Explore Array Prints Length
+///
+/// ### Description
+/// Verifies that exploring a JSON array outputs its length.
+///
+/// ### Test Procedure
+/// 1. Write `[1, 2, 3]` to a file.
+/// 2. Run `jsonette explore '$' <file>`.
+///
+/// ### Expected Result
+/// Exits with code 0. Stdout contains `Length: 3 elements`.
+#[test]
+fn test_cli_explore_array_length() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("test.json");
+    fs::write(&json_file, r#"[1, 2, 3]"#).unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("explore")
+        .arg("$")
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Length: 3 elements"));
+}
+
+/// **Test Case**: Explore Object Filters Keys with Regex
+///
+/// ### Description
+/// Verifies that exploring with `--regex` filters the returned keys.
+///
+/// ### Test Procedure
+/// 1. Write `{"foo": 1, "bar": 2, "baz": 3}` to a file.
+/// 2. Run `jsonette explore --regex '^ba' '$' <file>`.
+///
+/// ### Expected Result
+/// Exits with code 0. Stdout contains `bar` and `baz` but not `foo`.
+#[test]
+fn test_cli_explore_object_regex_filter() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("test.json");
+    fs::write(&json_file, r#"{"foo": 1, "bar": 2, "baz": 3}"#).unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("explore")
+        .arg("--regex")
+        .arg("^ba")
+        .arg("$")
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("bar\nbaz"))
+        .stdout(predicate::str::contains("foo").not());
+}
+
+/// **Test Case**: Explore Limits Output
+///
+/// ### Description
+/// Verifies that exploring with `--limit` truncates the output and shows a "... more" message.
+///
+/// ### Test Procedure
+/// 1. Write `{"a": 1, "b": 2, "c": 3}` to a file.
+/// 2. Run `jsonette explore -n 1 '$' <file>`.
+///
+/// ### Expected Result
+/// Exits with code 0. Stdout contains `a\n` and `... and 2 more keys`.
+#[test]
+fn test_cli_explore_object_limit() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("test.json");
+    fs::write(&json_file, r#"{"a": 1, "b": 2, "c": 3}"#).unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("explore")
+        .arg("-n")
+        .arg("1")
+        .arg("$")
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("a\n... and 2 more keys"));
+}

@@ -43,6 +43,8 @@ pub enum Commands {
     Format(FormatArgs),
     /// Query JSON using JSONPath.
     Query(QueryArgs),
+    /// Explore a JSONPath node (list keys or array length).
+    Explore(ExploreArgs),
     /// Manage global configuration settings.
     Config(ConfigArgs),
     /// Generate shell autocompletion scripts.
@@ -100,6 +102,28 @@ pub struct QueryArgs {
 
     /// Input file path. If omitted, the tool reads from standard input.
     pub file: Option<PathBuf>,
+}
+
+/// Arguments and options for the explore command.
+#[derive(Args, Debug)]
+pub struct ExploreArgs {
+    /// The JSONPath expression to explore (e.g. `$[0]`).
+    pub path: String,
+
+    /// Input file path. If omitted, the tool reads from standard input.
+    pub file: Option<PathBuf>,
+
+    /// Optional substring match to filter keys.
+    #[arg(short = 'g', long)]
+    pub grep: Option<String>,
+
+    /// Optional regex match to filter keys.
+    #[arg(short = 'r', long)]
+    pub regex: Option<String>,
+
+    /// Limit the number of keys displayed.
+    #[arg(short = 'n', long)]
+    pub limit: Option<usize>,
 }
 
 /// Arguments for the global configuration subcommand.
