@@ -136,7 +136,7 @@ pub fn evaluate_path(node: &JsonNode, path: &str) -> Result<Vec<JsonNode>, Strin
     let json_path = JsonPath::parse(path).map_err(|e| format!("Invalid JSONPath '{path}': {e}"))?;
     let value = node_to_value(node);
     let node_list = json_path.query(&value);
-    let results = node_list.iter().map(|v| value_to_node(*v)).collect();
+    let results = node_list.iter().map(|v| value_to_node(v)).collect();
     Ok(results)
 }
 
