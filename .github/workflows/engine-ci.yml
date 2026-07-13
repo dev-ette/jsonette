@@ -150,10 +150,52 @@ jobs:
           path: code-coverage-results.md
 
   # -------------------------------------------------------------------------- #
+  ffi-bridge:
+    name: ffi-bridge
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.0
+      
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build Rust Library
+        run: cargo build
+
+      - name: Generate Swift Bindings
+        run: cargo run --bin uniffi-bindgen -- generate --library target/debug/libjsonette.dylib --language swift --out-dir bridge-spike/
+
+      - name: Rename Swift Modulemap
+        run: mv bridge-spike/jsonetteFFI.modulemap bridge-spike/module.modulemap
+
+      - name: Verify Swift Bridge
+        run: |
+          swiftc -I bridge-spike -L target/debug -ljsonette bridge-spike/jsonette.swift bridge-spike/main.swift -o bridge-spike/main
+          DYLD_LIBRARY_PATH=target/debug/ ./bridge-spike/main
+
+      - name: Generate Python Bindings
+        run: cargo run --bin uniffi-bindgen -- generate --library target/debug/libjsonette.dylib --language python --out-dir bridge-spike/
+
+      - name: Verify Python Bridge
+        run: DYLD_LIBRARY_PATH=target/debug/ python3 bridge-spike/main.py
+
+      - name: Verify C Bridge
+        run: |
+          clang -I bridge-spike/ -L target/debug/ -ljsonette bridge-spike/main.c -o bridge-spike/main_c
+          DYLD_LIBRARY_PATH=target/debug/ ./bridge-spike/main_c
+
+      - name: Generate Kotlin Bindings
+        run: cargo run --bin uniffi-bindgen -- generate --library target/debug/libjsonette.dylib --language kotlin --out-dir bridge-spike/
+
+  # -------------------------------------------------------------------------- #
   publish:
     name: publish
     runs-on: ubuntu-latest
-    needs: [build, test, clippy, fmt]
+    needs: [build, test, clippy, fmt, ffi-bridge]
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
       - name: Checkout
