@@ -222,6 +222,10 @@ pub fn update_settings(settings: AppSettings) -> Result<(), String> {
 }
 
 /// Updates the in-memory preferences without persisting them to disk.
+///
+/// # Returns
+///
+/// Nothing.
 pub fn set_in_memory_settings(settings: AppSettings) {
     let lock = Settings::get_settings_lock();
     let mut write_guard = lock.write().expect("Failed to acquire settings write lock");

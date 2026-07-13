@@ -29,6 +29,10 @@ use std::fs;
 /// # Arguments
 ///
 /// * `args` - Parse command formatting options and input targets.
+///
+/// # Returns
+///
+/// Nothing.
 pub fn handle_format(args: FormatArgs) {
     if args.in_place && args.file.is_none() {
         eprintln!("Error: Cannot perform in-place formatting when reading from standard input.");

@@ -60,7 +60,10 @@ pub fn tolerant_parse(input: &str) -> (Option<JsonNode>, Vec<Diagnostic>) {
 ///
 /// A list of `Diagnostic` errors found in the input. If the input is valid JSON, this is empty.
 pub fn diagnostics(input: &str) -> Vec<Diagnostic> {
-    todo!("Fast diagnostics check will be implemented in subsequent issues")
+    // Fast validation path: for M0, we simply delegate to tolerant_parse
+    // and return the extracted diagnostics. Future performance optimizations
+    // can skip AST allocation entirely if necessary.
+    tolerant_parse(input).1
 }
 
 #[cfg(test)]
@@ -73,9 +76,25 @@ mod stub_tests {
         assert!(node.is_some());
     }
 
+    /// **Test Case**: Fast Validation Returns Proper Diagnostics
+    ///
+    /// ### Description
+    /// Verifies that the fast `diagnostics` validation path correctly identifies
+    /// valid and invalid JSON document syntax.
+    ///
+    /// ### Test Procedure
+    /// 1. Call `diagnostics` on a valid JSON document `{}`.
+    /// 2. Call `diagnostics` on an invalid JSON document `{`.
+    ///
+    /// ### Expected Result
+    /// The valid document returns an empty `Vec<Diagnostic>`. The invalid document
+    /// returns a non-empty `Vec<Diagnostic>`.
     #[test]
-    #[should_panic(expected = "not yet implemented")]
-    fn test_diagnostics_is_stub() {
-        diagnostics("{}");
+    fn test_diagnostics() {
+        let diags = diagnostics("{}");
+        assert!(diags.is_empty());
+
+        let diags = diagnostics("{");
+        assert!(!diags.is_empty());
     }
 }

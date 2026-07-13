@@ -27,7 +27,7 @@ use std::path::PathBuf;
 #[derive(ClapParser, Debug)]
 #[command(
     name = "jsonette",
-    version = "0.3.0",
+    version = "0.4.0",
     about = "Fast, lightweight JSON format, query, and configuration utility."
 )]
 pub struct Cli {
@@ -45,8 +45,12 @@ pub enum Commands {
     Query(QueryArgs),
     /// Explore a JSONPath node (list keys or array length).
     Explore(ExploreArgs),
+    /// Generate dummy JSON data based on size.
+    Generate(GenerateArgs),
     /// Manage global configuration settings.
     Config(ConfigArgs),
+    /// Convert between JSON and other formats (YAML, TOML, XML).
+    Convert(ConvertArgs),
     /// Generate shell autocompletion scripts.
     Completions {
         /// The shell to generate completions for.
@@ -126,6 +130,30 @@ pub struct ExploreArgs {
     pub limit: Option<usize>,
 }
 
+/// Arguments and options for the generate command.
+#[derive(Args, Debug)]
+pub struct GenerateArgs {
+    /// Target size in bytes (e.g. 1000000 for 1MB). Mutually exclusive with count.
+    #[arg(short = 's', long, conflicts_with = "count")]
+    pub size: Option<usize>,
+
+    /// Target number of array items to generate. Mutually exclusive with size.
+    #[arg(short = 'n', long, conflicts_with = "size")]
+    pub count: Option<usize>,
+
+    /// Optional path to a JSON generation schema file.
+    #[arg(short = 'c', long)]
+    pub schema: Option<PathBuf>,
+
+    /// Write the output to a specific file instead of standard output.
+    #[arg(short = 'o', long)]
+    pub output: Option<PathBuf>,
+
+    /// Minify the JSON output, stripping all whitespace.
+    #[arg(short = 'm', long)]
+    pub minify: bool,
+}
+
 /// Arguments for the global configuration subcommand.
 #[derive(Args, Debug)]
 pub struct ConfigArgs {
@@ -151,4 +179,19 @@ pub enum ConfigCommands {
         /// The new value to store (e.g. `true`).
         value: String,
     },
+}
+
+/// Arguments and options for the convert command.
+#[derive(Args, Debug)]
+pub struct ConvertArgs {
+    /// The input format (json, yaml, toml, xml).
+    #[arg(short = 'f', long, default_value = "json")]
+    pub from: String,
+
+    /// The output format (json, yaml, toml, xml).
+    #[arg(short = 't', long, default_value = "yaml")]
+    pub to: String,
+
+    /// Input file path. If omitted, the tool reads from standard input.
+    pub file: Option<PathBuf>,
 }

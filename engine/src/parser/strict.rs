@@ -56,7 +56,8 @@ pub fn parse(input: &str) -> Result<JsonNode, Vec<Diagnostic>> {
     }
 
     // 2. Parse with our hand-rolled parser to build the AST with correct spans
-    let mut parser = Parser::new(input);
+    let mut parser = Parser::new(input, parser_opts);
+
     match parser.parse_value() {
         Ok(node) => {
             parser.skip_whitespace();
@@ -82,16 +83,24 @@ struct Parser<'a> {
     input_str: &'a str,
     /// The current byte offset cursor in the input.
     cursor: usize,
+    /// Cached parser options.
+    opts: crate::types::ParserOptions,
 }
 
 impl<'a> Parser<'a> {
     /// Creates a new Parser instance for the given JSON input.
-    fn new(input: &'a str) -> Self {
+    pub(crate) fn new(input: &'a str, opts: crate::types::ParserOptions) -> Self {
         Parser {
             input: input.as_bytes(),
             input_str: input,
             cursor: 0,
+            opts,
         }
+    }
+
+    #[cfg(test)]
+    pub(crate) fn new_test(input: &'a str) -> Self {
+        Self::new(input, crate::types::ParserOptions::default())
     }
 
     /// Returns the character byte at the current cursor, or `None` if EOF is reached.
@@ -122,7 +131,7 @@ impl<'a> Parser<'a> {
     /// Skips any ASCII whitespace characters (spaces, tabs, newlines, carriage returns)
     /// and single-line/multi-line comments if they are allowed in configuration.
     fn skip_whitespace(&mut self) {
-        let allow_comments = crate::settings::get_settings().parser.allow_comments;
+        let allow_comments = self.opts.allow_comments;
         loop {
             let start = self.cursor;
             // 1. Skip standard whitespace
@@ -369,10 +378,7 @@ impl<'a> Parser<'a> {
                     return Err(self.error(self.cursor, "Control characters must be escaped"));
                 }
                 _ => {
-                    let tail = match std::str::from_utf8(&self.input[self.cursor..]) {
-                        Ok(t) => t,
-                        Err(_) => return Err(self.error(self.cursor, "Invalid UTF-8 sequence")),
-                    };
+                    let tail = &self.input_str[self.cursor..];
                     let c = match tail.chars().next() {
                         Some(ch) => ch,
                         None => return Err(self.error(self.cursor, "Unexpected EOF")),
@@ -480,7 +486,7 @@ impl<'a> Parser<'a> {
                     self.advance();
                     self.skip_whitespace();
                     if self.peek() == Some(b']') {
-                        if !crate::settings::get_settings().parser.allow_trailing_commas {
+                        if !self.opts.allow_trailing_commas {
                             return Err(
                                 self.error(self.cursor, "Trailing commas are not allowed in JSON")
                             );
@@ -562,7 +568,7 @@ impl<'a> Parser<'a> {
                     self.advance();
                     self.skip_whitespace();
                     if self.peek() == Some(b'}') {
-                        if !crate::settings::get_settings().parser.allow_trailing_commas {
+                        if !self.opts.allow_trailing_commas {
                             return Err(
                                 self.error(self.cursor, "Trailing commas are not allowed in JSON")
                             );
@@ -618,7 +624,7 @@ mod private_tests {
     /// The parser parses the number `123` successfully and reports remaining characters at the end.
     #[test]
     fn test_parser_trailing_characters() {
-        let mut parser = Parser::new("123 abc");
+        let mut parser = Parser::new_test("123 abc");
         let res = parser.parse_value();
         assert!(res.is_ok());
         parser.skip_whitespace();
@@ -638,7 +644,7 @@ mod private_tests {
     /// Returns `Err` with the message "Unexpected end of input".
     #[test]
     fn test_parser_unexpected_eof() {
-        let mut parser = Parser::new("");
+        let mut parser = Parser::new_test("");
         let res = parser.parse_value();
         assert!(res.is_err());
         assert_eq!(res.unwrap_err().message, "Unexpected end of input");
@@ -657,7 +663,7 @@ mod private_tests {
     /// Returns `Err` with the message "Unexpected character 'x'".
     #[test]
     fn test_parser_unexpected_char() {
-        let mut parser = Parser::new("x");
+        let mut parser = Parser::new_test("x");
         let res = parser.parse_value();
         assert!(res.is_err());
         assert_eq!(res.unwrap_err().message, "Unexpected character 'x'");
@@ -676,7 +682,7 @@ mod private_tests {
     /// Returns `Err` with the message "Expected 'null'".
     #[test]
     fn test_parser_null_error() {
-        let mut parser = Parser::new("nula");
+        let mut parser = Parser::new_test("nula");
         let res = parser.parse_value();
         assert!(res.is_err());
         assert_eq!(res.unwrap_err().message, "Expected 'null'");
@@ -695,12 +701,12 @@ mod private_tests {
     /// Both return `Err` with the message "Expected boolean value".
     #[test]
     fn test_parser_bool_error() {
-        let mut parser = Parser::new("truf");
+        let mut parser = Parser::new_test("truf");
         let res = parser.parse_value();
         assert!(res.is_err());
         assert_eq!(res.unwrap_err().message, "Expected boolean value");
 
-        let mut parser = Parser::new("falz");
+        let mut parser = Parser::new_test("falz");
         let res = parser.parse_value();
         assert!(res.is_err());
         assert_eq!(res.unwrap_err().message, "Expected boolean value");
@@ -726,55 +732,55 @@ mod private_tests {
     /// All cases return `Err` with their respective parsing/syntax error messages.
     #[test]
     fn test_parser_string_errors() {
-        let mut parser = Parser::new("\"hello");
+        let mut parser = Parser::new_test("\"hello");
         assert_eq!(
             parser.parse_value().unwrap_err().message,
             "Unterminated string"
         );
 
-        let mut parser = Parser::new("\"\u{08}\"");
+        let mut parser = Parser::new_test("\"\u{08}\"");
         assert_eq!(
             parser.parse_value().unwrap_err().message,
             "Control characters must be escaped"
         );
 
-        let mut parser = Parser::new("\"\\x\"");
+        let mut parser = Parser::new_test("\"\\x\"");
         assert_eq!(
             parser.parse_value().unwrap_err().message,
             "Invalid escape character 'x'"
         );
 
-        let mut parser = Parser::new("\"\\");
+        let mut parser = Parser::new_test("\"\\");
         assert_eq!(
             parser.parse_value().unwrap_err().message,
             "Unterminated string escape"
         );
 
-        let mut parser = Parser::new("\"\\u1\"");
+        let mut parser = Parser::new_test("\"\\u1\"");
         assert_eq!(
             parser.parse_value().unwrap_err().message,
             "Invalid unicode escape sequence"
         );
 
-        let mut parser = Parser::new("\"\\u123g\"");
+        let mut parser = Parser::new_test("\"\\u123g\"");
         assert_eq!(
             parser.parse_value().unwrap_err().message,
             "Invalid hex in unicode escape"
         );
 
-        let mut parser = Parser::new("\"\\uD800\"");
+        let mut parser = Parser::new_test("\"\\uD800\"");
         assert_eq!(
             parser.parse_value().unwrap_err().message,
             "Expected low surrogate after high surrogate"
         );
 
-        let mut parser = Parser::new("\"\\uD800\\u1234\"");
+        let mut parser = Parser::new_test("\"\\uD800\\u1234\"");
         assert_eq!(
             parser.parse_value().unwrap_err().message,
             "Expected low surrogate after high surrogate"
         );
 
-        let mut parser = Parser::new("\"\\uDC00\"");
+        let mut parser = Parser::new_test("\"\\uDC00\"");
         assert_eq!(
             parser.parse_value().unwrap_err().message,
             "Unexpected low surrogate without high surrogate"
@@ -794,7 +800,7 @@ mod private_tests {
     /// Returns `Err` with the message "Expected digit for number".
     #[test]
     fn test_parser_number_errors() {
-        let mut parser = Parser::new("-");
+        let mut parser = Parser::new_test("-");
         assert_eq!(
             parser.parse_value().unwrap_err().message,
             "Expected digit for number"
@@ -815,19 +821,19 @@ mod private_tests {
     /// All cases return `Err` with their respective parsing/syntax error messages.
     #[test]
     fn test_parser_array_errors() {
-        let mut parser = Parser::new("[1");
+        let mut parser = Parser::new_test("[1");
         assert_eq!(
             parser.parse_value().unwrap_err().message,
             "Unterminated array"
         );
 
-        let mut parser = Parser::new("[1, ]");
+        let mut parser = Parser::new_test("[1, ]");
         assert_eq!(
             parser.parse_value().unwrap_err().message,
             "Trailing commas are not allowed in JSON"
         );
 
-        let mut parser = Parser::new("[1 2]");
+        let mut parser = Parser::new_test("[1 2]");
         assert_eq!(
             parser.parse_value().unwrap_err().message,
             "Expected ',' or ']' after array element, found '2'"
@@ -850,31 +856,31 @@ mod private_tests {
     /// All cases return `Err` with their respective parsing/syntax error messages.
     #[test]
     fn test_parser_object_errors() {
-        let mut parser = Parser::new("{1: 2}");
+        let mut parser = Parser::new_test("{1: 2}");
         assert_eq!(
             parser.parse_value().unwrap_err().message,
             "Expected string key in object"
         );
 
-        let mut parser = Parser::new("{\"key\" 1}");
+        let mut parser = Parser::new_test("{\"key\" 1}");
         assert_eq!(
             parser.parse_value().unwrap_err().message,
             "Expected ':' after key"
         );
 
-        let mut parser = Parser::new("{\"key\": 1, }");
+        let mut parser = Parser::new_test("{\"key\": 1, }");
         assert_eq!(
             parser.parse_value().unwrap_err().message,
             "Trailing commas are not allowed in JSON"
         );
 
-        let mut parser = Parser::new("{\"key\": 1 \"other\": 2}");
+        let mut parser = Parser::new_test("{\"key\": 1 \"other\": 2}");
         assert_eq!(
             parser.parse_value().unwrap_err().message,
             "Expected ',' or '}' after object member, found '\"'"
         );
 
-        let mut parser = Parser::new("{\"key\": 1");
+        let mut parser = Parser::new_test("{\"key\": 1");
         assert_eq!(
             parser.parse_value().unwrap_err().message,
             "Unterminated object"
@@ -916,7 +922,7 @@ mod private_tests {
     /// Returns `JsonNode::String` containing the correct unescaped string and span.
     #[test]
     fn test_parser_valid_escapes() {
-        let mut parser = Parser::new("\"\\\"\\\\\\/\\b\\f\\n\\r\\t\"");
+        let mut parser = Parser::new_test("\"\\\"\\\\\\/\\b\\f\\n\\r\\t\"");
         let res = parser.parse_value().unwrap();
         assert_eq!(
             res,
@@ -940,7 +946,7 @@ mod private_tests {
     /// Returns `JsonNode::String` containing "😀" and span `0..14`.
     #[test]
     fn test_parser_surrogate_pair() {
-        let mut parser = Parser::new("\"\\uD83D\\uDE00\"");
+        let mut parser = Parser::new_test("\"\\uD83D\\uDE00\"");
         let res = parser.parse_value().unwrap();
         assert_eq!(
             res,
@@ -962,19 +968,19 @@ mod private_tests {
     /// All cases return correct `JsonNode::Number` containing the correct float value, raw text representation, and span.
     #[test]
     fn test_parser_numbers() {
-        let mut parser = Parser::new("0");
+        let mut parser = Parser::new_test("0");
         assert_eq!(
             parser.parse_value().unwrap(),
             JsonNode::Number(0.0, "0".to_string(), Span { start: 0, end: 1 })
         );
 
-        let mut parser = Parser::new("0.1");
+        let mut parser = Parser::new_test("0.1");
         assert_eq!(
             parser.parse_value().unwrap(),
             JsonNode::Number(0.1, "0.1".to_string(), Span { start: 0, end: 3 })
         );
 
-        let mut parser = Parser::new("123e4 ");
+        let mut parser = Parser::new_test("123e4 ");
         assert_eq!(
             parser.parse_value().unwrap(),
             JsonNode::Number(1230000.0, "123e4".to_string(), Span { start: 0, end: 5 })
@@ -994,13 +1000,13 @@ mod private_tests {
     /// Returns correct empty container nodes with spans starting at 0 and ending at 2.
     #[test]
     fn test_parser_empty_array_and_object() {
-        let mut parser = Parser::new("[]");
+        let mut parser = Parser::new_test("[]");
         assert_eq!(
             parser.parse_value().unwrap(),
             JsonNode::Array(vec![], Span { start: 0, end: 2 })
         );
 
-        let mut parser = Parser::new("{}");
+        let mut parser = Parser::new_test("{}");
         assert_eq!(
             parser.parse_value().unwrap(),
             JsonNode::Object(vec![], Span { start: 0, end: 2 })

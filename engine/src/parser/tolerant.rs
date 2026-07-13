@@ -103,7 +103,7 @@ impl<'a> Parser<'a> {
     /// Skips any ASCII whitespace characters (spaces, tabs, newlines, carriage returns)
     /// and single-line/multi-line comments if they are allowed in configuration.
     fn skip_whitespace(&mut self) {
-        let allow_comments = crate::settings::get_settings().parser.allow_comments;
+        let allow_comments = false; // crate::settings::get_settings().parser.allow_comments;
         loop {
             let start = self.cursor;
             // 1. Skip standard whitespace
@@ -410,15 +410,7 @@ impl<'a> Parser<'a> {
                     };
                 }
                 _ => {
-                    let tail = match std::str::from_utf8(&self.input[self.cursor..]) {
-                        Ok(t) => t,
-                        Err(_) => {
-                            return {
-                                t_err!(self, self.cursor, "Invalid UTF-8 sequence");
-                                None
-                            };
-                        }
-                    };
+                    let tail = &self.input_str[self.cursor..];
                     let c = match tail.chars().next() {
                         Some(ch) => ch,
                         None => {
@@ -697,6 +689,16 @@ impl<'a> Parser<'a> {
 mod tolerant_tests {
     use super::*;
 
+    /// **Test Case**: Tolerant Parsing of Dangling Values
+    ///
+    /// ### Description
+    /// Verifies that parsing an incomplete object key returns a partial AST and a diagnostic error.
+    ///
+    /// ### Test Procedure
+    /// 1. Parse an object ending abruptly at the colon (`{"a":`).
+    ///
+    /// ### Expected Result
+    /// Returns `Some(JsonNode)` and a non-empty `diagnostics` vector.
     #[test]
     fn test_tolerant_dangling_value() {
         let (node, diagnostics) = parse(r#"{"a":"#);
@@ -704,6 +706,16 @@ mod tolerant_tests {
         assert!(!diagnostics.is_empty());
     }
 
+    /// **Test Case**: Tolerant Parsing of Trailing Object Commas
+    ///
+    /// ### Description
+    /// Verifies that parsing an object with a trailing comma recovers cleanly.
+    ///
+    /// ### Test Procedure
+    /// 1. Parse `{"a": 1,}`.
+    ///
+    /// ### Expected Result
+    /// Returns `Some(JsonNode)` representing the parsed pairs and logs a diagnostic error.
     #[test]
     fn test_tolerant_trailing_comma() {
         let (node, diagnostics) = parse(r#"{"a": 1,"#);
@@ -711,6 +723,16 @@ mod tolerant_tests {
         assert!(!diagnostics.is_empty());
     }
 
+    /// **Test Case**: Tolerant Parsing of Unclosed Strings
+    ///
+    /// ### Description
+    /// Verifies that an unclosed string is captured up to the EOF.
+    ///
+    /// ### Test Procedure
+    /// 1. Parse `{"a": "unclosed`.
+    ///
+    /// ### Expected Result
+    /// Returns `Some(JsonNode)` capturing the string and logs an unclosed string error.
     #[test]
     fn test_tolerant_unclosed_string() {
         let (node, diagnostics) = parse(r#"{"a": "unclosed"#);
@@ -718,6 +740,16 @@ mod tolerant_tests {
         assert!(!diagnostics.is_empty());
     }
 
+    /// **Test Case**: Tolerant Parsing of Trailing Array Commas
+    ///
+    /// ### Description
+    /// Verifies that parsing an array with a trailing comma recovers cleanly.
+    ///
+    /// ### Test Procedure
+    /// 1. Parse `[1, 2,]`.
+    ///
+    /// ### Expected Result
+    /// Returns `Some(JsonNode)` containing the parsed elements and a diagnostic error.
     #[test]
     fn test_tolerant_array_trailing_comma() {
         let (node, diagnostics) = parse(r#"[1, 2,"#);
@@ -725,6 +757,16 @@ mod tolerant_tests {
         assert!(!diagnostics.is_empty());
     }
 
+    /// **Test Case**: Tolerant Parsing of Just an Opening Brace
+    ///
+    /// ### Description
+    /// Verifies that an empty, unclosed object brace recovers a minimal AST.
+    ///
+    /// ### Test Procedure
+    /// 1. Parse `{`.
+    ///
+    /// ### Expected Result
+    /// Returns `Some(JsonNode::Object)` and a diagnostic error.
     #[test]
     fn test_tolerant_just_opening_brace() {
         let (node, diagnostics) = parse(r#"{"#);

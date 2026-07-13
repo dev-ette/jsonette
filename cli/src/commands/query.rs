@@ -43,6 +43,10 @@ use crate::utils::{print_diagnostics, read_input};
 ///
 /// * `args` - Parsed query subcommand arguments containing the JSONPath
 ///   expression string in `args.query` and the optional input file path in `args.file`.
+///
+/// # Returns
+///
+/// Nothing.
 pub fn handle_query(args: QueryArgs) {
     let (input, label) = match read_input(&args.file) {
         Ok(res) => res,
