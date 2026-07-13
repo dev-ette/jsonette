@@ -221,6 +221,8 @@ jobs:
     name: performance
     runs-on: ubuntu-latest
     needs: [build, test, clippy, fmt]
+    permissions:
+      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.0
@@ -234,20 +236,21 @@ jobs:
       - name: Build CLI Release
         run: cargo build --release -p jsonette
 
-      - name: Generate Fixtures
-        run: |
-          ./target/release/jsonette generate -c .github/perf_schema.json -s 1000000 -o 1mb.json
-          ./target/release/jsonette generate -c .github/perf_schema.json -s 10000000 -o 10mb.json
-          ./target/release/jsonette generate -c .github/perf_schema.json -s 50000000 -o 50mb.json
-
       - name: Evaluate Engine & CLI Performance
         run: |
-          echo "Testing parsing performance (1MB)"
-          time ./target/release/jsonette format 1mb.json --output /dev/null
-          
-          echo "Testing parsing performance (10MB)"
-          time ./target/release/jsonette format 10mb.json --output /dev/null
-          
-          echo "Testing parsing performance (50MB)"
-          # Fail if the parse/format takes too long. M0 baseline: 50MB should be quick.
-          time ./target/release/jsonette format 50mb.json --output /dev/null
+          python scripts/benchmark.py
+          cat perf_report.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Post Performance Report to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('perf_report.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            })
