@@ -45,6 +45,8 @@ pub enum Commands {
     Query(QueryArgs),
     /// Explore a JSONPath node (list keys or array length).
     Explore(ExploreArgs),
+    /// Generate dummy JSON data based on size.
+    Generate(GenerateArgs),
     /// Manage global configuration settings.
     Config(ConfigArgs),
     /// Generate shell autocompletion scripts.
@@ -124,6 +126,30 @@ pub struct ExploreArgs {
     /// Limit the number of keys displayed.
     #[arg(short = 'n', long)]
     pub limit: Option<usize>,
+}
+
+/// Arguments and options for the generate command.
+#[derive(Args, Debug)]
+pub struct GenerateArgs {
+    /// Target size in bytes (e.g. 1000000 for 1MB). Mutually exclusive with count.
+    #[arg(short = 's', long, conflicts_with = "count")]
+    pub size: Option<usize>,
+
+    /// Target number of array items to generate. Mutually exclusive with size.
+    #[arg(short = 'n', long, conflicts_with = "size")]
+    pub count: Option<usize>,
+
+    /// Optional path to a JSON generation schema file.
+    #[arg(short = 'c', long)]
+    pub schema: Option<PathBuf>,
+
+    /// Write the output to a specific file instead of standard output.
+    #[arg(short = 'o', long)]
+    pub output: Option<PathBuf>,
+
+    /// Minify the JSON output, stripping all whitespace.
+    #[arg(short = 'm', long)]
+    pub minify: bool,
 }
 
 /// Arguments for the global configuration subcommand.

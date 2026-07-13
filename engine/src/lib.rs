@@ -22,6 +22,7 @@
 
 pub mod completion;
 pub mod formatter;
+pub mod generator;
 pub mod json_node;
 pub mod parser;
 pub mod query;
