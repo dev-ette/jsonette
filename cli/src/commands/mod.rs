@@ -23,11 +23,11 @@
 pub mod config;
 pub mod explore;
 pub mod format;
-pub mod query;
 pub mod generate;
+pub mod query;
 
 pub use config::handle_config;
 pub use explore::handle_explore;
 pub use format::handle_format;
-pub use query::handle_query;
 pub use generate::handle_generate;
+pub use query::handle_query;

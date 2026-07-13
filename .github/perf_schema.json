@@ -1,42 +1,39 @@
 {
-  "@type": "array",
-  "@item": {
-    "id": { "@type": "uuid" },
-    "index": { "@type": "integer", "@start": 0, "@step": 1 },
-    "isActive": { "@type": "bool" },
-    "balance": { "@type": "float", "@min": 10.0, "@max": 10000.0 },
-    "picture": { "@type": "string", "@template": "http://placehold.it/32x32" },
-    "age": { "@type": "integer", "@start": 20, "@step": 0 },
-    "eyeColor": { "@type": "string", "@pool": ["blue", "brown", "green"] },
-    "name": { "@type": "string", "@pool": ["Alice", "Bob", "Charlie", "Diana"] },
-    "company": { "@type": "string", "@pool": ["JSONETTE", "ACME", "GLOBEX"] },
-    "email": { 
-      "@type": "string", 
-      "@template": "user_{id}@jsonette.local",
-      "@vars": {
-        "id": { "@type": "integer", "@start": 1, "@step": 1 }
-      }
-    },
-    "phone": { "@type": "string", "@template": "+1 (800) 555-1234" },
-    "address": { "@type": "string", "@template": "123 Main St, Cityville, State, 12345" },
-    "about": { "@type": "string", "@template": "This is a dummy description to pad the size of the JSON fixture." },
-    "registered": { "@type": "string", "@template": "2026-07-13T00:00:00 -03:00" },
-    "latitude": { "@type": "float", "@min": -90.0, "@max": 90.0 },
-    "longitude": { "@type": "float", "@min": -180.0, "@max": 180.0 },
-    "tags": {
-      "@type": "array",
-      "@count": 7,
-      "@item": { "@type": "string", "@pool": ["dummy", "data", "jsonette", "performance", "testing", "fixtures", "generator"] }
-    },
-    "friends": {
-      "@type": "array",
-      "@count": 3,
-      "@item": {
-        "id": { "@type": "integer", "@start": 1, "@step": 1 },
-        "name": { "@type": "string", "@pool": ["Friend A", "Friend B", "Friend C"] }
-      }
-    },
-    "greeting": { "@type": "string", "@template": "Hello! You have unread messages." },
-    "favoriteFruit": { "@type": "string", "@pool": ["apple", "banana", "strawberry"] }
-  }
+  "id": { "@type": "uuid" },
+  "index": { "@type": "integer", "@start": 0, "@step": 1 },
+  "isActive": { "@type": "bool" },
+  "balance": { "@type": "float", "@min": 10.0, "@max": 10000.0 },
+  "picture": { "@type": "string", "@template": "http://placehold.it/32x32" },
+  "age": { "@type": "integer", "@start": 20, "@step": 0 },
+  "eyeColor": { "@type": "string", "@pool": ["blue", "brown", "green"] },
+  "name": { "@type": "string", "@pool": ["Alice", "Bob", "Charlie", "Diana"] },
+  "company": { "@type": "string", "@pool": ["JSONETTE", "ACME", "GLOBEX"] },
+  "email": { 
+    "@type": "string", 
+    "@template": "user_{id}@jsonette.local",
+    "@vars": {
+      "id": { "@type": "integer", "@start": 1, "@step": 1 }
+    }
+  },
+  "phone": { "@type": "string", "@template": "+1 (800) 555-1234" },
+  "address": { "@type": "string", "@template": "123 Main St, Cityville, State, 12345" },
+  "about": { "@type": "string", "@template": "This is a dummy description to pad the size of the JSON fixture." },
+  "registered": { "@type": "string", "@template": "2026-07-13T00:00:00 -03:00" },
+  "latitude": { "@type": "float", "@min": -90.0, "@max": 90.0 },
+  "longitude": { "@type": "float", "@min": -180.0, "@max": 180.0 },
+  "tags": {
+    "@type": "array",
+    "@count": 7,
+    "@item": { "@type": "string", "@pool": ["dummy", "data", "jsonette", "performance", "testing", "fixtures", "generator"] }
+  },
+  "friends": {
+    "@type": "array",
+    "@count": 3,
+    "@item": {
+      "id": { "@type": "integer", "@start": 1, "@step": 1 },
+      "name": { "@type": "string", "@pool": ["Friend A", "Friend B", "Friend C"] }
+    }
+  },
+  "greeting": { "@type": "string", "@template": "Hello! You have unread messages." },
+  "favoriteFruit": { "@type": "string", "@pool": ["apple", "banana", "strawberry"] }
 }

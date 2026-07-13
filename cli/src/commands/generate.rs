@@ -18,7 +18,7 @@
 //! Handles the `generate` subcommand for dummy JSON data creation.
 
 use crate::args::GenerateArgs;
-use jsonette::generator::{generate_from_schema, GeneratorOptions};
+use jsonette::generator::{GeneratorOptions, generate_from_schema};
 use jsonette::parser::parse;
 use std::fs;
 use std::io::{self, Write};
@@ -46,7 +46,8 @@ pub fn handle_generate(args: GenerateArgs) {
                 "@count": 3,
                 "@item": { "@type": "string", "@pool": ["urgent", "low", "bug", "feature"] }
             }
-        }"#.to_string()
+        }"#
+        .to_string()
     };
 
     // 2. Parse schema
@@ -62,7 +63,7 @@ pub fn handle_generate(args: GenerateArgs) {
     };
 
     // 3. Generate data
-    let gen_opts = GeneratorOptions { 
+    let gen_opts = GeneratorOptions {
         target_size_bytes: args.size,
         target_count: args.count,
     };

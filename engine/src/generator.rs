@@ -17,7 +17,7 @@
  */
 
 //! Schema-based Dummy Data JSON Generator.
-//! 
+//!
 //! Evaluates a template `JsonNode` schema and generates a new `JsonNode`
 //! containing dummy data according to the schema rules.
 
@@ -63,17 +63,17 @@ pub fn generate_from_schema(
     if let Some(target_size) = options.target_size_bytes {
         let mut items = Vec::new();
         let mut current_size = 0;
-        
+
         while current_size < target_size {
             let item = evaluate_node(schema, &mut state, &mut diagnostics);
             current_size += estimate_size(&item);
             items.push(item);
-            
+
             if items.len() > 1000000 {
                 break;
             }
         }
-        
+
         if !diagnostics.is_empty() {
             Err(diagnostics)
         } else {
@@ -84,7 +84,7 @@ pub fn generate_from_schema(
         for _ in 0..target_count {
             items.push(evaluate_node(schema, &mut state, &mut diagnostics));
         }
-        
+
         if !diagnostics.is_empty() {
             Err(diagnostics)
         } else {
@@ -100,8 +100,6 @@ pub fn generate_from_schema(
     }
 }
 
-
-
 /// Recursively evaluates a schema node.
 ///
 /// # Arguments
@@ -113,7 +111,11 @@ pub fn generate_from_schema(
 /// # Returns
 ///
 /// The evaluated `JsonNode` instance with resolved generator instructions.
-fn evaluate_node(node: &JsonNode, state: &mut GeneratorState, diagnostics: &mut Vec<Diagnostic>) -> JsonNode {
+fn evaluate_node(
+    node: &JsonNode,
+    state: &mut GeneratorState,
+    diagnostics: &mut Vec<Diagnostic>,
+) -> JsonNode {
     match node {
         JsonNode::Object(pairs, span) => {
             // Check if this is a generator instruction
@@ -133,7 +135,7 @@ fn evaluate_node(node: &JsonNode, state: &mut GeneratorState, diagnostics: &mut 
                 } else {
                     pair.key.clone()
                 };
-                
+
                 new_pairs.push(KeyValuePair {
                     key,
                     value: evaluate_node(&pair.value, state, diagnostics),
@@ -142,7 +144,10 @@ fn evaluate_node(node: &JsonNode, state: &mut GeneratorState, diagnostics: &mut 
             JsonNode::Object(new_pairs, span.clone())
         }
         JsonNode::Array(items, span) => {
-            let new_items = items.iter().map(|item| evaluate_node(item, state, diagnostics)).collect();
+            let new_items = items
+                .iter()
+                .map(|item| evaluate_node(item, state, diagnostics))
+                .collect();
             JsonNode::Array(new_items, span.clone())
         }
         // Primitives pass through unchanged
@@ -177,7 +182,10 @@ fn evaluate_instruction(
             let lcg = state.variables.entry("lcg".to_string()).or_insert(1.0);
             *lcg = (*lcg * 1664525.0 + 1013904223.0) % 4294967296.0;
             let val = *lcg as u32;
-            JsonNode::String(format!("uuid-{:08x}-1234-5678-abcd-123456789012", val), span)
+            JsonNode::String(
+                format!("uuid-{:08x}-1234-5678-abcd-123456789012", val),
+                span,
+            )
         }
         "integer" => {
             let mut start = 0.0;
@@ -185,9 +193,13 @@ fn evaluate_instruction(
             for pair in pairs {
                 #[allow(clippy::collapsible_if)]
                 if pair.key == "@start" {
-                    if let JsonNode::Number(n, _, _) = pair.value { start = n; }
+                    if let JsonNode::Number(n, _, _) = pair.value {
+                        start = n;
+                    }
                 } else if pair.key == "@step" {
-                    if let JsonNode::Number(n, _, _) = pair.value { step = n; }
+                    if let JsonNode::Number(n, _, _) = pair.value {
+                        step = n;
+                    }
                 }
             }
             let state_key = format!("int_{}", span.start);
@@ -202,9 +214,13 @@ fn evaluate_instruction(
             for pair in pairs {
                 #[allow(clippy::collapsible_if)]
                 if pair.key == "@min" {
-                    if let JsonNode::Number(n, _, _) = pair.value { min = n; }
+                    if let JsonNode::Number(n, _, _) = pair.value {
+                        min = n;
+                    }
                 } else if pair.key == "@max" {
-                    if let JsonNode::Number(n, _, _) = pair.value { max = n; }
+                    if let JsonNode::Number(n, _, _) = pair.value {
+                        max = n;
+                    }
                 }
             }
             let lcg = state.variables.entry("lcg".to_string()).or_insert(1.0);
@@ -221,11 +237,13 @@ fn evaluate_instruction(
             let mut template = "".to_string();
             let mut pool = Vec::new();
             let mut vars_schema = None;
-            
+
             for pair in pairs {
                 #[allow(clippy::collapsible_if)]
                 if pair.key == "@template" {
-                    if let JsonNode::String(s, _) = &pair.value { template = s.clone(); }
+                    if let JsonNode::String(s, _) = &pair.value {
+                        template = s.clone();
+                    }
                 } else if pair.key == "@pool" {
                     if let JsonNode::Array(items, _) = &pair.value {
                         for item in items {
@@ -238,7 +256,7 @@ fn evaluate_instruction(
                     vars_schema = Some(&pair.value);
                 }
             }
-            
+
             if !pool.is_empty() {
                 let lcg = state.variables.entry("lcg".to_string()).or_insert(1.0);
                 *lcg = (*lcg * 1664525.0 + 1013904223.0) % 4294967296.0;
@@ -269,12 +287,14 @@ fn evaluate_instruction(
             let mut item_schema = &JsonNode::Null(span.clone());
             for pair in pairs {
                 if pair.key == "@count" {
-                    if let JsonNode::Number(n, _, _) = pair.value { count = n as usize; }
+                    if let JsonNode::Number(n, _, _) = pair.value {
+                        count = n as usize;
+                    }
                 } else if pair.key == "@item" {
                     item_schema = &pair.value;
                 }
             }
-            
+
             let mut items = Vec::with_capacity(count);
             for _ in 0..count {
                 items.push(evaluate_node(item_schema, state, diagnostics));
@@ -306,11 +326,18 @@ fn estimate_size(node: &JsonNode) -> usize {
         JsonNode::Bool(_, _) => 4,
         JsonNode::Number(_, raw, _) => raw.len(),
         JsonNode::String(s, _) => s.len() + 2,
-        JsonNode::Array(items, _) => items.iter().map(estimate_size).sum::<usize>() + items.len() + 2,
-        JsonNode::Object(pairs, _) => pairs.iter().map(|p| p.key.len() + 4 + estimate_size(&p.value)).sum::<usize>() + 2,
+        JsonNode::Array(items, _) => {
+            items.iter().map(estimate_size).sum::<usize>() + items.len() + 2
+        }
+        JsonNode::Object(pairs, _) => {
+            pairs
+                .iter()
+                .map(|p| p.key.len() + 4 + estimate_size(&p.value))
+                .sum::<usize>()
+                + 2
+        }
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -335,8 +362,11 @@ mod tests {
             "index": { "@type": "integer", "@start": 5, "@step": 2 }
         }"#;
         let schema = parse(schema_str).unwrap();
-        let opts = GeneratorOptions { target_size_bytes: None, target_count: Some(2) };
-        
+        let opts = GeneratorOptions {
+            target_size_bytes: None,
+            target_count: Some(2),
+        };
+
         let result = generate_from_schema(&schema, &opts).unwrap();
         if let JsonNode::Array(items, _) = result {
             assert_eq!(items.len(), 2);
@@ -375,8 +405,11 @@ mod tests {
     fn test_generator_unknown_instruction_returns_diagnostic() {
         let schema_str = r#"{ "field": { "@type": "fake_type" } }"#;
         let schema = parse(schema_str).unwrap();
-        let opts = GeneratorOptions { target_size_bytes: None, target_count: Some(1) };
-        
+        let opts = GeneratorOptions {
+            target_size_bytes: None,
+            target_count: Some(1),
+        };
+
         let result = generate_from_schema(&schema, &opts);
         assert!(result.is_err());
         let diags = result.unwrap_err();
@@ -398,8 +431,11 @@ mod tests {
     fn test_generator_escaped_keys() {
         let schema_str = r#"{ "@@type": "User" }"#;
         let schema = parse(schema_str).unwrap();
-        let opts = GeneratorOptions { target_size_bytes: None, target_count: None };
-        
+        let opts = GeneratorOptions {
+            target_size_bytes: None,
+            target_count: None,
+        };
+
         let result = generate_from_schema(&schema, &opts).unwrap();
         if let JsonNode::Object(pairs, _) = result {
             assert_eq!(pairs[0].key, "@type");
