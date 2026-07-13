@@ -1,7 +1,7 @@
 # jsonette
 
 [![Crates.io](https://img.shields.io/crates/v/jsonette-core.svg)](https://crates.io/crates/jsonette-core)
-[![Documentation](https://docs.rs/jsonette/badge.svg)](https://docs.rs/jsonette)
+[![Documentation](https://docs.rs/jsonette-core/badge.svg)](https://docs.rs/jsonette-core)
 [![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](LICENSE-MIT)
 
 A lightweight, zero-dependency, UI-agnostic JSON parse, format, query, and diagnostics engine written in Rust. It serves as the shared core for the `jsonette` native editors and viewers.

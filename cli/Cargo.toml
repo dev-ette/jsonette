@@ -6,6 +6,7 @@ description = "CLI application for jsonette: format, query, and configure JSON p
 repository = "https://github.com/dev-ette/jsonette"
 license = "MIT OR Apache-2.0"
 homepage = "https://github.com/dev-ette/jsonette"
+documentation = "https://dev-ette.github.io/jsonette/cli/"
 readme = "README.md"
 keywords = ["json", "jsonpath", "cli", "format", "query"]
 categories = ["command-line-utilities", "encoding"]
