@@ -1,6 +1,6 @@
 # jsonette
 
-[![Crates.io](https://img.shields.io/crates/v/jsonette.svg)](https://crates.io/crates/jsonette)
+[![Crates.io](https://img.shields.io/crates/v/jsonette-core.svg)](https://crates.io/crates/jsonette-core)
 [![Documentation](https://docs.rs/jsonette/badge.svg)](https://docs.rs/jsonette)
 [![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](LICENSE-MIT)
 
@@ -67,11 +67,11 @@ use jsonette::Formatter;
 
 fn main() {
     let minified = r#"{"name":"jsonette","version":"0.1.0"}"#;
-    
+
     // Format JSON with standard 4-space indentation
     let formatted = Formatter::format(minified, 4)
         .expect("Valid JSON input");
-        
+
     println!("{}", formatted);
 }
 ```
@@ -90,7 +90,7 @@ For more details on the desktop project structure, see the [Root README](https:/
 
 Dual-licensed under either:
 
-* Apache License, Version 2.0 ([LICENSE-APACHE](https://github.com/dev-ette/jsonette/blob/main/LICENSE-APACHE))
-* MIT license ([LICENSE-MIT](https://github.com/dev-ette/jsonette/blob/main/LICENSE-MIT))
+- Apache License, Version 2.0 ([LICENSE-APACHE](https://github.com/dev-ette/jsonette/blob/main/LICENSE-APACHE))
+- MIT license ([LICENSE-MIT](https://github.com/dev-ette/jsonette/blob/main/LICENSE-MIT))
 
 at your option.
