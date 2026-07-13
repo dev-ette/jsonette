@@ -56,8 +56,8 @@ pub fn parse(input: &str) -> Result<JsonNode, Vec<Diagnostic>> {
     }
 
     // 2. Parse with our hand-rolled parser to build the AST with correct spans
-    let mut parser = Parser::new(input);
-    match parser.parse_value() {
+    let mut parser = Parser::new(input, parser_opts);
+    let res = match parser.parse_value() {
         Ok(node) => {
             parser.skip_whitespace();
             if parser.cursor < parser.input.len() {
@@ -70,7 +70,8 @@ pub fn parse(input: &str) -> Result<JsonNode, Vec<Diagnostic>> {
             }
         }
         Err(diag) => Err(vec![diag]),
-    }
+    };
+    res
 }
 
 /// A stateful recursive-descent parser for strict JSON documents.
@@ -82,15 +83,18 @@ struct Parser<'a> {
     input_str: &'a str,
     /// The current byte offset cursor in the input.
     cursor: usize,
+    /// Cached parser options.
+    opts: crate::types::ParserOptions,
 }
 
 impl<'a> Parser<'a> {
     /// Creates a new Parser instance for the given JSON input.
-    fn new(input: &'a str) -> Self {
+    fn new(input: &'a str, opts: crate::types::ParserOptions) -> Self {
         Parser {
             input: input.as_bytes(),
             input_str: input,
             cursor: 0,
+            opts,
         }
     }
 
@@ -122,7 +126,7 @@ impl<'a> Parser<'a> {
     /// Skips any ASCII whitespace characters (spaces, tabs, newlines, carriage returns)
     /// and single-line/multi-line comments if they are allowed in configuration.
     fn skip_whitespace(&mut self) {
-        let allow_comments = crate::settings::get_settings().parser.allow_comments;
+        let allow_comments = self.opts.allow_comments;
         loop {
             let start = self.cursor;
             // 1. Skip standard whitespace
@@ -369,10 +373,7 @@ impl<'a> Parser<'a> {
                     return Err(self.error(self.cursor, "Control characters must be escaped"));
                 }
                 _ => {
-                    let tail = match std::str::from_utf8(&self.input[self.cursor..]) {
-                        Ok(t) => t,
-                        Err(_) => return Err(self.error(self.cursor, "Invalid UTF-8 sequence")),
-                    };
+                    let tail = &self.input_str[self.cursor..];
                     let c = match tail.chars().next() {
                         Some(ch) => ch,
                         None => return Err(self.error(self.cursor, "Unexpected EOF")),
@@ -480,7 +481,7 @@ impl<'a> Parser<'a> {
                     self.advance();
                     self.skip_whitespace();
                     if self.peek() == Some(b']') {
-                        if !crate::settings::get_settings().parser.allow_trailing_commas {
+                        if !self.opts.allow_trailing_commas {
                             return Err(
                                 self.error(self.cursor, "Trailing commas are not allowed in JSON")
                             );
@@ -562,7 +563,7 @@ impl<'a> Parser<'a> {
                     self.advance();
                     self.skip_whitespace();
                     if self.peek() == Some(b'}') {
-                        if !crate::settings::get_settings().parser.allow_trailing_commas {
+                        if !self.opts.allow_trailing_commas {
                             return Err(
                                 self.error(self.cursor, "Trailing commas are not allowed in JSON")
                             );

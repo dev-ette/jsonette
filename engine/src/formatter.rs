@@ -33,7 +33,8 @@ use crate::types::{FoldingStyle, LineEnding};
 ///
 /// The pretty-printed JSON string representation of the node.
 pub fn format(node: &JsonNode) -> String {
-    format_impl(node, 0)
+    let opts = crate::settings::get_settings().format;
+    format_impl(node, 0, &opts)
 }
 
 /// Minifies the JSON node, stripping all whitespace and formatting.
@@ -60,8 +61,7 @@ pub fn minify(node: &JsonNode) -> String {
 /// # Returns
 ///
 /// A `String` consisting of space or tab characters.
-fn get_indent(level: usize) -> String {
-    let opts = crate::settings::get_settings().format;
+fn get_indent(level: usize, opts: &crate::types::FormatOptions) -> String {
     if level == 0 {
         return String::new();
     }
@@ -78,8 +78,7 @@ fn get_indent(level: usize) -> String {
 /// # Returns
 ///
 /// A static string slice (`"\n"` or `"\r\n"`).
-fn get_line_ending() -> &'static str {
-    let opts = crate::settings::get_settings().format;
+fn get_line_ending(opts: &crate::types::FormatOptions) -> &'static str {
     match opts.line_ending {
         LineEnding::LF => "\n",
         LineEnding::CRLF => "\r\n",
@@ -97,8 +96,7 @@ fn get_line_ending() -> &'static str {
 /// # Returns
 ///
 /// `Some(String)` if the node could be formatted inline within 80 characters, or `None` otherwise.
-fn format_inline(node: &JsonNode) -> Option<String> {
-    let opts = crate::settings::get_settings().format;
+fn format_inline(node: &JsonNode, opts: &crate::types::FormatOptions) -> Option<String> {
     match node {
         JsonNode::Null(_) => Some("null".to_string()),
         JsonNode::Bool(b, _) => Some(if *b { "true" } else { "false" }.to_string()),
@@ -110,7 +108,7 @@ fn format_inline(node: &JsonNode) -> Option<String> {
             }
             let mut parts = Vec::with_capacity(elements.len());
             for elem in elements {
-                let part = format_inline(elem)?;
+                let part = format_inline(elem, opts)?;
                 parts.push(part);
             }
             let comma_space = if opts.space_after_comma { ", " } else { "," };
@@ -133,7 +131,7 @@ fn format_inline(node: &JsonNode) -> Option<String> {
             }
             let mut parts = Vec::with_capacity(pairs.len());
             for pair in &pairs {
-                let val_str = format_inline(&pair.value)?;
+                let val_str = format_inline(&pair.value, opts)?;
                 let key_str = serde_json::to_string(&pair.key).unwrap();
                 let colon_space = if opts.space_after_colon { ": " } else { ":" };
                 parts.push(format!("{}{}{}", key_str, colon_space, val_str));
@@ -162,8 +160,7 @@ fn format_inline(node: &JsonNode) -> Option<String> {
 /// # Returns
 ///
 /// The pretty-printed string representation of the sub-tree.
-fn format_impl(node: &JsonNode, level: usize) -> String {
-    let opts = crate::settings::get_settings().format;
+fn format_impl(node: &JsonNode, level: usize, opts: &crate::types::FormatOptions) -> String {
     match node {
         JsonNode::Null(_) => "null".to_string(),
         JsonNode::Bool(b, _) => if *b { "true" } else { "false" }.to_string(),
@@ -173,14 +170,14 @@ fn format_impl(node: &JsonNode, level: usize) -> String {
             if elements.is_empty() {
                 return "[]".to_string();
             }
-            if let (FoldingStyle::Compact, Some(inline)) = (opts.folding_style, format_inline(node))
+            if let (crate::types::FoldingStyle::Compact, Some(inline)) = (&opts.folding_style, format_inline(node, &opts))
             {
                 return inline;
             }
 
-            let line_ending = get_line_ending();
-            let next_indent = get_indent(level + 1);
-            let current_indent = get_indent(level);
+            let line_ending = get_line_ending(&opts);
+            let next_indent = get_indent(level + 1, &opts);
+            let current_indent = get_indent(level, &opts);
 
             let mut result = String::new();
             result.push('[');
@@ -188,7 +185,7 @@ fn format_impl(node: &JsonNode, level: usize) -> String {
 
             for (i, elem) in elements.iter().enumerate() {
                 result.push_str(&next_indent);
-                result.push_str(&format_impl(elem, level + 1));
+                result.push_str(&format_impl(elem, level + 1, &opts));
                 if i + 1 < elements.len() {
                     result.push(',');
                 }
@@ -203,7 +200,7 @@ fn format_impl(node: &JsonNode, level: usize) -> String {
             if pairs.is_empty() {
                 return "{}".to_string();
             }
-            if let (FoldingStyle::Compact, Some(inline)) = (opts.folding_style, format_inline(node))
+            if let (crate::types::FoldingStyle::Compact, Some(inline)) = (&opts.folding_style, format_inline(node, &opts))
             {
                 return inline;
             }
@@ -213,9 +210,9 @@ fn format_impl(node: &JsonNode, level: usize) -> String {
                 pairs.sort_by(|a, b| a.key.cmp(&b.key));
             }
 
-            let line_ending = get_line_ending();
-            let next_indent = get_indent(level + 1);
-            let current_indent = get_indent(level);
+            let line_ending = get_line_ending(&opts);
+            let next_indent = get_indent(level + 1, &opts);
+            let current_indent = get_indent(level, &opts);
             let colon_str = if opts.space_after_colon { ": " } else { ":" };
 
             let mut result = String::new();
@@ -226,7 +223,7 @@ fn format_impl(node: &JsonNode, level: usize) -> String {
                 result.push_str(&next_indent);
                 result.push_str(&serde_json::to_string(&pair.key).unwrap());
                 result.push_str(colon_str);
-                result.push_str(&format_impl(&pair.value, level + 1));
+                result.push_str(&format_impl(&pair.value, level + 1, &opts));
                 if i + 1 < pairs.len() {
                     result.push(',');
                 }

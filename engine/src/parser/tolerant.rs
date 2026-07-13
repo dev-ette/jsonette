@@ -103,7 +103,7 @@ impl<'a> Parser<'a> {
     /// Skips any ASCII whitespace characters (spaces, tabs, newlines, carriage returns)
     /// and single-line/multi-line comments if they are allowed in configuration.
     fn skip_whitespace(&mut self) {
-        let allow_comments = crate::settings::get_settings().parser.allow_comments;
+        let allow_comments = false; // crate::settings::get_settings().parser.allow_comments;
         loop {
             let start = self.cursor;
             // 1. Skip standard whitespace
@@ -410,15 +410,7 @@ impl<'a> Parser<'a> {
                     };
                 }
                 _ => {
-                    let tail = match std::str::from_utf8(&self.input[self.cursor..]) {
-                        Ok(t) => t,
-                        Err(_) => {
-                            return {
-                                t_err!(self, self.cursor, "Invalid UTF-8 sequence");
-                                None
-                            };
-                        }
-                    };
+                    let tail = &self.input_str[self.cursor..];
                     let c = match tail.chars().next() {
                         Some(ch) => ch,
                         None => {
