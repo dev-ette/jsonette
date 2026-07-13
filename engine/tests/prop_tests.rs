@@ -59,6 +59,19 @@ fn arb_json() -> impl Strategy<Value = String> {
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(50))]
 
+    /// **Property**: Formatting is faithful.
+    ///
+    /// For any valid JSON structure, parsing the formatted output results in the exact same AST structure (except spans).
+    #[test]
+    fn test_parse_format_roundtrip(input in arb_json()) {
+        let parsed = parse(&input).expect("Generated JSON must be valid");
+        let formatted = format(&parsed);
+        let parsed_formatted = parse(&formatted).expect("Formatted JSON must be valid");
+        // Spans will differ between `parsed` and `parsed_formatted` because whitespace changes,
+        // so we format them both and assert string equality, which is equivalent to tree structure equality
+        assert_eq!(format(&parsed), format(&parsed_formatted));
+    }
+
     /// **Property**: Formatting is idempotent.
     ///
     /// For any valid JSON structure, `format(format(x)) == format(x)`.
