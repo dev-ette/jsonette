@@ -287,4 +287,3 @@ fn test_cli_query_missing_file_reports_error() {
         .failure()
         .stderr(predicate::str::contains("Error").or(predicate::str::contains("error")));
 }
-
