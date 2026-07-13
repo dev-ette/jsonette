@@ -1,7 +1,7 @@
 # Command Line Interface (CLI) Reference
 
 [![Crates.io](https://img.shields.io/crates/v/jsonette.svg)](https://crates.io/crates/jsonette)
-[![Documentation](https://docs.rs/jsonette/badge.svg)](https://docs.rs/jsonette)
+[![Docs Portal](https://img.shields.io/badge/docs-portal-blue)](https://dev-ette.github.io/jsonette/)
 [![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](LICENSE-MIT)
 
 `jsonette` provides a high-performance, standalone Command Line Interface (CLI) built on top of the core Rust engine. It allows formatting, minifying, querying, and managing configuration settings directly in your terminal.
