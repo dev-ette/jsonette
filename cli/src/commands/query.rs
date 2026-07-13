@@ -17,7 +17,8 @@
 
 //! JSONPath query expression command execution.
 //!
-//! Loads file or standard input, parses JSON, and evaluates queries against the document.
+//! Loads file or standard input, parses JSON, and evaluates JSONPath expressions
+//! against the parsed document. Results are printed as a JSON array to stdout.
 
 use crate::args::QueryArgs;
 use crate::utils::{print_diagnostics, read_input};
@@ -26,7 +27,7 @@ use crate::utils::{print_diagnostics, read_input};
 ///
 /// # Arguments
 ///
-/// * `args` - Parse command query expression and input targets.
+/// * `args` - Query command arguments: the JSONPath expression and input source.
 pub fn handle_query(args: QueryArgs) {
     let (input, label) = match read_input(&args.file) {
         Ok(res) => res,
@@ -36,7 +37,7 @@ pub fn handle_query(args: QueryArgs) {
         }
     };
 
-    // Parse the JSON
+    // Parse the JSON document
     let node = match jsonette::parse(&input) {
         Ok(node) => node,
         Err(diags) => {
@@ -45,7 +46,16 @@ pub fn handle_query(args: QueryArgs) {
         }
     };
 
-    // Evaluate JSONPath query
+    // Validate the JSONPath expression before evaluation for better error messages
+    let path_diags = jsonette::diagnostics_for_path(&args.query);
+    if !path_diags.is_empty() {
+        for diag in &path_diags {
+            eprintln!("Error: {}", diag.message);
+        }
+        std::process::exit(1);
+    }
+
+    // Evaluate the JSONPath expression
     match jsonette::evaluate_path(&node, &args.query) {
         Ok(matches) => {
             if matches.is_empty() {

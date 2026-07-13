@@ -244,25 +244,86 @@ fn test_cli_completions() {
 
 // ──────────────────────────── query subcommand ────────────────────────────────
 
-/// **Test Case**: `query` on a file with a valid path exits with code 1 because
-/// `evaluate_path` is a `todo!()` stub — the process panics and the CLI reports
-/// an error. This exercises the full call path through `handle_query`, giving
-/// coverage on `cli/src/commands/query.rs`.
+/// **Test Case**: `query` with a simple dot-key path returns the matched value.
 #[test]
-fn test_cli_query_stub_returns_error() {
+fn test_cli_query_dot_key() {
     let temp_dir = TempDir::new().unwrap();
     let json_file = temp_dir.path().join("test.json");
-    fs::write(&json_file, r#"{"name":"jsonette","version":"0.1.0"}"#).unwrap();
+    fs::write(&json_file, r#"{"name": "jsonette", "version": "0.1.0"}"#).unwrap();
 
     let mut cmd = jsonette_cmd(&temp_dir);
     cmd.arg("query")
         .arg("$.name")
         .arg(json_file.to_str().unwrap())
         .assert()
-        .failure(); // todo!() in evaluate_path panics → process exits non-zero
+        .success()
+        .stdout(predicate::str::contains("jsonette"));
 }
 
-/// **Test Case**: `query` with invalid JSON input reports an error on stderr and exits 1.
+/// **Test Case**: `query` with a wildcard path returns all matching array elements.
+#[test]
+fn test_cli_query_wildcard_array() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("users.json");
+    fs::write(
+        &json_file,
+        r#"{"users": [{"name": "Alice"}, {"name": "Bob"}]}"#,
+    )
+    .unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("query")
+        .arg("$.users[*].name")
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Alice"))
+        .stdout(predicate::str::contains("Bob"));
+}
+
+/// **Test Case**: `query` with no matches prints `[]`.
+#[test]
+fn test_cli_query_no_match_prints_empty_array() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("test.json");
+    fs::write(&json_file, r#"{"a": 1}"#).unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("query")
+        .arg("$.nonexistent")
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("[]"));
+}
+
+/// **Test Case**: `query` from stdin using a valid JSONPath expression.
+#[test]
+fn test_cli_query_stdin() {
+    let temp_dir = TempDir::new().unwrap();
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("query")
+        .arg("$.x")
+        .write_stdin(r#"{"x": 42}"#)
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("42"));
+}
+
+/// **Test Case**: `query` with an invalid JSONPath expression reports an error on stderr.
+#[test]
+fn test_cli_query_invalid_jsonpath_reports_error() {
+    let temp_dir = TempDir::new().unwrap();
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("query")
+        .arg("NOT A VALID PATH")
+        .write_stdin(r#"{"a": 1}"#)
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Error"));
+}
+
+/// **Test Case**: `query` with invalid JSON input reports an error on stderr.
 #[test]
 fn test_cli_query_invalid_json_reports_error() {
     let temp_dir = TempDir::new().unwrap();
@@ -275,7 +336,7 @@ fn test_cli_query_invalid_json_reports_error() {
         .stderr(predicate::str::is_empty().not());
 }
 
-/// **Test Case**: `query` on a missing file reports an error on stderr and exits 1.
+/// **Test Case**: `query` on a missing file reports an error on stderr.
 #[test]
 fn test_cli_query_missing_file_reports_error() {
     let temp_dir = TempDir::new().unwrap();
