@@ -56,3 +56,18 @@ uniffi::setup_scaffolding!();
 pub fn ping(input: String) -> String {
     format!("pong: {}", input)
 }
+
+#[cfg(test)]
+mod ffi_tests {
+    use super::*;
+
+    #[test]
+    fn test_ping_returns_pong_prefix() {
+        assert_eq!(ping("world".to_string()), "pong: world");
+    }
+
+    #[test]
+    fn test_ping_empty_string() {
+        assert_eq!(ping(String::new()), "pong: ");
+    }
+}

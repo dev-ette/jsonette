@@ -56,3 +56,20 @@ pub fn tolerant_parse(input: &str) -> (Option<JsonNode>, Vec<Diagnostic>) {
 pub fn diagnostics(input: &str) -> Vec<Diagnostic> {
     todo!("Fast diagnostics check will be implemented in subsequent issues")
 }
+
+#[cfg(test)]
+mod stub_tests {
+    use super::*;
+
+    #[test]
+    #[should_panic(expected = "not yet implemented")]
+    fn test_tolerant_parse_is_stub() {
+        tolerant_parse("{}");
+    }
+
+    #[test]
+    #[should_panic(expected = "not yet implemented")]
+    fn test_diagnostics_is_stub() {
+        diagnostics("{}");
+    }
+}

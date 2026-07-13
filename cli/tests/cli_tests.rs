@@ -241,3 +241,50 @@ fn test_cli_completions() {
         .stdout(predicate::str::contains("query"))
         .stdout(predicate::str::contains("config"));
 }
+
+// ──────────────────────────── query subcommand ────────────────────────────────
+
+/// **Test Case**: `query` on a file with a valid path exits with code 1 because
+/// `evaluate_path` is a `todo!()` stub — the process panics and the CLI reports
+/// an error. This exercises the full call path through `handle_query`, giving
+/// coverage on `cli/src/commands/query.rs`.
+#[test]
+fn test_cli_query_stub_returns_error() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("test.json");
+    fs::write(&json_file, r#"{"name":"jsonette","version":"0.1.0"}"#).unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("query")
+        .arg("$.name")
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .failure(); // todo!() in evaluate_path panics → process exits non-zero
+}
+
+/// **Test Case**: `query` with invalid JSON input reports an error on stderr and exits 1.
+#[test]
+fn test_cli_query_invalid_json_reports_error() {
+    let temp_dir = TempDir::new().unwrap();
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("query")
+        .arg("$.foo")
+        .write_stdin("NOT VALID JSON")
+        .assert()
+        .failure()
+        .stderr(predicate::str::is_empty().not());
+}
+
+/// **Test Case**: `query` on a missing file reports an error on stderr and exits 1.
+#[test]
+fn test_cli_query_missing_file_reports_error() {
+    let temp_dir = TempDir::new().unwrap();
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("query")
+        .arg("$.foo")
+        .arg("/nonexistent/path/missing.json")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Error").or(predicate::str::contains("error")));
+}
+

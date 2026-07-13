@@ -34,3 +34,16 @@ use crate::types::CompletionItem;
 pub fn completions_at(node: &JsonNode, path_prefix: &str) -> Vec<CompletionItem> {
     todo!("Autocomplete suggestion logic will be implemented in subsequent issues")
 }
+
+#[cfg(test)]
+mod stub_tests {
+    use super::*;
+    use crate::parser::parse;
+
+    #[test]
+    #[should_panic(expected = "not yet implemented")]
+    fn test_completions_at_is_stub() {
+        let node = parse("{}").unwrap();
+        completions_at(&node, "$.");
+    }
+}

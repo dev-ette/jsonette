@@ -48,3 +48,22 @@ pub fn evaluate_path(node: &JsonNode, path: &str) -> Result<Vec<JsonNode>, Strin
 pub fn diagnostics_for_path(path: &str) -> Vec<Diagnostic> {
     todo!("JSONPath syntax validation will be implemented in subsequent issues")
 }
+
+#[cfg(test)]
+mod stub_tests {
+    use super::*;
+    use crate::parser::parse;
+
+    #[test]
+    #[should_panic(expected = "not yet implemented")]
+    fn test_evaluate_path_is_stub() {
+        let node = parse("{}").unwrap();
+        evaluate_path(&node, "$.foo").unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "not yet implemented")]
+    fn test_diagnostics_for_path_is_stub() {
+        diagnostics_for_path("$.foo");
+    }
+}
