@@ -101,17 +101,21 @@ impl Settings {
     ///
     /// An optional `PathBuf` pointing to the settings file.
     fn get_settings_path() -> Option<PathBuf> {
-        #[cfg(test)]
-        {
+        let is_test = cfg!(test) || std::env::current_exe()
+            .map(|p| {
+                let s = p.to_string_lossy();
+                s.contains("/deps/") || s.contains("\\deps\\")
+            })
+            .unwrap_or(false);
+
+        if is_test {
             let mut path = std::env::temp_dir();
             path.push(format!(
                 "jsonette_test_settings_{}.json",
                 std::process::id()
             ));
             Some(path)
-        }
-        #[cfg(not(test))]
-        {
+        } else {
             #[cfg(target_os = "windows")]
             {
                 let mut path = std::env::var("LOCALAPPDATA")

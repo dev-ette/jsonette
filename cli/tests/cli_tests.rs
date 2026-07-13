@@ -189,3 +189,40 @@ fn test_cli_config_management() {
         .success()
         .stdout(predicate::str::starts_with("{\n    \"a\": 1\n}"));
 }
+
+/// **Test Case**: Output option generating formatted output to a new file.
+#[test]
+fn test_cli_format_output() {
+    let temp_dir = TempDir::new().unwrap();
+    let out_path = temp_dir.path().join("out.json");
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("format")
+        .arg("--output")
+        .arg(&out_path)
+        .write_stdin(r#"{"a":1}"#)
+        .assert()
+        .success()
+        .stdout(predicate::str::is_empty());
+
+    let content = fs::read_to_string(out_path).unwrap();
+    assert_eq!(content, "{\n  \"a\": 1\n}\n");
+}
+
+/// **Test Case**: Conflicting output and in-place arguments.
+#[test]
+fn test_cli_format_output_and_inplace_conflict() {
+    let temp_dir = TempDir::new().unwrap();
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("format")
+        .arg("dummy.json")
+        .arg("--output")
+        .arg("out.json")
+        .arg("--in-place")
+        .assert()
+        .failure()
+        .code(1)
+        .stderr(predicate::str::contains(
+            "Error: Cannot specify both --in-place and --output file.",
+        ));
+}

@@ -77,6 +77,10 @@ pub struct FormatArgs {
     #[arg(long, value_parser = ["expanded", "compact"])]
     pub folding_style: Option<String>,
 
+    /// Write the output to a specific file instead of standard output.
+    #[arg(short = 'o', long)]
+    pub output: Option<PathBuf>,
+
     /// Edit file in-place instead of printing to standard output.
     #[arg(short = 'i', long)]
     pub in_place: bool,

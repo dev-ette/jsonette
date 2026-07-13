@@ -34,6 +34,10 @@ pub fn handle_format(args: FormatArgs) {
         eprintln!("Error: Cannot perform in-place formatting when reading from standard input.");
         std::process::exit(1);
     }
+    if args.in_place && args.output.is_some() {
+        eprintln!("Error: Cannot specify both --in-place and --output file.");
+        std::process::exit(1);
+    }
 
     let (input, label) = match read_input(&args.file) {
         Ok(res) => res,
@@ -97,6 +101,15 @@ pub fn handle_format(args: FormatArgs) {
         }
         if let Err(e) = fs::write(path, &final_output) {
             eprintln!("Error writing formatted file: {}", e);
+            std::process::exit(1);
+        }
+    } else if let Some(out_path) = &args.output {
+        let mut final_output = output;
+        if !args.minify && !final_output.ends_with('\n') {
+            final_output.push('\n');
+        }
+        if let Err(e) = fs::write(out_path, &final_output) {
+            eprintln!("Error writing output file: {}", e);
             std::process::exit(1);
         }
     } else {

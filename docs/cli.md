@@ -38,6 +38,9 @@ cat data.json | jsonette format
 # Minify JSON (remove all whitespace)
 jsonette format data.json --minify
 
+# Output formatted JSON to a new file
+jsonette format data.json --output formatted.json
+
 # Format in-place (updates the file directly)
 jsonette format data.json --in-place
 ```
@@ -46,6 +49,8 @@ jsonette format data.json --in-place
 
 You can override your global configuration for a single command run using the following flags:
 
+- `-o, --output <file>`: Write output to a specific file instead of standard output.
+- `-i, --in-place`: Edit the input file in-place (mutually exclusive with `--output`).
 - `-s, --sort-keys <true|false>`: Sort object keys alphabetically.
 - `-n, --indent <count>`: Set the number of spaces/tabs for indentation.
 - `--use-tabs <true|false>`: Use tab characters instead of spaces.
