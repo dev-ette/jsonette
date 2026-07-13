@@ -19,7 +19,7 @@
 //! Pretty printing and minification for the JSON AST.
 
 use crate::json_node::JsonNode;
-use crate::types::{FoldingStyle, LineEnding};
+use crate::types::LineEnding;
 
 /// Formats the JSON node.
 /// Uses lossless number representations to preserve precision.
@@ -170,14 +170,15 @@ fn format_impl(node: &JsonNode, level: usize, opts: &crate::types::FormatOptions
             if elements.is_empty() {
                 return "[]".to_string();
             }
-            if let (crate::types::FoldingStyle::Compact, Some(inline)) = (&opts.folding_style, format_inline(node, &opts))
+            if let (crate::types::FoldingStyle::Compact, Some(inline)) =
+                (&opts.folding_style, format_inline(node, opts))
             {
                 return inline;
             }
 
-            let line_ending = get_line_ending(&opts);
-            let next_indent = get_indent(level + 1, &opts);
-            let current_indent = get_indent(level, &opts);
+            let line_ending = get_line_ending(opts);
+            let next_indent = get_indent(level + 1, opts);
+            let current_indent = get_indent(level, opts);
 
             let mut result = String::new();
             result.push('[');
@@ -185,7 +186,7 @@ fn format_impl(node: &JsonNode, level: usize, opts: &crate::types::FormatOptions
 
             for (i, elem) in elements.iter().enumerate() {
                 result.push_str(&next_indent);
-                result.push_str(&format_impl(elem, level + 1, &opts));
+                result.push_str(&format_impl(elem, level + 1, opts));
                 if i + 1 < elements.len() {
                     result.push(',');
                 }
@@ -200,7 +201,8 @@ fn format_impl(node: &JsonNode, level: usize, opts: &crate::types::FormatOptions
             if pairs.is_empty() {
                 return "{}".to_string();
             }
-            if let (crate::types::FoldingStyle::Compact, Some(inline)) = (&opts.folding_style, format_inline(node, &opts))
+            if let (crate::types::FoldingStyle::Compact, Some(inline)) =
+                (&opts.folding_style, format_inline(node, opts))
             {
                 return inline;
             }
@@ -210,9 +212,9 @@ fn format_impl(node: &JsonNode, level: usize, opts: &crate::types::FormatOptions
                 pairs.sort_by(|a, b| a.key.cmp(&b.key));
             }
 
-            let line_ending = get_line_ending(&opts);
-            let next_indent = get_indent(level + 1, &opts);
-            let current_indent = get_indent(level, &opts);
+            let line_ending = get_line_ending(opts);
+            let next_indent = get_indent(level + 1, opts);
+            let current_indent = get_indent(level, opts);
             let colon_str = if opts.space_after_colon { ": " } else { ":" };
 
             let mut result = String::new();
@@ -223,7 +225,7 @@ fn format_impl(node: &JsonNode, level: usize, opts: &crate::types::FormatOptions
                 result.push_str(&next_indent);
                 result.push_str(&serde_json::to_string(&pair.key).unwrap());
                 result.push_str(colon_str);
-                result.push_str(&format_impl(&pair.value, level + 1, &opts));
+                result.push_str(&format_impl(&pair.value, level + 1, opts));
                 if i + 1 < pairs.len() {
                     result.push(',');
                 }
@@ -275,7 +277,7 @@ fn minify_impl(node: &JsonNode) -> String {
 mod tests {
     use super::*;
     use crate::parser::parse;
-    use crate::types::FormatOptions;
+    use crate::types::{FoldingStyle, FormatOptions};
     use std::sync::Mutex;
 
     static TEST_LOCK: Mutex<()> = Mutex::new(());

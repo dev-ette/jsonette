@@ -28,6 +28,10 @@ use jsonette::{AppSettings, FoldingStyle, LineEnding, Severity};
 /// # Arguments
 ///
 /// * `args` - Parse config subcommands and arguments.
+///
+/// # Returns
+///
+/// Nothing.
 pub fn handle_config(args: ConfigArgs) {
     let mut settings = jsonette::get_settings();
     match args.command {

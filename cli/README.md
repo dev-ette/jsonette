@@ -108,7 +108,38 @@ jsonette explore --regex "^meta_" -n 5 "$[0]" data.json
 
 ---
 
-### 4. Global Config Management
+### 4. Converting JSON (`convert`)
+
+Convert a JSON document into other serialization formats (YAML, TOML, XML).
+
+```bash
+# Convert a JSON file to YAML
+jsonette convert -t yaml data.json
+
+# Convert a JSON file to TOML
+jsonette convert -t toml data.json
+
+# Convert standard input to XML
+cat data.json | jsonette convert -t xml
+```
+
+---
+
+### 5. Generating Dummy Data (`generate`)
+
+Generate structured dummy JSON data from a schema file.
+
+```bash
+# Generate dummy JSON based on schema
+jsonette generate --schema schema.json
+
+# Generate a 10MB dummy JSON object and write to a file
+jsonette generate --schema schema.json --size 10MB -o large-dummy.json
+```
+
+---
+
+### 6. Global Config Management
 
 Manage your global settings file (`~/.config/jsonette/settings.json` or `%LOCALAPPDATA%\jsonette\settings.json`) directly from the command line.
 
@@ -122,9 +153,10 @@ jsonette config get format.sort_keys
 # Set a configuration key (persists to disk)
 jsonette config set format.sort_keys true
 jsonette config set format.indent 4
+```
 ---
 
-### 4. Shell Autocompletion (`completions`)
+### 7. Shell Autocompletion (`completions`)
 
 Dynamically generates autocompletion scripts for various shells including `bash`, `zsh`, `fish`, `powershell`, and `elvish`.
 

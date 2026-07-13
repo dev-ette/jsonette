@@ -24,6 +24,10 @@ use std::str::FromStr;
 /// # Arguments
 ///
 /// * `args` - Parsed convert subcommand arguments.
+///
+/// # Returns
+///
+/// Nothing.
 pub fn handle_convert(args: ConvertArgs) {
     let (input, _label) = match read_input(&args.file) {
         Ok(res) => res,

@@ -64,23 +64,34 @@ impl FromStr for DataFormat {
 pub fn convert(input: &str, from: DataFormat, to: DataFormat) -> Result<String, String> {
     // 1. Parse input to intermediate serde_json::Value
     let value: serde_json::Value = match from {
-        DataFormat::Json => serde_json::from_str(input).map_err(|e| format!("JSON Parse Error: {}", e))?,
-        DataFormat::Yaml => serde_yml::from_str(input).map_err(|e| format!("YAML Parse Error: {}", e))?,
-        DataFormat::Toml => toml::from_str(input).map_err(|e| format!("TOML Parse Error: {}", e))?,
-        DataFormat::Xml => quick_xml::de::from_str(input).map_err(|e| format!("XML Parse Error: {}", e))?,
+        DataFormat::Json => {
+            serde_json::from_str(input).map_err(|e| format!("JSON Parse Error: {}", e))?
+        }
+        DataFormat::Yaml => {
+            serde_yml::from_str(input).map_err(|e| format!("YAML Parse Error: {}", e))?
+        }
+        DataFormat::Toml => {
+            toml::from_str(input).map_err(|e| format!("TOML Parse Error: {}", e))?
+        }
+        DataFormat::Xml => {
+            quick_xml::de::from_str(input).map_err(|e| format!("XML Parse Error: {}", e))?
+        }
     };
 
     // 2. Serialize value to target format
     match to {
         DataFormat::Json => {
-            let raw_json = serde_json::to_string(&value).map_err(|e| format!("JSON Serialize Error: {}", e))?;
+            let raw_json = serde_json::to_string(&value)
+                .map_err(|e| format!("JSON Serialize Error: {}", e))?;
             // Re-parse and format using our engine to respect configuration rules
             match crate::parse(&raw_json) {
                 Ok(node) => Ok(crate::format(&node)),
                 Err(_) => Ok(raw_json), // fallback to raw
             }
         }
-        DataFormat::Yaml => serde_yml::to_string(&value).map_err(|e| format!("YAML Serialize Error: {}", e)),
+        DataFormat::Yaml => {
+            serde_yml::to_string(&value).map_err(|e| format!("YAML Serialize Error: {}", e))
+        }
         DataFormat::Toml => {
             let toml_value = if value.is_array() {
                 let mut map = serde_json::Map::new();

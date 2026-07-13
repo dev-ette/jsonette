@@ -23,7 +23,15 @@ use jsonette::parser::parse;
 use std::fs;
 use std::io::{self, Write};
 
-/// Entry point for the `generate` subcommand.
+/// Starts the generation process.
+///
+/// # Arguments
+///
+/// * `args` - The GenerateArgs containing constraints and file output.
+///
+/// # Returns
+///
+/// Nothing.
 pub fn handle_generate(args: GenerateArgs) {
     // 1. Read schema
     let schema_text = if let Some(schema_path) = &args.schema {

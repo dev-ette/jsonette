@@ -110,6 +110,13 @@ def main():
             f"{bin_path} explore -n 1 '$[{last}].friends' {out_file} > /dev/null"
         )
 
+        print(f"[{name}] Convert to YAML...")
+        c_yaml, c_yaml_ram, _ = run_cmd(f"{bin_path} convert -f json -t yaml {out_file} > /dev/null || true")
+        print(f"[{name}] Convert to TOML...")
+        c_toml, c_toml_ram, _ = run_cmd(f"{bin_path} convert -f json -t toml {out_file} > /dev/null")
+        print(f"[{name}] Convert to XML...")
+        c_xml, c_xml_ram, _ = run_cmd(f"{bin_path} convert -f json -t xml {out_file} > /dev/null")
+
         results.append(
             {
                 "name": name,
@@ -122,6 +129,9 @@ def main():
                 "e_first": e_first,
                 "e_mid": e_mid,
                 "e_last": e_last,
+                "c_yaml": c_yaml,
+                "c_toml": c_toml,
+                "c_xml": c_xml,
                 "peak_ram": max(
                     gen_ram,
                     fmt_ram,
@@ -132,6 +142,9 @@ def main():
                     e_first_ram,
                     e_mid_ram,
                     e_last_ram,
+                    c_yaml_ram,
+                    c_toml_ram,
+                    c_xml_ram,
                 ),
             }
         )
@@ -145,13 +158,13 @@ def main():
     ]
 
     report.append(
-        "| Workload | Gen (s) | Fmt (s) | Q First | Q Mid | Q Last | Exp Root | Peak RAM (MB) |"
+        "| Workload | Gen (s) | Fmt (s) | Q Mid | Exp Root | C TOML (s) | C XML (s) | Peak RAM (MB) |"
     )
     report.append("|---|---|---|---|---|---|---|---|")
 
     for r in results:
         report.append(
-            f"| {r['name']} | {r['gen']:.3f} | {r['fmt']:.3f} | {r['q_first']:.3f} | {r['q_mid']:.3f} | {r['q_last']:.3f} | {r['e_root']:.3f} | {r['peak_ram']:.1f} |"
+            f"| {r['name']} | {r['gen']:.3f} | {r['fmt']:.3f} | {r['q_mid']:.3f} | {r['e_root']:.3f} | {r['c_toml']:.3f} | {r['c_xml']:.3f} | {r['peak_ram']:.1f} |"
         )
 
     report_md = "\n".join(report)

@@ -41,6 +41,10 @@ use regex::Regex;
 /// # Arguments
 ///
 /// * `args` - Parsed explore subcommand arguments.
+///
+/// # Returns
+///
+/// Nothing.
 pub fn handle_explore(mut args: ExploreArgs) {
     // Heuristic: If only one positional argument is provided (parsed as `path`)
     // and it corresponds to an existing file on disk, assume the user omitted
@@ -169,19 +173,18 @@ fn page_output(output: &str) {
     use std::io::{IsTerminal, Write};
     use std::process::{Command, Stdio};
 
-    if std::io::stdout().is_terminal() {
-        if let Ok(mut child) = Command::new("less")
+    if std::io::stdout().is_terminal()
+        && let Ok(mut child) = Command::new("less")
             .args(["-F", "-R", "-X"])
             .stdin(Stdio::piped())
             .spawn()
-        {
-            if let Some(mut stdin) = child.stdin.take() {
-                let _ = stdin.write_all(output.as_bytes());
-            }
-            let _ = child.wait();
-            return;
+    {
+        if let Some(mut stdin) = child.stdin.take() {
+            let _ = stdin.write_all(output.as_bytes());
         }
+        let _ = child.wait();
+        return;
     }
-    
+
     print!("{}", output);
 }

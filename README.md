@@ -12,11 +12,13 @@
 
 ## 🎯 Project Philosophy
 
-Unlike bundled "swiss-army-knife" developer utilities, `jsonette` is designed to do three core tasks exceptionally well, focusing on native-tier quality, performance, and user privacy:
+Unlike bundled "swiss-army-knife" developer utilities, `jsonette` is designed to do five core tasks exceptionally well, focusing on native-tier quality, performance, and user privacy:
 
 1. **Edit**: High-performance text editor experience with syntax highlighting, inline diagnostic error indicators, and instant formatting.
 2. **View**: High-speed, virtualized, collapsible outline tree view with click-to-navigate structural exploration.
 3. **Query**: Real-time RFC 9535 JSONPath evaluator featuring intelligent key autocomplete and a live results panel.
+4. **Convert**: Seamlessly convert JSON into YAML, TOML, and XML.
+5. **Generate**: Create structured dummy JSON data based on constraints.
 
 ### Core Guarantees
 
@@ -44,8 +46,8 @@ To ensure multi-platform capability without duplicating business logic, `jsonett
      (clap binary)     (SwiftUI)       (Tauri / Web)
 ```
 
-- **The Engine (`jsonette-core`)**: Owns parsing logic, query computation, autocomplete schema inference, diagnostics generation, settings management, and data transformations.
-- **The CLI (`jsonette`)**: A fast, dependency-isolated terminal binary wrapping the engine, providing pipeline formatting and query capabilities.
+- **The Engine (`jsonette-core`)**: Owns parsing logic, query computation, autocomplete schema inference, diagnostics generation, settings management, and cross-format data conversions.
+- **The CLI (`jsonette`)**: A fast, dependency-isolated terminal binary wrapping the engine, providing pipeline formatting, data conversion, and query capabilities.
 - **The GUI Shell (SwiftUI / Tauri)**: Focuses purely on native system integrations, input handling, and high-performance virtualized UI rendering.
 
 ---

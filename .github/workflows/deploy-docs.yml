@@ -7,6 +7,7 @@ on:
     paths:
       - 'docs/**'
       - 'engine/**'
+      - 'cli/**'
       - 'mkdocs.yml'
       - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
@@ -61,7 +62,7 @@ jobs:
           else
             echo "Warning: docs/architecture/html-docs not found. Skipping."
           fi
-          
+
           # Copy Rust engine API documentation
           if [ -d "target/doc" ]; then
             echo "Copying Rust engine-docs..."

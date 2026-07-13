@@ -27,7 +27,7 @@ use std::path::PathBuf;
 #[derive(ClapParser, Debug)]
 #[command(
     name = "jsonette",
-    version = "0.3.0",
+    version = "0.4.0",
     about = "Fast, lightweight JSON format, query, and configuration utility."
 )]
 pub struct Cli {

@@ -27,7 +27,6 @@ pub mod format;
 pub mod generate;
 pub mod query;
 
-pub use config::handle_config;
 pub use explore::handle_explore;
 pub use format::handle_format;
 pub use generate::handle_generate;
