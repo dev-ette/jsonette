@@ -31,19 +31,24 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             binary_name: jsonette
-            asset_name: jsonette-linux-amd64
+            os_name: linux
+            arch: amd64
           - os: macos-latest
             target: x86_64-apple-darwin
             binary_name: jsonette
-            asset_name: jsonette-macos-amd64
+            os_name: macos
+            arch: amd64
           - os: macos-latest
             target: aarch64-apple-darwin
             binary_name: jsonette
-            asset_name: jsonette-macos-arm64
+            os_name: macos
+            arch: arm64
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             binary_name: jsonette.exe
-            asset_name: jsonette-windows-amd64.exe
+            os_name: windows
+            arch: amd64
+            ext: .exe
 
     steps:
       - name: Checkout repository
@@ -61,9 +66,29 @@ jobs:
         shell: bash
         run: |
           mkdir -p release-asset
-          cp target/${{ matrix.target }}/release/${{ matrix.binary_name }} release-asset/${{ matrix.asset_name }}
+          VERSION=${GITHUB_REF_NAME#v}
+          ASSET_BASENAME="jsonette-${VERSION}-${{ matrix.os_name }}-${{ matrix.arch }}"
+          
+          # Compress binary into tar.gz or zip depending on OS
+          if [ "${{ matrix.os_name }}" = "windows" ]; then
+            cp target/${{ matrix.target }}/release/${{ matrix.binary_name }} $ASSET_BASENAME${{ matrix.ext }}
+            7z a release-asset/${ASSET_BASENAME}.zip $ASSET_BASENAME${{ matrix.ext }}
+          else
+            cp target/${{ matrix.target }}/release/${{ matrix.binary_name }} $ASSET_BASENAME
+            tar -czvf release-asset/${ASSET_BASENAME}.tar.gz $ASSET_BASENAME
+          fi
+
+      - name: Install cargo-deb (Linux only)
+        if: matrix.os_name == 'linux'
+        run: cargo install cargo-deb
+
+      - name: Build and Prepare .deb (Linux only)
+        if: matrix.os_name == 'linux'
+        run: |
+          cargo deb --target ${{ matrix.target }}
+          cp target/${{ matrix.target }}/debian/*.deb release-asset/
 
       - name: Upload Binary to Release
         uses: softprops/action-gh-release@v3.0.1
         with:
-          files: release-asset/${{ matrix.asset_name }}
+          files: release-asset/*

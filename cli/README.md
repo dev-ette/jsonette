@@ -18,10 +18,29 @@ Once published, you can install the CLI directly:
 cargo install jsonette
 ```
 
+### APT / PPA (Ubuntu / Debian)
+
+We maintain an official PPA for Ubuntu users.
+
+```bash
+sudo add-apt-repository ppa:dev-ette/jsonette
+sudo apt update
+sudo apt install jsonette
+```
+
 ### Homebrew (macOS / Linux)
 
 ```bash
+brew tap dev-ette/jsonette
 brew install jsonette
+```
+
+### Pacman (Arch Linux / AUR)
+
+The package is available in the Arch User Repository as `jsonette-bin`.
+
+```bash
+yay -S jsonette-bin
 ```
 
 ### Pre-compiled Binaries (GitHub Releases)
