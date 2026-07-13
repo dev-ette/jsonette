@@ -40,3 +40,19 @@ pub use formatter::{format, minify};
 pub use parser::{diagnostics, parse, tolerant_parse};
 pub use query::{diagnostics_for_path, evaluate_path};
 pub use settings::{Settings, get_settings, set_in_memory_settings, update_settings};
+
+uniffi::setup_scaffolding!();
+
+/// A trivial ping-pong function to verify the UniFFI FFI bridge is working end-to-end.
+///
+/// # Arguments
+///
+/// * `input` - A string parameter sent from the calling shell (Swift/Kotlin).
+///
+/// # Returns
+///
+/// A formatted string response showing success.
+#[uniffi::export]
+pub fn ping(input: String) -> String {
+    format!("pong: {}", input)
+}

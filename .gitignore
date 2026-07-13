@@ -35,6 +35,14 @@ macos/.build/
 
 # Generated UniFFI bindings
 macos/generated/
+bridge-spike/jsonette.swift
+bridge-spike/jsonetteFFI.h
+bridge-spike/jsonette.py
+bridge-spike/jsonette.kt
+bridge-spike/main
+bridge-spike/main_c
+bridge-spike/__pycache__/
+bridge-spike/uniffi/
 
 # Architecture
 # Comment out html-docs/ to allow tracking StarUML architecture exports in Git
