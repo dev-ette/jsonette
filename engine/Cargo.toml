@@ -18,9 +18,12 @@ path = "src/lib.rs"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [dependencies]
+quick-xml = { version = "0.41.0", features = ["serialize"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
 serde_json_path = "0.7"
+serde_yml = "0.0.13"
+toml = "1.1.2"
 uniffi = { version = "0.32.0", features = ["cli"] }
 
 [dev-dependencies]

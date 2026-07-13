@@ -49,6 +49,8 @@ pub enum Commands {
     Generate(GenerateArgs),
     /// Manage global configuration settings.
     Config(ConfigArgs),
+    /// Convert between JSON and other formats (YAML, TOML, XML).
+    Convert(ConvertArgs),
     /// Generate shell autocompletion scripts.
     Completions {
         /// The shell to generate completions for.
@@ -177,4 +179,19 @@ pub enum ConfigCommands {
         /// The new value to store (e.g. `true`).
         value: String,
     },
+}
+
+/// Arguments and options for the convert command.
+#[derive(Args, Debug)]
+pub struct ConvertArgs {
+    /// The input format (json, yaml, toml, xml).
+    #[arg(short = 'f', long, default_value = "json")]
+    pub from: String,
+
+    /// The output format (json, yaml, toml, xml).
+    #[arg(short = 't', long, default_value = "yaml")]
+    pub to: String,
+
+    /// Input file path. If omitted, the tool reads from standard input.
+    pub file: Option<PathBuf>,
 }

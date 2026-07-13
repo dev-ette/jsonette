@@ -21,6 +21,7 @@
 //! inside this module.
 
 pub mod config;
+pub mod convert;
 pub mod explore;
 pub mod format;
 pub mod generate;

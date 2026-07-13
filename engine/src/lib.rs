@@ -21,6 +21,7 @@
 #![allow(unused_variables)]
 
 pub mod completion;
+pub mod converter;
 pub mod formatter;
 pub mod generator;
 pub mod json_node;

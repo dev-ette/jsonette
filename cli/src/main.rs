@@ -37,7 +37,12 @@ fn main() {
         Commands::Query(args) => commands::handle_query(args),
         Commands::Explore(args) => commands::handle_explore(args),
         Commands::Generate(args) => commands::handle_generate(args),
-        Commands::Config(args) => commands::handle_config(args),
+        Commands::Config(config_args) => {
+            commands::config::handle_config(config_args);
+        }
+        Commands::Convert(convert_args) => {
+            commands::convert::handle_convert(convert_args);
+        }
         Commands::Completions { shell } => {
             let mut cmd = Cli::command();
             let name = cmd.get_name().to_string();
