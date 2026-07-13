@@ -101,12 +101,13 @@ impl Settings {
     ///
     /// An optional `PathBuf` pointing to the settings file.
     fn get_settings_path() -> Option<PathBuf> {
-        let is_test = cfg!(test) || std::env::current_exe()
-            .map(|p| {
-                let s = p.to_string_lossy();
-                s.contains("/deps/") || s.contains("\\deps\\")
-            })
-            .unwrap_or(false);
+        let is_test = cfg!(test)
+            || std::env::current_exe()
+                .map(|p| {
+                    let s = p.to_string_lossy();
+                    s.contains("/deps/") || s.contains("\\deps\\")
+                })
+                .unwrap_or(false);
 
         if is_test {
             let mut path = std::env::temp_dir();
