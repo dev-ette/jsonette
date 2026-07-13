@@ -3,8 +3,10 @@
 
 # Rust — target/ is also in engine/.gitignore; root entry is a safety net
 engine/target/
+target/
 # Library crates don't commit Cargo.lock — downstream consumers manage their own
 engine/Cargo.lock
+Cargo.lock
 
 # Xcode / Swift
 macos/*.xcodeproj/xcuserdata/

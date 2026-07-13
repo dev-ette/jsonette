@@ -112,9 +112,35 @@ impl Settings {
         }
         #[cfg(not(test))]
         {
-            let mut path = Self::get_home_dir()?;
-            path.push(".jsonette_settings.json");
-            Some(path)
+            #[cfg(target_os = "windows")]
+            {
+                let mut path = std::env::var("LOCALAPPDATA")
+                    .ok()
+                    .map(PathBuf::from)
+                    .or_else(|| {
+                        let mut home = Self::get_home_dir()?;
+                        home.push("AppData");
+                        home.push("Local");
+                        Some(home)
+                    })?;
+                path.push("jsonette");
+                path.push("settings.json");
+                Some(path)
+            }
+            #[cfg(not(target_os = "windows"))]
+            {
+                let mut path = std::env::var("XDG_CONFIG_HOME")
+                    .ok()
+                    .map(PathBuf::from)
+                    .or_else(|| {
+                        let mut home = Self::get_home_dir()?;
+                        home.push(".config");
+                        Some(home)
+                    })?;
+                path.push("jsonette");
+                path.push("settings.json");
+                Some(path)
+            }
         }
     }
 
@@ -151,6 +177,10 @@ impl Settings {
     fn save_settings_to_disk(settings: &AppSettings) -> Result<(), String> {
         let path = Self::get_settings_path()
             .ok_or_else(|| "Unable to locate home directory".to_string())?;
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent)
+                .map_err(|e| format!("Failed to create settings directory: {}", e))?;
+        }
         let content = serde_json::to_string_pretty(settings)
             .map_err(|e| format!("Failed to serialize settings: {}", e))?;
         fs::write(&path, content).map_err(|e| format!("Failed to write settings file: {}", e))?;
@@ -184,4 +214,11 @@ pub fn update_settings(settings: AppSettings) -> Result<(), String> {
         *write_guard = settings;
     }
     Settings::save_settings_to_disk(&settings)
+}
+
+/// Updates the in-memory preferences without persisting them to disk.
+pub fn set_in_memory_settings(settings: AppSettings) {
+    let lock = Settings::get_settings_lock();
+    let mut write_guard = lock.write().expect("Failed to acquire settings write lock");
+    *write_guard = settings;
 }

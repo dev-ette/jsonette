@@ -16,7 +16,7 @@ The generated API reference lists public modules, parser structs, diagnostics tr
 
 The rustdocs cover:
 
-- **[`Parser`](../engine-docs/jsonette/struct.Parser.html)**: Handles parsing JSON text and generating tolerant syntax trees.
-- **[`Formatter`](../engine-docs/jsonette/struct.Formatter.html)**: Manages pretty printing, indentation, and minification.
-- **[`QueryEngine`](../engine-docs/jsonette/struct.QueryEngine.html)**: Evaluates RFC 9535 JSONPath expressions.
+- **[`Parser`](../engine-docs/jsonette/praser/index.html)**: Handles parsing JSON text and generating tolerant syntax trees.
+- **[`Formatter`](../engine-docs/jsonette/formatter/index.html)**: Manages pretty printing, indentation, and minification.
+- **[`QueryEngine`](../engine-docs/jsonette/query/index.html)**: Evaluates RFC 9535 JSONPath expressions.
 - **FFI Bindings**: Entrypoints compiled into a static library for native consumption via UniFFI.

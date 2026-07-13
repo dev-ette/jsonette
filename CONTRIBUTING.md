@@ -1,6 +1,6 @@
 # Contributing to jsonette
 
-Thank you for your interest in contributing to `jsonette`! 
+Thank you for your interest in contributing to `jsonette`!
 
 `jsonette` is a small, deliberately scoped project that values **correctness, stability, extreme performance, and a clean native user experience over feature breadth**. Before you begin working on a contribution, please read this guide and review the active Architecture Decision Records (ADRs) under `/docs/architecture/decisions/`.
 
@@ -11,18 +11,24 @@ Thank you for your interest in contributing to `jsonette`!
 Every contribution must adhere to these three core principles:
 
 ### 1. Respect the Engine / Shell Boundary (ADR-0003)
-All business logic—parsing, tree model representation, formatting, JSONPath evaluation, autocomplete schema inference, and error diagnostics—lives entirely in the **Rust core engine**. 
-- Shell applications (SwiftUI, Tauri, etc.) **only render**. 
+
+All business logic—parsing, tree model representation, formatting, JSONPath evaluation, autocomplete schema inference, and error diagnostics—lives entirely in the **Rust core engine**.
+
+- Shell applications (SwiftUI, Tauri, etc.) **only render**.
 - **Do not** add JSON parsing, regex queries, or schema validation inside a shell. If a feature involves data processing, it belongs in `/engine`.
 
 ### 2. Privacy First
-`jsonette` is 100% local. 
+
+`jsonette` is 100% local.
+
 - **No network calls** are allowed.
 - **No telemetry, logging services, or crash reporters** that connect to external servers may be added.
 - Pull requests that introduce network connectivity of any kind will be rejected.
 
 ### 3. Strict Performance Budgets
+
 Performance is a core feature. We enforce limits on cold start times, idle RAM consumption, and input latency.
+
 - Avoid pulling in heavy crates with large transitive dependency trees in `/engine/Cargo.toml`.
 - Any PR that regresses typing latency in the editor or parsing speeds on files larger than 10MB will be flagged for optimization.
 
@@ -30,27 +36,40 @@ Performance is a core feature. We enforce limits on cold start times, idle RAM c
 
 ## 🛠️ Local Development Setup
 
-### 1. Working on the Rust Engine (`/engine`)
-The engine is a standard Rust library crate. Ensure you have the version specified in `rust-toolchain.toml` installed.
+### 1. Working in the Rust Workspace (`/engine` and `/cli`)
+
+The Rust project is managed as a Cargo Workspace containing both the `jsonette-core` library engine and the `jsonette` CLI app. Ensure you have the stable toolchain installed.
+
+Run all compilation, linting, and testing commands from the repository root directory:
 
 ```bash
-# Build the engine in debug mode
-cargo build
+# Build both the library engine and the CLI binary
+cargo build --workspace
 
-# Run the unit and property tests
-cargo test
+# Run all unit, integration, and property tests
+cargo test --workspace
 
 # Run lints and formatting checks (CI-enforced)
 cargo clippy --workspace -- -D warnings
 cargo fmt --check
 ```
 
-### 2. Working on the macOS Shell (`/macos`)
+### 2. Working on the CLI Application (`/cli`)
+
+The CLI is a binary shell. If you add command-line overrides, parsing logic, or subcommands:
+
+- Maintain clean modularity under `cli/src/commands/`.
+- Add corresponding black-box integration tests under `cli/tests/cli_tests.rs` utilizing the `assert_cmd` and `predicates` crates to verify output streams and exit codes.
+
+### 3. Working on the macOS Shell (`/macos`)
+
 - Open the Xcode workspace under `/macos`.
 - The macOS project is configured to link the Rust engine via UniFFI. Setting up and compiling the project automatically runs the UniFFI bridge compiler.
 
-### 3. Documentation
+### 4. Documentation
+
 To generate and view the combined API documentation portal locally:
+
 ```bash
 ./docs/build-docs.sh
 open docs/index.html

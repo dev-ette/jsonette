@@ -1,5 +1,5 @@
 [package]
-name = "jsonette"
+name = "jsonette-core"
 version = "0.2.0"
 edition = "2024"
 description = "JSON parse, format, query, and diagnostics engine — core library for the jsonette tool"
@@ -12,7 +12,14 @@ categories = ["parser-implementations", "encoding"]
 
 # NOTE: UniFFI crate-type (staticlib + cdylib) will be added in the bridge
 # setup issue (#13). Default lib crate-type is correct until then.
+[lib]
+name = "jsonette"
+path = "src/lib.rs"
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
+
+[dev-dependencies]
+proptest = "1.4"
+

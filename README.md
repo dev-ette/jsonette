@@ -19,6 +19,7 @@ Unlike bundled "swiss-army-knife" developer utilities, `jsonette` is designed to
 3. **Query**: Real-time RFC 9535 JSONPath evaluator featuring intelligent key autocomplete and a live results panel.
 
 ### Core Guarantees
+
 - **Strict Privacy**: 100% local processing. Zero telemetry, zero external trackers, and zero network calls.
 - **Extreme Performance**: Enforced startup and memory budgets (e.g., fast cold start, under 30MB idle RAM).
 - **Native Experience**: Standard native controls and performance over bloated multi-gigabyte Electron apps.
@@ -33,54 +34,61 @@ To ensure multi-platform capability without duplicating business logic, `jsonett
 ┌──────────────────────────────────────────────────────────────┐
 │                  CORE ENGINE (Rust Crate)                    │
 │   Parsers · Tree Model · Formatter · JSONPath · Autocomplete │
-└──────────────────────────────┬───────────────────────────────┘
-                               │
-                Compiles via FFI (UniFFI / Rust ABI)
-                               │
-        ┌──────────────────────┴──────────────────────┐
-        ▼                                             ▼
-   macOS Shell (SwiftUI)                       Future Shells (Tauri / Web)
-   Native rendering, outline views.            Tauri webview, CodeMirror.
+└──────────────┬───────────────┬───────────────┬───────────────┘
+               │               │               │
+        Direct Dependency   UniFFI FFI   Future Web ABI
+               │               │               │
+        ┌──────┴──────┐ ┌──────┴──────┐ ┌──────┴──────┐
+        ▼             ▼ ▼             ▼ ▼             ▼
+     CLI App           macOS Shell     Future Shells
+     (clap binary)     (SwiftUI)       (Tauri / Web)
 ```
 
-- **The Engine (Rust)**: Owns parsing logic, query computation, autocomplete schema inference, diagnostics generation, and data transformations.
-- **The Shell (Native Swift / Tauri)**: Focuses purely on native system integrations, input handling, and high-performance UI rendering.
+- **The Engine (`jsonette-core`)**: Owns parsing logic, query computation, autocomplete schema inference, diagnostics generation, settings management, and data transformations.
+- **The CLI (`jsonette`)**: A fast, dependency-isolated terminal binary wrapping the engine, providing pipeline formatting and query capabilities.
+- **The GUI Shell (SwiftUI / Tauri)**: Focuses purely on native system integrations, input handling, and high-performance virtualized UI rendering.
 
 ---
 
 ## 🛠️ Technology Stack
 
-| Layer | Technology | Rationale |
-|---|---|---|
-| **Core Engine** | Rust | Portable compiled library, native speed, memory safety. Shared via UniFFI wrapper. |
-| **macOS UI** | SwiftUI + AppKit | Deeply integrated native macOS 14+ look-and-feel. |
-| **macOS Editor** | Tree-sitter / AppKit | Native text view with high-speed syntax coloring. |
-| **macOS Tree View** | Virtualized outline view | Handles multi-gigabyte JSON hierarchies lazily without lag. |
+| Layer               | Technology               | Rationale                                                                          |
+| ------------------- | ------------------------ | ---------------------------------------------------------------------------------- |
+| **Core Engine**     | Rust                     | Portable compiled library, native speed, memory safety. Shared via UniFFI wrapper. |
+| **CLI App**         | Rust + Clap              | Dependency-isolated binary for shell scripting and pipelines.                      |
+| **macOS UI**        | SwiftUI + AppKit         | Deeply integrated native macOS 14+ look-and-feel.                                  |
+| **macOS Editor**    | Tree-sitter / AppKit     | Native text view with high-speed syntax coloring.                                  |
+| **macOS Tree View** | Virtualized outline view | Handles multi-gigabyte JSON hierarchies lazily without lag.                        |
 
 ---
 
 ## 📂 Repository Structure
 
-- **/engine**: Core Rust library crate (`jsonette`) containing all data processing logic and FFI configurations.
+- **/engine**: Core Rust library crate (`jsonette-core`) containing all parsing, formatting, and diagnostics logic.
+- **/cli**: Modular command line application crate (`jsonette`) containing clap CLI args, subcommands, and pipeline formatting helpers.
 - **/macos**: SwiftUI client application (Xcode project) consuming the engine.
 - **/docs**: Unified documentation portal config, architecture ADRs, and decision records.
-- **/.github**: CI/CD pipelines (Engine validation, docs deployment, crates.io publishing).
+- **/.github**: CI/CD pipelines (Engine & CLI validation, docs deployment, crates.io publishing).
 
 ---
 
 ## 🚀 Getting Started & Building
 
 ### Prerequisites
+
 - **Rust Toolchain**: Install via [rustup](https://rustup.rs/) (version details in [rust-toolchain.toml](file:///Users/aharbi/workset/jsonette/engine/rust-toolchain.toml)).
 - **Xcode**: Required for macOS application compilation.
 
-### Building the Engine & Running Tests
-```bash
-# Navigate to the engine
-cd engine
+### Building the Workspace & Running Tests
 
-# Run tests
-cargo test
+All commands are run from the workspace root:
+
+```bash
+# Build the core engine and CLI
+cargo build --workspace
+
+# Run all unit, integration, and property tests
+cargo test --workspace
 
 # Run quality checks
 cargo clippy --workspace -- -D warnings
@@ -88,13 +96,15 @@ cargo fmt --check
 ```
 
 ### Developing documentation portal locally
-To generate the Rust engine API documentation locally:
+
+To generate the Rust engine and CLI API documentation locally:
+
 ```bash
 # Execute the docs script
 ./docs/build-docs.sh
 
 # Open generated index in browser
-open docs/index.html
+open docs/engine-docs/jsonette/index.html
 ```
 
 ---
@@ -116,5 +126,6 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) to und
 ## 📄 License
 
 Dual-licensed under either:
+
 - **MIT License** ([LICENSE-MIT](LICENSE-MIT))
 - **Apache License, Version 2.0** ([LICENSE-APACHE](LICENSE-APACHE))

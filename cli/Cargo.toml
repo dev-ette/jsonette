@@ -1,0 +1,22 @@
+[package]
+name = "jsonette"
+version = "0.2.0"
+edition = "2024"
+description = "CLI application for jsonette: format, query, and configure JSON parser engine."
+license = "MIT OR Apache-2.0"
+
+[[bin]]
+name = "jsonette"
+path = "src/main.rs"
+
+[dependencies]
+jsonette = { package = "jsonette-core", path = "../engine" }
+clap = { version = "4.4", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[dev-dependencies]
+assert_cmd = "2.0"
+predicates = "3.1"
+tempfile = "3.10"
+
