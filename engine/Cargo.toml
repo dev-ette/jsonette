@@ -1,6 +1,6 @@
 [package]
 name = "jsonette-core"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 description = "JSON parse, format, query, and diagnostics engine — core library for the jsonette tool"
 repository = "https://github.com/dev-ette/jsonette"
