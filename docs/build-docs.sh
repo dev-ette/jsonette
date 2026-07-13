@@ -4,12 +4,13 @@ set -e
 
 # Get the directory of this script
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+WORKSPACE_DIR="$SCRIPT_DIR/.."
 
-# Navigate to the engine directory
-cd "$SCRIPT_DIR/../engine"
+# Navigate to the workspace root directory
+cd "$WORKSPACE_DIR"
 
-echo "Building Rust engine documentation..."
-cargo doc --no-deps
+echo "Building Rust workspace documentation..."
+cargo doc --workspace --no-deps
 
 echo "Cleaning up old documentation in docs/engine-docs..."
 rm -rf "$SCRIPT_DIR/engine-docs"

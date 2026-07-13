@@ -13,7 +13,7 @@ Sizing is relative (S / M / L), not calendar time — this is a solo + trusted-c
 | **M1** | Editor | `CodeEditSourceEditor` integrated; tree-sitter JSON coloring; engine-driven error diagnostics; format/minify; 50 MB file stays interactive; first signed `.dmg`. | L |
 | **M2** | Tree Viewer | `NSOutlineView` virtualized tree; datatype rendering; search + jump; editor↔tree two-way sync. | M |
 | **M3** | Query Tool | JSONPath via engine; native autocomplete from live schema; span-accurate error messages; results pane + history. | L |
-| **M4** | **macOS 1.0** | UX polish; all perf budgets green in CI; notarized `.dmg`; **Homebrew cask** published; tagged GitHub release with notes. | M |
+| **M4** | **macOS & CLI 1.0** | UX polish; all perf budgets green in CI; notarized macOS `.dmg` and signed CLI binary; **Homebrew cask** (GUI) and **Homebrew formula** (CLI) published; packages for `apt` and `winget` generated; tagged GitHub release. | M |
 
 ## Phase 2 — Decision gate
 

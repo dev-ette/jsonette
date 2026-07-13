@@ -17,3 +17,5 @@ Architecture Decision Records (ADRs) document the significant choices made durin
 | [0005](0005-jsonpath-primary-query-language.md) | JSONPath as the primary query language | Accepted | 2026-06-27 |
 | [0006](0006-project-name-selection.md) | Project name selection | Accepted | 2026-06-27 |
 | [0007](0007-licensing.md) | Licensing | Accepted | 2026-06-27 |
+| [0008](0008-cli-application-via-cargo-workspace.md) | CLI target and configuration via Cargo Workspace | Accepted | 2026-07-13 |
+

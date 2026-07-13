@@ -1,0 +1,101 @@
+# Command Line Interface (CLI) Reference
+
+`jsonette` provides a high-performance, standalone Command Line Interface (CLI) built on top of the core Rust engine. It allows formatting, minifying, querying, and managing configuration settings directly in your terminal.
+
+---
+
+## 🚀 Installation
+
+Once published, you can install the CLI directly:
+
+### Cargo (Rust)
+
+```bash
+cargo install jsonette
+```
+
+### Homebrew (macOS / Linux)
+
+```bash
+brew install jsonette
+```
+
+---
+
+## 🛠️ Commands & Usage
+
+### 1. Formatting & Minifying
+
+Formats (pretty-prints) or minifies a JSON file or standard input.
+
+```bash
+# Format a JSON file (outputs to stdout)
+jsonette format data.json
+
+# Format standard input via pipeline
+cat data.json | jsonette format
+
+# Minify JSON (remove all whitespace)
+jsonette format data.json --minify
+
+# Format in-place (updates the file directly)
+jsonette format data.json --in-place
+```
+
+#### Formatting Option Overrides
+
+You can override your global configuration for a single command run using the following flags:
+
+- `-s, --sort-keys <true|false>`: Sort object keys alphabetically.
+- `-n, --indent <count>`: Set the number of spaces/tabs for indentation.
+- `--use-tabs <true|false>`: Use tab characters instead of spaces.
+- `--line-ending <lf|crlf>`: Force a specific line ending style.
+- `--folding-style <expanded|compact>`: Customize folding behavior.
+
+---
+
+### 2. Querying JSON (JSONPath)
+
+Evaluate RFC 9535 JSONPath expressions against a JSON document.
+
+```bash
+# Query a file
+jsonette query "$.store.book[*].author" books.json
+
+# Query standard input
+cat books.json | jsonette query "$.store.book[*].author"
+```
+
+---
+
+### 3. Global Config Management
+
+Manage your global settings file (`~/.config/jsonette/settings.json` or `%LOCALAPPDATA%\jsonette\settings.json`) directly from the command line.
+
+```bash
+# List all active settings in JSON format
+jsonette config list
+
+# Get a specific configuration key
+jsonette config get format.sort_keys
+
+# Set a configuration key (persists to disk)
+jsonette config set format.sort_keys true
+jsonette config set format.indent 4
+```
+
+---
+
+## ⚠️ Diagnostics & Error Output
+
+When formatting or parsing invalid JSON, `jsonette` outputs detailed diagnostics to `stderr` with line/column coordinates and a compiler-style visual caret pointer:
+
+```text
+Error in <stdin>:2:1: EOF while parsing an object at line 2 column 0
+  |
+  1 | {"a": 1
+  |        ^
+```
+
+- Exit code `0` is returned on success.
+- Exit code `1` is returned on parsing, evaluation, or syntax errors.
