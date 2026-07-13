@@ -244,7 +244,18 @@ fn test_cli_completions() {
 
 // ──────────────────────────── query subcommand ────────────────────────────────
 
-/// **Test Case**: `query` with a simple dot-key path returns the matched value.
+/// **Test Case**: Dot-Key Path Extracts Named Property From File
+///
+/// ### Description
+/// Verifies that `jsonette query` correctly evaluates a simple dot-key JSONPath
+/// expression against a JSON file and prints the matched string value.
+///
+/// ### Test Procedure
+/// 1. Write `{"name": "jsonette", "version": "0.1.0"}` to a temporary file.
+/// 2. Run `jsonette query $.name <file>`.
+///
+/// ### Expected Result
+/// Exits with code 0. Stdout contains the string `"jsonette"`.
 #[test]
 fn test_cli_query_dot_key() {
     let temp_dir = TempDir::new().unwrap();
@@ -260,7 +271,18 @@ fn test_cli_query_dot_key() {
         .stdout(predicate::str::contains("jsonette"));
 }
 
-/// **Test Case**: `query` with a wildcard path returns all matching array elements.
+/// **Test Case**: Wildcard Path Collects All Matching Array Elements
+///
+/// ### Description
+/// Verifies that a wildcard JSONPath expression traverses an array of objects
+/// and collects the named property from every element in document order.
+///
+/// ### Test Procedure
+/// 1. Write `{"users": [{"name": "Alice"}, {"name": "Bob"}]}` to a temporary file.
+/// 2. Run `jsonette query $.users[*].name <file>`.
+///
+/// ### Expected Result
+/// Exits with code 0. Stdout contains both `"Alice"` and `"Bob"`.
 #[test]
 fn test_cli_query_wildcard_array() {
     let temp_dir = TempDir::new().unwrap();
@@ -281,7 +303,19 @@ fn test_cli_query_wildcard_array() {
         .stdout(predicate::str::contains("Bob"));
 }
 
-/// **Test Case**: `query` with no matches prints `[]`.
+/// **Test Case**: Non-Matching Path Prints Empty Array
+///
+/// ### Description
+/// Verifies that a valid JSONPath expression that matches no nodes in the
+/// document prints `[]` to stdout and exits successfully, consistent with
+/// the RFC 9535 empty node-list convention.
+///
+/// ### Test Procedure
+/// 1. Write `{"a": 1}` to a temporary file.
+/// 2. Run `jsonette query $.nonexistent <file>`.
+///
+/// ### Expected Result
+/// Exits with code 0. Stdout contains `[]`.
 #[test]
 fn test_cli_query_no_match_prints_empty_array() {
     let temp_dir = TempDir::new().unwrap();
@@ -297,7 +331,19 @@ fn test_cli_query_no_match_prints_empty_array() {
         .stdout(predicate::str::contains("[]"));
 }
 
-/// **Test Case**: `query` from stdin using a valid JSONPath expression.
+/// **Test Case**: Query Reads JSON Document From Standard Input
+///
+/// ### Description
+/// Verifies that `jsonette query` accepts a JSON document on stdin when no
+/// file argument is provided, matching the pipeline-friendly behaviour of the
+/// format subcommand.
+///
+/// ### Test Procedure
+/// 1. Pipe `{"x": 42}` on stdin.
+/// 2. Run `jsonette query $.x` with no file argument.
+///
+/// ### Expected Result
+/// Exits with code 0. Stdout contains the numeric value `42`.
 #[test]
 fn test_cli_query_stdin() {
     let temp_dir = TempDir::new().unwrap();
@@ -310,7 +356,19 @@ fn test_cli_query_stdin() {
         .stdout(predicate::str::contains("42"));
 }
 
-/// **Test Case**: `query` with an invalid JSONPath expression reports an error on stderr.
+/// **Test Case**: Invalid JSONPath Expression Reports Error on Stderr
+///
+/// ### Description
+/// Verifies that a syntactically invalid JSONPath expression is caught by the
+/// pre-evaluation validation step and produces a clear error message on stderr
+/// before any document processing occurs.
+///
+/// ### Test Procedure
+/// 1. Pipe a valid JSON document on stdin.
+/// 2. Supply an arbitrary non-JSONPath string as the path argument.
+///
+/// ### Expected Result
+/// Exits with code 1. Stderr contains `"Error"`.
 #[test]
 fn test_cli_query_invalid_jsonpath_reports_error() {
     let temp_dir = TempDir::new().unwrap();
@@ -323,7 +381,18 @@ fn test_cli_query_invalid_jsonpath_reports_error() {
         .stderr(predicate::str::contains("Error"));
 }
 
-/// **Test Case**: `query` with invalid JSON input reports an error on stderr.
+/// **Test Case**: Malformed JSON Document Reports Parse Error on Stderr
+///
+/// ### Description
+/// Verifies that when the input document cannot be parsed as valid JSON, the
+/// command prints diagnostics to stderr and exits with a non-zero exit code.
+///
+/// ### Test Procedure
+/// 1. Pipe the string `"NOT VALID JSON"` on stdin.
+/// 2. Run `jsonette query $.foo` with no file argument.
+///
+/// ### Expected Result
+/// Exits with code 1. Stderr is non-empty.
 #[test]
 fn test_cli_query_invalid_json_reports_error() {
     let temp_dir = TempDir::new().unwrap();
@@ -336,7 +405,17 @@ fn test_cli_query_invalid_json_reports_error() {
         .stderr(predicate::str::is_empty().not());
 }
 
-/// **Test Case**: `query` on a missing file reports an error on stderr.
+/// **Test Case**: Missing Input File Reports Error on Stderr
+///
+/// ### Description
+/// Verifies that supplying a path to a file that does not exist causes the
+/// command to report an I/O error on stderr and exit with a non-zero code.
+///
+/// ### Test Procedure
+/// 1. Run `jsonette query $.foo /nonexistent/path/missing.json`.
+///
+/// ### Expected Result
+/// Exits with code 1. Stderr contains `"Error"` or `"error"`.
 #[test]
 fn test_cli_query_missing_file_reports_error() {
     let temp_dir = TempDir::new().unwrap();
