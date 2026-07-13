@@ -76,7 +76,7 @@ To ensure multi-platform capability without duplicating business logic, `jsonett
 
 ### Prerequisites
 
-- **Rust Toolchain**: Install via [rustup](https://rustup.rs/) (version details in [rust-toolchain.toml](file:///Users/aharbi/workset/jsonette/engine/rust-toolchain.toml)).
+- **Rust Toolchain**: Install via [rustup](https://rustup.rs/) (version details in [engine/rust-toolchain.toml](engine/rust-toolchain.toml)).
 - **Xcode**: Required for macOS application compilation.
 
 ### Building the Workspace & Running Tests
