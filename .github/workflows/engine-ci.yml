@@ -28,7 +28,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.0
-      
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
@@ -49,7 +49,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.0
-      
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
@@ -75,7 +75,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.0
-      
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
@@ -92,7 +92,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.0
-      
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
@@ -113,7 +113,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.0
-      
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
@@ -134,7 +134,7 @@ jobs:
           format: markdown
           output: file
           thresholds: '60 80'
-      
+
       - name: Upload to Codecov
         uses: codecov/codecov-action@v7.0.0
         if: github.event_name == 'push'
@@ -143,7 +143,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Post coverage PR comment
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@v3.0.5
         if: github.event_name == 'pull_request'
         with:
           recreate: true
@@ -156,7 +156,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.0
-      
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
@@ -200,7 +200,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.0
-      
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
@@ -226,7 +226,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.0
-      
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
@@ -243,7 +243,7 @@ jobs:
 
       - name: Post Performance Report to PR
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v6
+        uses: actions/github-script@v9.0.0
         with:
           script: |
             const fs = require('fs');
