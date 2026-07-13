@@ -226,3 +226,18 @@ fn test_cli_format_output_and_inplace_conflict() {
             "Error: Cannot specify both --in-place and --output file.",
         ));
 }
+
+/// **Test Case**: Generation of shell autocompletion scripts.
+#[test]
+fn test_cli_completions() {
+    let temp_dir = TempDir::new().unwrap();
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("completions")
+        .arg("zsh")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("#compdef jsonette"))
+        .stdout(predicate::str::contains("format"))
+        .stdout(predicate::str::contains("query"))
+        .stdout(predicate::str::contains("config"));
+}

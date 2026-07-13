@@ -87,6 +87,21 @@ jsonette config get format.sort_keys
 # Set a configuration key (persists to disk)
 jsonette config set format.sort_keys true
 jsonette config set format.indent 4
+---
+
+### 4. Shell Autocompletion (`completions`)
+
+Dynamically generates autocompletion scripts for various shells including `bash`, `zsh`, `fish`, `powershell`, and `elvish`.
+
+```bash
+# Generate zsh autocompletions (prints to stdout)
+jsonette completions zsh
+
+# Load completions immediately in your current zsh session
+source <(jsonette completions zsh)
+
+# Install completions permanently (macOS/Homebrew zsh setup)
+jsonette completions zsh > $(brew --prefix)/share/zsh/site-functions/_jsonette
 ```
 
 ---

@@ -25,7 +25,7 @@ mod commands;
 mod utils;
 
 use args::{Cli, Commands};
-use clap::Parser;
+use clap::{CommandFactory, Parser};
 
 /// The main entry point of the CLI application.
 /// Parses the arguments and executes the requested subcommand.
@@ -36,5 +36,10 @@ fn main() {
         Commands::Format(args) => commands::handle_format(args),
         Commands::Query(args) => commands::handle_query(args),
         Commands::Config(args) => commands::handle_config(args),
+        Commands::Completions { shell } => {
+            let mut cmd = Cli::command();
+            let name = cmd.get_name().to_string();
+            clap_complete::generate(shell, &mut cmd, name, &mut std::io::stdout());
+        }
     }
 }

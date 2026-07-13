@@ -45,6 +45,12 @@ pub enum Commands {
     Query(QueryArgs),
     /// Manage global configuration settings.
     Config(ConfigArgs),
+    /// Generate shell autocompletion scripts.
+    Completions {
+        /// The shell to generate completions for.
+        #[arg(value_enum)]
+        shell: clap_complete::Shell,
+    },
 }
 
 /// Arguments and options for the formatting and minification command.
