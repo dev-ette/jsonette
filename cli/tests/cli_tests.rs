@@ -537,6 +537,101 @@ fn test_cli_explore_object_regex_filter() {
         .stdout(predicate::str::contains("foo").not());
 }
 
+/// **Test Case**: Explore With Invalid Regex Reports Error
+///
+/// ### Description
+/// Verifies that an invalid regular expression string passed to `--regex` exits with an error.
+#[test]
+fn test_cli_explore_invalid_regex_error() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("test.json");
+    fs::write(&json_file, r#"{"a": 1}"#).unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("explore")
+        .arg("--regex")
+        .arg("[invalid")
+        .arg("$")
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Invalid regex"));
+}
+
+/// **Test Case**: Explore With Invalid JSONPath Reports Error
+#[test]
+fn test_cli_explore_invalid_jsonpath_error() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("test.json");
+    fs::write(&json_file, r#"{"a": 1}"#).unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("explore")
+        .arg("NOT_A_PATH")
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Error"));
+}
+
+/// **Test Case**: Explore Where No Nodes Match
+#[test]
+fn test_cli_explore_no_match() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("test.json");
+    fs::write(&json_file, r#"{"a": 1}"#).unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("explore")
+        .arg("$.b")
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("No nodes matched"));
+}
+
+/// **Test Case**: Explore Matching a Primitive Node
+#[test]
+fn test_cli_explore_primitive_node() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("test.json");
+    fs::write(&json_file, r#"{"a": 42}"#).unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("explore")
+        .arg("$.a")
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Matched a number node"));
+}
+
+/// **Test Case**: Explore With Invalid JSON Reports Error
+#[test]
+fn test_cli_explore_invalid_json_reports_error() {
+    let temp_dir = TempDir::new().unwrap();
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("explore")
+        .arg("$")
+        .write_stdin("NOT VALID JSON")
+        .assert()
+        .failure()
+        .stderr(predicate::str::is_empty().not());
+}
+
+/// **Test Case**: Explore On Missing File Reports Error
+#[test]
+fn test_cli_explore_missing_file_reports_error() {
+    let temp_dir = TempDir::new().unwrap();
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("explore")
+        .arg("$")
+        .arg("/nonexistent/path/missing.json")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Error").or(predicate::str::contains("error")));
+}
+
 /// **Test Case**: Explore Limits Output
 ///
 /// ### Description

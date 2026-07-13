@@ -14,10 +14,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7.0.0
 
       - name: Create Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3.0.1
         with:
           generate_release_notes: true
 
@@ -64,6 +64,6 @@ jobs:
           cp target/${{ matrix.target }}/release/${{ matrix.binary_name }} release-asset/${{ matrix.asset_name }}
 
       - name: Upload Binary to Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3.0.1
         with:
           files: release-asset/${{ matrix.asset_name }}
