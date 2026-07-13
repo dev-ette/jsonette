@@ -23,7 +23,7 @@ cargo install jsonette
 We maintain an official PPA for Ubuntu users.
 
 ```bash
-sudo add-apt-repository ppa:dev-ette/jsonette
+sudo add-apt-repository ppa:dev-ette/stable
 sudo apt update
 sudo apt install jsonette
 ```
@@ -41,6 +41,21 @@ The package is available in the Arch User Repository as `jsonette-bin`.
 
 ```bash
 yay -S jsonette-bin
+```
+
+### DNF / COPR (Fedora / CentOS / RHEL)
+
+We provide an official COPR repository for RPM-based systems.
+
+```bash
+sudo dnf copr enable dev-ette/jsonette
+sudo dnf install jsonette
+```
+
+### Winget (Windows)
+
+```powershell
+winget install dev-ette.jsonette
 ```
 
 ### Pre-compiled Binaries (GitHub Releases)
