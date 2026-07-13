@@ -35,6 +35,7 @@ fn main() {
     match cli.command {
         Commands::Format(args) => commands::handle_format(args),
         Commands::Query(args) => commands::handle_query(args),
+        Commands::Explore(args) => commands::handle_explore(args),
         Commands::Config(args) => commands::handle_config(args),
         Commands::Completions { shell } => {
             let mut cmd = Cli::command();

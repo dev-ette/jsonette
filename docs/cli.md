@@ -20,6 +20,20 @@ cargo install jsonette
 brew install jsonette
 ```
 
+### Pre-compiled Binaries (GitHub Releases)
+
+If you prefer not to use a package manager or `cargo`, you can download standalone binaries directly from our GitHub Releases page.
+
+1. Go to the [Releases](https://github.com/dev-ette/jsonette/releases) page.
+2. Download the binary that matches your operating system and architecture (e.g., `jsonette-macos-arm64` for Apple Silicon, `jsonette-linux-amd64` for Linux, or `jsonette-windows-amd64.exe` for Windows).
+3. Make the binary executable (on Unix systems) and move it to your PATH:
+
+```bash
+# Example for macOS Apple Silicon
+chmod +x jsonette-macos-arm64
+mv jsonette-macos-arm64 /usr/local/bin/jsonette
+```
+
 ---
 
 ## 🛠️ Commands & Usage
@@ -73,7 +87,24 @@ cat books.json | jsonette query "$.store.book[*].author"
 
 ---
 
-### 3. Global Config Management
+### 3. Exploring JSON Structure (`explore`)
+
+For unfamiliar JSON structures, `explore` allows you to discover keys or array lengths without needing to know them in advance.
+
+```bash
+# View the keys at the root of a JSON file (defaults to '$')
+jsonette explore data.json
+
+# View keys of an object at a specific path
+jsonette explore "$[0]" data.json
+
+# Filter keys matching a regex and limit the output to 5 items
+jsonette explore --regex "^meta_" -n 5 "$[0]" data.json
+```
+
+---
+
+### 4. Global Config Management
 
 Manage your global settings file (`~/.config/jsonette/settings.json` or `%LOCALAPPDATA%\jsonette\settings.json`) directly from the command line.
 

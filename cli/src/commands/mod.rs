@@ -21,9 +21,11 @@
 //! inside this module.
 
 pub mod config;
+pub mod explore;
 pub mod format;
 pub mod query;
 
 pub use config::handle_config;
+pub use explore::handle_explore;
 pub use format::handle_format;
 pub use query::handle_query;

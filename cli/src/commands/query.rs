@@ -17,16 +17,32 @@
 
 //! JSONPath query expression command execution.
 //!
-//! Loads file or standard input, parses JSON, and evaluates queries against the document.
+//! Reads a JSON document from a file path or standard input, parses it into
+//! the engine AST, validates the supplied JSONPath expression, evaluates it,
+//! and prints each matched node as formatted JSON inside a top-level array
+//! on standard output.
 
 use crate::args::QueryArgs;
 use crate::utils::{print_diagnostics, read_input};
 
-/// Executes the JSONPath query command.
+/// Executes the `jsonette query` subcommand end-to-end.
+///
+/// The pipeline is:
+/// 1. Read the input source (file or stdin) using [`read_input`].
+/// 2. Parse the JSON document via the core engine parser.
+/// 3. Validate the JSONPath expression using [`jsonette::diagnostics_for_path`]
+///    before evaluation to surface actionable error messages on stderr.
+/// 4. Evaluate the JSONPath expression via [`jsonette::evaluate_path`].
+/// 5. Print matched nodes as a JSON array to stdout, one formatted node per
+///    array element. Prints `[]` when no nodes match, consistent with the
+///    RFC 9535 empty-nodelist convention.
+///
+/// Any error in steps 1–4 prints a message to stderr and exits with code 1.
 ///
 /// # Arguments
 ///
-/// * `args` - Parse command query expression and input targets.
+/// * `args` - Parsed query subcommand arguments containing the JSONPath
+///   expression string in `args.query` and the optional input file path in `args.file`.
 pub fn handle_query(args: QueryArgs) {
     let (input, label) = match read_input(&args.file) {
         Ok(res) => res,
@@ -36,7 +52,7 @@ pub fn handle_query(args: QueryArgs) {
         }
     };
 
-    // Parse the JSON
+    // Parse the JSON document into the engine AST.
     let node = match jsonette::parse(&input) {
         Ok(node) => node,
         Err(diags) => {
@@ -45,17 +61,24 @@ pub fn handle_query(args: QueryArgs) {
         }
     };
 
-    // Evaluate JSONPath query
+    // Validate the JSONPath expression syntax before evaluation so that
+    // invalid paths produce clear error messages rather than an empty result.
+    let path_diags = jsonette::diagnostics_for_path(&args.query);
+    if !path_diags.is_empty() {
+        for diag in &path_diags {
+            eprintln!("Error: {}", diag.message);
+        }
+        std::process::exit(1);
+    }
+
+    // Evaluate the JSONPath expression and print the result.
     match jsonette::evaluate_path(&node, &args.query) {
         Ok(matches) => {
             if matches.is_empty() {
                 println!("[]");
             } else {
-                let mut results = Vec::new();
-                for m in matches {
-                    results.push(jsonette::format(&m));
-                }
-                println!("[\n  {}\n]", results.join(",\n  ").replace('\n', "\n  "));
+                let formatted: Vec<String> = matches.iter().map(jsonette::format).collect();
+                println!("[\n  {}\n]", formatted.join(",\n  ").replace('\n', "\n  "));
             }
         }
         Err(err) => {

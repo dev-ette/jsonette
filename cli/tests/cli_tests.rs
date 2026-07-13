@@ -244,25 +244,155 @@ fn test_cli_completions() {
 
 // ──────────────────────────── query subcommand ────────────────────────────────
 
-/// **Test Case**: `query` on a file with a valid path exits with code 1 because
-/// `evaluate_path` is a `todo!()` stub — the process panics and the CLI reports
-/// an error. This exercises the full call path through `handle_query`, giving
-/// coverage on `cli/src/commands/query.rs`.
+/// **Test Case**: Dot-Key Path Extracts Named Property From File
+///
+/// ### Description
+/// Verifies that `jsonette query` correctly evaluates a simple dot-key JSONPath
+/// expression against a JSON file and prints the matched string value.
+///
+/// ### Test Procedure
+/// 1. Write `{"name": "jsonette", "version": "0.1.0"}` to a temporary file.
+/// 2. Run `jsonette query $.name <file>`.
+///
+/// ### Expected Result
+/// Exits with code 0. Stdout contains the string `"jsonette"`.
 #[test]
-fn test_cli_query_stub_returns_error() {
+fn test_cli_query_dot_key() {
     let temp_dir = TempDir::new().unwrap();
     let json_file = temp_dir.path().join("test.json");
-    fs::write(&json_file, r#"{"name":"jsonette","version":"0.1.0"}"#).unwrap();
+    fs::write(&json_file, r#"{"name": "jsonette", "version": "0.1.0"}"#).unwrap();
 
     let mut cmd = jsonette_cmd(&temp_dir);
     cmd.arg("query")
         .arg("$.name")
         .arg(json_file.to_str().unwrap())
         .assert()
-        .failure(); // todo!() in evaluate_path panics → process exits non-zero
+        .success()
+        .stdout(predicate::str::contains("jsonette"));
 }
 
-/// **Test Case**: `query` with invalid JSON input reports an error on stderr and exits 1.
+/// **Test Case**: Wildcard Path Collects All Matching Array Elements
+///
+/// ### Description
+/// Verifies that a wildcard JSONPath expression traverses an array of objects
+/// and collects the named property from every element in document order.
+///
+/// ### Test Procedure
+/// 1. Write `{"users": [{"name": "Alice"}, {"name": "Bob"}]}` to a temporary file.
+/// 2. Run `jsonette query $.users[*].name <file>`.
+///
+/// ### Expected Result
+/// Exits with code 0. Stdout contains both `"Alice"` and `"Bob"`.
+#[test]
+fn test_cli_query_wildcard_array() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("users.json");
+    fs::write(
+        &json_file,
+        r#"{"users": [{"name": "Alice"}, {"name": "Bob"}]}"#,
+    )
+    .unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("query")
+        .arg("$.users[*].name")
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Alice"))
+        .stdout(predicate::str::contains("Bob"));
+}
+
+/// **Test Case**: Non-Matching Path Prints Empty Array
+///
+/// ### Description
+/// Verifies that a valid JSONPath expression that matches no nodes in the
+/// document prints `[]` to stdout and exits successfully, consistent with
+/// the RFC 9535 empty node-list convention.
+///
+/// ### Test Procedure
+/// 1. Write `{"a": 1}` to a temporary file.
+/// 2. Run `jsonette query $.nonexistent <file>`.
+///
+/// ### Expected Result
+/// Exits with code 0. Stdout contains `[]`.
+#[test]
+fn test_cli_query_no_match_prints_empty_array() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("test.json");
+    fs::write(&json_file, r#"{"a": 1}"#).unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("query")
+        .arg("$.nonexistent")
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("[]"));
+}
+
+/// **Test Case**: Query Reads JSON Document From Standard Input
+///
+/// ### Description
+/// Verifies that `jsonette query` accepts a JSON document on stdin when no
+/// file argument is provided, matching the pipeline-friendly behaviour of the
+/// format subcommand.
+///
+/// ### Test Procedure
+/// 1. Pipe `{"x": 42}` on stdin.
+/// 2. Run `jsonette query $.x` with no file argument.
+///
+/// ### Expected Result
+/// Exits with code 0. Stdout contains the numeric value `42`.
+#[test]
+fn test_cli_query_stdin() {
+    let temp_dir = TempDir::new().unwrap();
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("query")
+        .arg("$.x")
+        .write_stdin(r#"{"x": 42}"#)
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("42"));
+}
+
+/// **Test Case**: Invalid JSONPath Expression Reports Error on Stderr
+///
+/// ### Description
+/// Verifies that a syntactically invalid JSONPath expression is caught by the
+/// pre-evaluation validation step and produces a clear error message on stderr
+/// before any document processing occurs.
+///
+/// ### Test Procedure
+/// 1. Pipe a valid JSON document on stdin.
+/// 2. Supply an arbitrary non-JSONPath string as the path argument.
+///
+/// ### Expected Result
+/// Exits with code 1. Stderr contains `"Error"`.
+#[test]
+fn test_cli_query_invalid_jsonpath_reports_error() {
+    let temp_dir = TempDir::new().unwrap();
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("query")
+        .arg("NOT A VALID PATH")
+        .write_stdin(r#"{"a": 1}"#)
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Error"));
+}
+
+/// **Test Case**: Malformed JSON Document Reports Parse Error on Stderr
+///
+/// ### Description
+/// Verifies that when the input document cannot be parsed as valid JSON, the
+/// command prints diagnostics to stderr and exits with a non-zero exit code.
+///
+/// ### Test Procedure
+/// 1. Pipe the string `"NOT VALID JSON"` on stdin.
+/// 2. Run `jsonette query $.foo` with no file argument.
+///
+/// ### Expected Result
+/// Exits with code 1. Stderr is non-empty.
 #[test]
 fn test_cli_query_invalid_json_reports_error() {
     let temp_dir = TempDir::new().unwrap();
@@ -275,7 +405,17 @@ fn test_cli_query_invalid_json_reports_error() {
         .stderr(predicate::str::is_empty().not());
 }
 
-/// **Test Case**: `query` on a missing file reports an error on stderr and exits 1.
+/// **Test Case**: Missing Input File Reports Error on Stderr
+///
+/// ### Description
+/// Verifies that supplying a path to a file that does not exist causes the
+/// command to report an I/O error on stderr and exit with a non-zero code.
+///
+/// ### Test Procedure
+/// 1. Run `jsonette query $.foo /nonexistent/path/missing.json`.
+///
+/// ### Expected Result
+/// Exits with code 1. Stderr contains `"Error"` or `"error"`.
 #[test]
 fn test_cli_query_missing_file_reports_error() {
     let temp_dir = TempDir::new().unwrap();
@@ -286,4 +426,141 @@ fn test_cli_query_missing_file_reports_error() {
         .assert()
         .failure()
         .stderr(predicate::str::contains("Error").or(predicate::str::contains("error")));
+}
+
+// ──────────────────────────── explore subcommand ──────────────────────────────
+
+/// **Test Case**: Explore Root Object Prints Sorted Keys
+///
+/// ### Description
+/// Verifies that exploring a JSON object outputs its keys sorted alphabetically.
+///
+/// ### Test Procedure
+/// 1. Write `{"b": 2, "a": 1, "c": 3}` to a file.
+/// 2. Run `jsonette explore '$' <file>`.
+///
+/// ### Expected Result
+/// Exits with code 0. Stdout contains `a\nb\nc\n`.
+#[test]
+fn test_cli_explore_object_keys_sorted() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("test.json");
+    fs::write(&json_file, r#"{"b": 2, "a": 1, "c": 3}"#).unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("explore")
+        .arg("$")
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("a\nb\nc"));
+}
+
+/// **Test Case**: Explore Array Prints Length
+///
+/// ### Description
+/// Verifies that exploring a JSON array outputs its length.
+///
+/// ### Test Procedure
+/// 1. Write `[1, 2, 3]` to a file.
+/// 2. Run `jsonette explore '$' <file>`.
+///
+/// ### Expected Result
+/// Exits with code 0. Stdout contains `Length: 3 elements`.
+#[test]
+fn test_cli_explore_array_length() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("test.json");
+    fs::write(&json_file, r#"[1, 2, 3]"#).unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("explore")
+        .arg("$")
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Length: 3 elements"));
+}
+
+/// **Test Case**: Explore With Single File Argument Defaults to Root Path
+///
+/// ### Description
+/// Verifies the heuristic that if only one positional argument is provided and it's
+/// a file, the CLI defaults the path to `$` rather than waiting on stdin.
+///
+/// ### Test Procedure
+/// 1. Write `{"a": 1}` to a file.
+/// 2. Run `jsonette explore <file>`.
+///
+/// ### Expected Result
+/// Exits with code 0. Stdout contains the key `a`.
+#[test]
+fn test_cli_explore_single_file_argument() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("test.json");
+    fs::write(&json_file, r#"{"a": 1}"#).unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("explore")
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("a\n"));
+}
+
+/// **Test Case**: Explore Object Filters Keys with Regex
+///
+/// ### Description
+/// Verifies that exploring with `--regex` filters the returned keys.
+///
+/// ### Test Procedure
+/// 1. Write `{"foo": 1, "bar": 2, "baz": 3}` to a file.
+/// 2. Run `jsonette explore --regex '^ba' '$' <file>`.
+///
+/// ### Expected Result
+/// Exits with code 0. Stdout contains `bar` and `baz` but not `foo`.
+#[test]
+fn test_cli_explore_object_regex_filter() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("test.json");
+    fs::write(&json_file, r#"{"foo": 1, "bar": 2, "baz": 3}"#).unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("explore")
+        .arg("--regex")
+        .arg("^ba")
+        .arg("$")
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("bar\nbaz"))
+        .stdout(predicate::str::contains("foo").not());
+}
+
+/// **Test Case**: Explore Limits Output
+///
+/// ### Description
+/// Verifies that exploring with `--limit` truncates the output and shows a "... more" message.
+///
+/// ### Test Procedure
+/// 1. Write `{"a": 1, "b": 2, "c": 3}` to a file.
+/// 2. Run `jsonette explore -n 1 '$' <file>`.
+///
+/// ### Expected Result
+/// Exits with code 0. Stdout contains `a\n` and `... and 2 more keys`.
+#[test]
+fn test_cli_explore_object_limit() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("test.json");
+    fs::write(&json_file, r#"{"a": 1, "b": 2, "c": 3}"#).unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("explore")
+        .arg("-n")
+        .arg("1")
+        .arg("$")
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("a\n... and 2 more keys"));
 }
