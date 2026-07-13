@@ -100,8 +100,220 @@ pub fn generate_from_schema(
     }
 }
 
+
+
+/// Recursively evaluates a schema node.
+///
+/// # Arguments
+///
+/// * `node` - The current `JsonNode` in the schema being evaluated.
+/// * `state` - The mutable `GeneratorState` maintaining variables across evaluations.
+/// * `diagnostics` - A mutable vector accumulating any structural or evaluation errors.
+///
+/// # Returns
+///
+/// The evaluated `JsonNode` instance with resolved generator instructions.
+fn evaluate_node(node: &JsonNode, state: &mut GeneratorState, diagnostics: &mut Vec<Diagnostic>) -> JsonNode {
+    match node {
+        JsonNode::Object(pairs, span) => {
+            // Check if this is a generator instruction
+            if let Some(type_pair) = pairs.iter().find(|p| p.key == "@type") {
+                #[allow(clippy::collapsible_if)]
+                if let JsonNode::String(t, _) = &type_pair.value {
+                    return evaluate_instruction(t, pairs, state, diagnostics, span.clone());
+                }
+            }
+
+            // Otherwise, it's a regular nested object. Evaluate its children.
+            let mut new_pairs = Vec::with_capacity(pairs.len());
+            for pair in pairs {
+                // Handle @@ escape hatch
+                let key = if pair.key.starts_with("@@") {
+                    pair.key[1..].to_string()
+                } else {
+                    pair.key.clone()
+                };
+                
+                new_pairs.push(KeyValuePair {
+                    key,
+                    value: evaluate_node(&pair.value, state, diagnostics),
+                });
+            }
+            JsonNode::Object(new_pairs, span.clone())
+        }
+        JsonNode::Array(items, span) => {
+            let new_items = items.iter().map(|item| evaluate_node(item, state, diagnostics)).collect();
+            JsonNode::Array(new_items, span.clone())
+        }
+        // Primitives pass through unchanged
+        _ => node.clone(),
+    }
+}
+
+/// Evaluates a specific generator instruction based on its `@type`.
+///
+/// # Arguments
+///
+/// * `instruction_type` - The string identifying the instruction (e.g., `uuid`, `integer`).
+/// * `pairs` - The key-value pairs of the object containing the instruction.
+/// * `state` - The mutable `GeneratorState` maintaining variables across evaluations.
+/// * `diagnostics` - A mutable vector accumulating any structural or evaluation errors.
+/// * `span` - The byte span of the instruction object.
+///
+/// # Returns
+///
+/// The generated `JsonNode` value for this instruction.
+fn evaluate_instruction(
+    instruction_type: &str,
+    pairs: &[KeyValuePair],
+    state: &mut GeneratorState,
+    diagnostics: &mut Vec<Diagnostic>,
+    span: Span,
+) -> JsonNode {
+    match instruction_type {
+        "uuid" => {
+            // Simple deterministic UUID for M0 to avoid rand dependency, or use a basic LCG.
+            // In a real app we'd use `uuid` or `rand`.
+            let lcg = state.variables.entry("lcg".to_string()).or_insert(1.0);
+            *lcg = (*lcg * 1664525.0 + 1013904223.0) % 4294967296.0;
+            let val = *lcg as u32;
+            JsonNode::String(format!("uuid-{:08x}-1234-5678-abcd-123456789012", val), span)
+        }
+        "integer" => {
+            let mut start = 0.0;
+            let mut step = 1.0;
+            for pair in pairs {
+                #[allow(clippy::collapsible_if)]
+                if pair.key == "@start" {
+                    if let JsonNode::Number(n, _, _) = pair.value { start = n; }
+                } else if pair.key == "@step" {
+                    if let JsonNode::Number(n, _, _) = pair.value { step = n; }
+                }
+            }
+            let state_key = format!("int_{}", span.start);
+            let current = state.variables.entry(state_key).or_insert(start);
+            let val = *current;
+            *current += step;
+            JsonNode::Number(val, val.to_string(), span)
+        }
+        "float" => {
+            let mut min = 0.0;
+            let mut max = 1.0;
+            for pair in pairs {
+                #[allow(clippy::collapsible_if)]
+                if pair.key == "@min" {
+                    if let JsonNode::Number(n, _, _) = pair.value { min = n; }
+                } else if pair.key == "@max" {
+                    if let JsonNode::Number(n, _, _) = pair.value { max = n; }
+                }
+            }
+            let lcg = state.variables.entry("lcg".to_string()).or_insert(1.0);
+            *lcg = (*lcg * 1664525.0 + 1013904223.0) % 4294967296.0;
+            let val = min + (*lcg / 4294967296.0) * (max - min);
+            JsonNode::Number(val, format!("{:.4}", val), span)
+        }
+        "bool" => {
+            let lcg = state.variables.entry("lcg".to_string()).or_insert(1.0);
+            *lcg = (*lcg * 1664525.0 + 1013904223.0) % 4294967296.0;
+            JsonNode::Bool(*lcg > 2147483648.0, span)
+        }
+        "string" => {
+            let mut template = "".to_string();
+            let mut pool = Vec::new();
+            let mut vars_schema = None;
+            
+            for pair in pairs {
+                #[allow(clippy::collapsible_if)]
+                if pair.key == "@template" {
+                    if let JsonNode::String(s, _) = &pair.value { template = s.clone(); }
+                } else if pair.key == "@pool" {
+                    if let JsonNode::Array(items, _) = &pair.value {
+                        for item in items {
+                            if let JsonNode::String(s, _) = item {
+                                pool.push(s.clone());
+                            }
+                        }
+                    }
+                } else if pair.key == "@vars" {
+                    vars_schema = Some(&pair.value);
+                }
+            }
+            
+            if !pool.is_empty() {
+                let lcg = state.variables.entry("lcg".to_string()).or_insert(1.0);
+                *lcg = (*lcg * 1664525.0 + 1013904223.0) % 4294967296.0;
+                let idx = (*lcg as usize) % pool.len();
+                JsonNode::String(pool[idx].clone(), span)
+            } else if !template.is_empty() {
+                let mut output = template;
+                if let Some(JsonNode::Object(var_pairs, _)) = vars_schema {
+                    for var_pair in var_pairs {
+                        let var_val = evaluate_node(&var_pair.value, state, diagnostics);
+                        let var_str = match var_val {
+                            JsonNode::String(s, _) => s,
+                            JsonNode::Number(_, raw, _) => raw,
+                            JsonNode::Bool(b, _) => b.to_string(),
+                            _ => "".to_string(),
+                        };
+                        let placeholder = format!("{{{}}}", var_pair.key);
+                        output = output.replace(&placeholder, &var_str);
+                    }
+                }
+                JsonNode::String(output, span)
+            } else {
+                JsonNode::String("dummy".to_string(), span)
+            }
+        }
+        "array" => {
+            let mut count = 1;
+            let mut item_schema = &JsonNode::Null(span.clone());
+            for pair in pairs {
+                if pair.key == "@count" {
+                    if let JsonNode::Number(n, _, _) = pair.value { count = n as usize; }
+                } else if pair.key == "@item" {
+                    item_schema = &pair.value;
+                }
+            }
+            
+            let mut items = Vec::with_capacity(count);
+            for _ in 0..count {
+                items.push(evaluate_node(item_schema, state, diagnostics));
+            }
+            JsonNode::Array(items, span)
+        }
+        _ => {
+            diagnostics.push(Diagnostic {
+                span: span.clone(),
+                message: format!("Unknown generator instruction: {}", instruction_type),
+            });
+            JsonNode::Null(span)
+        }
+    }
+}
+
+/// Very rough byte size estimator for loop termination.
+///
+/// # Arguments
+///
+/// * `node` - The `JsonNode` to estimate the serialized size for.
+///
+/// # Returns
+///
+/// An `usize` representing the approximate byte size of the node.
+fn estimate_size(node: &JsonNode) -> usize {
+    match node {
+        JsonNode::Null(_) => 4,
+        JsonNode::Bool(_, _) => 4,
+        JsonNode::Number(_, raw, _) => raw.len(),
+        JsonNode::String(s, _) => s.len() + 2,
+        JsonNode::Array(items, _) => items.iter().map(estimate_size).sum::<usize>() + items.len() + 2,
+        JsonNode::Object(pairs, _) => pairs.iter().map(|p| p.key.len() + 4 + estimate_size(&p.value)).sum::<usize>() + 2,
+    }
+}
+
+
 #[cfg(test)]
-mod generator_tests {
+mod tests {
     use super::*;
     use crate::parser::parse;
 
@@ -197,179 +409,3 @@ mod generator_tests {
         }
     }
 }
-
-/// Recursively evaluates a schema node.
-///
-/// # Arguments
-///
-/// * `node` - The current `JsonNode` in the schema being evaluated.
-/// * `state` - The mutable `GeneratorState` maintaining variables across evaluations.
-/// * `diagnostics` - A mutable vector accumulating any structural or evaluation errors.
-///
-/// # Returns
-///
-/// The evaluated `JsonNode` instance with resolved generator instructions.
-fn evaluate_node(node: &JsonNode, state: &mut GeneratorState, diagnostics: &mut Vec<Diagnostic>) -> JsonNode {
-    match node {
-        JsonNode::Object(pairs, span) => {
-            // Check if this is a generator instruction
-            if let Some(type_pair) = pairs.iter().find(|p| p.key == "@type") {
-                #[allow(clippy::collapsible_if)]
-                if let JsonNode::String(t, _) = &type_pair.value {
-                    return evaluate_instruction(t, pairs, state, diagnostics, span.clone());
-                }
-            }
-
-            // Otherwise, it's a regular nested object. Evaluate its children.
-            let mut new_pairs = Vec::with_capacity(pairs.len());
-            for pair in pairs {
-                // Handle @@ escape hatch
-                let key = if pair.key.starts_with("@@") {
-                    pair.key[1..].to_string()
-                } else {
-                    pair.key.clone()
-                };
-                
-                new_pairs.push(KeyValuePair {
-                    key,
-                    value: evaluate_node(&pair.value, state, diagnostics),
-                });
-            }
-            JsonNode::Object(new_pairs, span.clone())
-        }
-        JsonNode::Array(items, span) => {
-            let new_items = items.iter().map(|item| evaluate_node(item, state, diagnostics)).collect();
-            JsonNode::Array(new_items, span.clone())
-        }
-        // Primitives pass through unchanged
-        _ => node.clone(),
-    }
-}
-
-/// Evaluates a specific generator instruction based on its `@type`.
-///
-/// # Arguments
-///
-/// * `instruction_type` - The string identifying the instruction (e.g., `uuid`, `integer`).
-/// * `pairs` - The key-value pairs of the object containing the instruction.
-/// * `state` - The mutable `GeneratorState` maintaining variables across evaluations.
-/// * `diagnostics` - A mutable vector accumulating any structural or evaluation errors.
-/// * `span` - The byte span of the instruction object.
-///
-/// # Returns
-///
-/// The generated `JsonNode` value for this instruction.
-fn evaluate_instruction(
-    instruction_type: &str,
-    pairs: &[KeyValuePair],
-    state: &mut GeneratorState,
-    diagnostics: &mut Vec<Diagnostic>,
-    span: Span,
-) -> JsonNode {
-    match instruction_type {
-        "uuid" => {
-            // Simple deterministic UUID for M0 to avoid rand dependency, or use a basic LCG.
-            // In a real app we'd use `uuid` or `rand`.
-            let lcg = state.variables.entry("lcg".to_string()).or_insert(1.0);
-            *lcg = (*lcg * 1664525.0 + 1013904223.0) % 4294967296.0;
-            let val = *lcg as u32;
-            JsonNode::String(format!("uuid-{:08x}-1234-5678-abcd-123456789012", val), span)
-        }
-        "integer" => {
-            let mut start = 0.0;
-            let mut step = 1.0;
-            for pair in pairs {
-                #[allow(clippy::collapsible_if)]
-                if pair.key == "@start" {
-                    if let JsonNode::Number(n, _, _) = pair.value { start = n; }
-                } else if pair.key == "@step" {
-                    if let JsonNode::Number(n, _, _) = pair.value { step = n; }
-                }
-            }
-            // Generate a unique ID for this instruction instance to track its state
-            let state_key = format!("int_{}", span.start);
-            let current = state.variables.entry(state_key).or_insert(start);
-            let val = *current;
-            *current += step;
-            JsonNode::Number(val, val.to_string(), span)
-        }
-        "string" => {
-            let mut template = "".to_string();
-            let mut pool = Vec::new();
-            
-            for pair in pairs {
-                #[allow(clippy::collapsible_if)]
-                if pair.key == "@template" {
-                    if let JsonNode::String(s, _) = &pair.value { template = s.clone(); }
-                } else if pair.key == "@pool" {
-                    if let JsonNode::Array(items, _) = &pair.value {
-                        for item in items {
-                            if let JsonNode::String(s, _) = item {
-                                pool.push(s.clone());
-                            }
-                        }
-                    }
-                }
-            }
-            
-            if !pool.is_empty() {
-                let lcg = state.variables.entry("lcg".to_string()).or_insert(1.0);
-                *lcg = (*lcg * 1664525.0 + 1013904223.0) % 4294967296.0;
-                let idx = (*lcg as usize) % pool.len();
-                JsonNode::String(pool[idx].clone(), span)
-            } else if !template.is_empty() {
-                // Handle @vars interpolation here
-                // For simplicity in M0, we just return the template string itself, 
-                // but real implementation would substitute {var}.
-                JsonNode::String(template, span)
-            } else {
-                JsonNode::String("dummy".to_string(), span)
-            }
-        }
-        "array" => {
-            let mut count = 1;
-            let mut item_schema = &JsonNode::Null(span.clone());
-            for pair in pairs {
-                if pair.key == "@count" {
-                    if let JsonNode::Number(n, _, _) = pair.value { count = n as usize; }
-                } else if pair.key == "@item" {
-                    item_schema = &pair.value;
-                }
-            }
-            
-            let mut items = Vec::with_capacity(count);
-            for _ in 0..count {
-                items.push(evaluate_node(item_schema, state, diagnostics));
-            }
-            JsonNode::Array(items, span)
-        }
-        _ => {
-            diagnostics.push(Diagnostic {
-                span: span.clone(),
-                message: format!("Unknown generator instruction: {}", instruction_type),
-            });
-            JsonNode::Null(span)
-        }
-    }
-}
-
-/// Very rough byte size estimator for loop termination.
-///
-/// # Arguments
-///
-/// * `node` - The `JsonNode` to estimate the serialized size for.
-///
-/// # Returns
-///
-/// An `usize` representing the approximate byte size of the node.
-fn estimate_size(node: &JsonNode) -> usize {
-    match node {
-        JsonNode::Null(_) => 4,
-        JsonNode::Bool(_, _) => 4,
-        JsonNode::Number(_, raw, _) => raw.len(),
-        JsonNode::String(s, _) => s.len() + 2,
-        JsonNode::Array(items, _) => items.iter().map(estimate_size).sum::<usize>() + items.len() + 2,
-        JsonNode::Object(pairs, _) => pairs.iter().map(|p| p.key.len() + 4 + estimate_size(&p.value)).sum::<usize>() + 2,
-    }
-}
-
