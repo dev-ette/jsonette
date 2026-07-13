@@ -20,6 +20,7 @@
 //! as well as fast diagnostics syntax checking and parsing helper utilities.
 
 pub mod strict;
+pub mod tolerant;
 pub mod utils;
 
 pub use strict::parse;
@@ -40,7 +41,12 @@ use crate::types::Diagnostic;
 /// * `Option<JsonNode>` - The partial AST tree if any structure could be recovered.
 /// * `Vec<Diagnostic>` - A list of errors encountered during parsing.
 pub fn tolerant_parse(input: &str) -> (Option<JsonNode>, Vec<Diagnostic>) {
-    todo!("Tolerant JSON parsing logic will be implemented in subsequent issues")
+    // We opted for a hand-rolled tolerant parser (Option B) instead of tree-sitter.
+    // While tree-sitter provides excellent error recovery, it introduces a C dependency
+    // which complicates the cross-platform UniFFI build (especially for iOS/Android targets),
+    // and slightly increases binary size. A minimal hand-rolled parser is sufficient for
+    // JSON and gives us full control over `JsonNode` span generation without an intermediate AST.
+    tolerant::parse(input)
 }
 
 /// Fast validation path: parses and returns only syntax or structural errors
@@ -62,9 +68,9 @@ mod stub_tests {
     use super::*;
 
     #[test]
-    #[should_panic(expected = "not yet implemented")]
-    fn test_tolerant_parse_is_stub() {
-        tolerant_parse("{}");
+    fn test_tolerant_parse_is_implemented() {
+        let (node, _) = tolerant_parse("{}");
+        assert!(node.is_some());
     }
 
     #[test]
