@@ -9,8 +9,8 @@ WORKSPACE_DIR="$SCRIPT_DIR/.."
 # Navigate to the workspace root directory
 cd "$WORKSPACE_DIR"
 
-echo "Building Rust workspace documentation..."
-cargo doc --workspace --no-deps
+echo "Building Rust engine documentation..."
+cargo doc --package jsonette-core --no-deps
 
 echo "Cleaning up old documentation in docs/engine-docs..."
 rm -rf "$SCRIPT_DIR/engine-docs"

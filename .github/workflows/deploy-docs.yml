@@ -49,7 +49,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Build Rust Engine Documentation
-        run: cargo doc --workspace --no-deps
+        run: cargo doc --package jsonette-core --no-deps
 
       - name: Assemble Documentation Pages
         run: |
