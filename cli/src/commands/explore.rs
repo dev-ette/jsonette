@@ -41,7 +41,18 @@ use regex::Regex;
 /// # Arguments
 ///
 /// * `args` - Parsed explore subcommand arguments.
-pub fn handle_explore(args: ExploreArgs) {
+pub fn handle_explore(mut args: ExploreArgs) {
+    // Heuristic: If only one positional argument is provided (parsed as `path`)
+    // and it corresponds to an existing file on disk, assume the user omitted
+    // the JSONPath and meant to explore the root of that file.
+    if args.file.is_none() {
+        let path_as_file = std::path::Path::new(&args.path);
+        if path_as_file.exists() && path_as_file.is_file() {
+            args.file = Some(path_as_file.to_path_buf());
+            args.path = "$".to_string();
+        }
+    }
+
     let (input, label) = match read_input(&args.file) {
         Ok(res) => res,
         Err(e) => {

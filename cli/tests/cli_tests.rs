@@ -482,6 +482,32 @@ fn test_cli_explore_array_length() {
         .stdout(predicate::str::contains("Length: 3 elements"));
 }
 
+/// **Test Case**: Explore With Single File Argument Defaults to Root Path
+///
+/// ### Description
+/// Verifies the heuristic that if only one positional argument is provided and it's
+/// a file, the CLI defaults the path to `$` rather than waiting on stdin.
+///
+/// ### Test Procedure
+/// 1. Write `{"a": 1}` to a file.
+/// 2. Run `jsonette explore <file>`.
+///
+/// ### Expected Result
+/// Exits with code 0. Stdout contains the key `a`.
+#[test]
+fn test_cli_explore_single_file_argument() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("test.json");
+    fs::write(&json_file, r#"{"a": 1}"#).unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("explore")
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("a\n"));
+}
+
 /// **Test Case**: Explore Object Filters Keys with Regex
 ///
 /// ### Description
