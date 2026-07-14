@@ -88,14 +88,13 @@ jobs:
         if: matrix.os_name == 'linux'
         run: |
           # Generate .deb
-          cargo deb --target ${{ matrix.target }}
-          cp target/${{ matrix.target }}/debian/*.deb release-asset/
+          cargo deb -p jsonette --target ${{ matrix.target }}
+          cp target/${{ matrix.target }}/debian/*.deb release-asset/ || cp target/debian/*.deb release-asset/
           
           # Generate .rpm
-          # cargo-generate-rpm requires the binary to be stripped first
           strip target/${{ matrix.target }}/release/${{ matrix.binary_name }}
-          cargo generate-rpm --target ${{ matrix.target }}
-          cp target/${{ matrix.target }}/generate-rpm/*.rpm release-asset/
+          cargo generate-rpm -p jsonette
+          cp target/generate-rpm/*.rpm release-asset/
 
       - name: Generate Checksums
         shell: bash
