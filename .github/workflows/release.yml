@@ -82,7 +82,6 @@ jobs:
         if: matrix.os_name == 'linux'
         run: |
           cargo install cargo-deb
-          cargo install cargo-generate-rpm
 
       - name: Build and Prepare Packages (Linux only)
         if: matrix.os_name == 'linux'
@@ -90,13 +89,6 @@ jobs:
           # Generate .deb
           cargo deb -p jsonette --target ${{ matrix.target }}
           cp target/${{ matrix.target }}/debian/*.deb release-asset/ || cp target/debian/*.deb release-asset/
-          
-          # Generate .rpm
-          strip target/${{ matrix.target }}/release/${{ matrix.binary_name }}
-          cd cli
-          cargo generate-rpm
-          cd ..
-          cp target/generate-rpm/*.rpm release-asset/ || cp target/${{ matrix.target }}/generate-rpm/*.rpm release-asset/
 
       - name: Generate Checksums
         shell: bash
