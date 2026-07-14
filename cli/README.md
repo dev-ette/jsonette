@@ -10,66 +10,31 @@
 
 ## 🚀 Installation
 
-Once published, you can install the CLI directly:
+We provide pre-compiled binaries and official packages for all major operating systems.
 
-### Cargo (Rust)
+### Package Managers
 
-```bash
-cargo install jsonette
-```
+| OS / Ecosystem      | Package Manager | Installation Command                                                                          |
+| ------------------- | --------------- | --------------------------------------------------------------------------------------------- |
+| **macOS / Linux**   | Homebrew        | `brew install jsonette`                                                                       |
+| **Ubuntu / Debian** | APT (PPA)       | `sudo add-apt-repository ppa:dev-ette/stable && sudo apt update && sudo apt install jsonette` |
+| **Fedora / RHEL**   | DNF (COPR)      | `sudo dnf copr enable aharbi/jsonette && sudo dnf install jsonette`                           |
+| **Arch Linux**      | Pacman (AUR)    | `yay -S jsonette`                                                                             |
+| **Windows**         | Winget          | `winget install dev-ette.jsonette`                                                            |
+| **Rust Developers** | Cargo           | `cargo install jsonette`                                                                      |
 
-### APT / PPA (Ubuntu / Debian)
-
-We maintain an official PPA for Ubuntu users.
-
-```bash
-sudo add-apt-repository ppa:dev-ette/stable
-sudo apt update
-sudo apt install jsonette
-```
-
-### Homebrew (macOS / Linux)
-
-```bash
-brew tap dev-ette/jsonette
-brew install jsonette
-```
-
-### Pacman (Arch Linux / AUR)
-
-The package is available in the Arch User Repository as `jsonette-bin`.
-
-```bash
-yay -S jsonette-bin
-```
-
-### DNF / COPR (Fedora / CentOS / RHEL)
-
-We provide an official COPR repository for RPM-based systems.
-
-```bash
-sudo dnf copr enable dev-ette/jsonette
-sudo dnf install jsonette
-```
-
-### Winget (Windows)
-
-```powershell
-winget install dev-ette.jsonette
-```
+---
 
 ### Pre-compiled Binaries (GitHub Releases)
 
-If you prefer not to use a package manager or `cargo`, you can download standalone binaries directly from our GitHub Releases page.
-
-1. Go to the [Releases](https://github.com/dev-ette/jsonette/releases) page.
-2. Download the binary that matches your operating system and architecture (e.g., `jsonette-macos-arm64` for Apple Silicon, `jsonette-linux-amd64` for Linux, or `jsonette-windows-amd64.exe` for Windows).
-3. Make the binary executable (on Unix systems) and move it to your PATH:
+If you prefer a portable standalone executable, download the pre-compiled `.tar.gz` or `.zip` files from our [GitHub Releases](https://github.com/dev-ette/jsonette/releases) page. All release assets are accompanied by a `SHA256SUMS.txt` file for cryptographic verification.
 
 ```bash
 # Example for macOS Apple Silicon
-chmod +x jsonette-macos-arm64
-mv jsonette-macos-arm64 /usr/local/bin/jsonette
+curl -LO https://github.com/dev-ette/jsonette/releases/latest/download/jsonette-macos-arm64.tar.gz
+tar -xvf jsonette-macos-arm64.tar.gz
+chmod +x jsonette
+sudo mv jsonette /usr/local/bin/
 ```
 
 ---
@@ -188,6 +153,7 @@ jsonette config get format.sort_keys
 jsonette config set format.sort_keys true
 jsonette config set format.indent 4
 ```
+
 ---
 
 ### 7. Shell Autocompletion (`completions`)

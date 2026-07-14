@@ -78,15 +78,36 @@ jobs:
             tar -czvf release-asset/${ASSET_BASENAME}.tar.gz $ASSET_BASENAME
           fi
 
-      - name: Install cargo-deb (Linux only)
-        if: matrix.os_name == 'linux'
-        run: cargo install cargo-deb
-
-      - name: Build and Prepare .deb (Linux only)
+      - name: Install Packagers (Linux only)
         if: matrix.os_name == 'linux'
         run: |
+          cargo install cargo-deb
+          cargo install cargo-generate-rpm
+
+      - name: Build and Prepare Packages (Linux only)
+        if: matrix.os_name == 'linux'
+        run: |
+          # Generate .deb
           cargo deb --target ${{ matrix.target }}
           cp target/${{ matrix.target }}/debian/*.deb release-asset/
+          
+          # Generate .rpm
+          # cargo-generate-rpm requires the binary to be stripped first
+          strip target/${{ matrix.target }}/release/${{ matrix.binary_name }}
+          cargo generate-rpm --target ${{ matrix.target }}
+          cp target/${{ matrix.target }}/generate-rpm/*.rpm release-asset/
+
+      - name: Generate Checksums
+        shell: bash
+        run: |
+          cd release-asset
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            certutil -hashfile jsonette-* SHA256 > SHA256SUMS.txt
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            shasum -a 256 * > SHA256SUMS.txt
+          else
+            sha256sum * > SHA256SUMS.txt
+          fi
 
       - name: Upload Binary to Release
         uses: softprops/action-gh-release@v3.0.1
