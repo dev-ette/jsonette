@@ -113,3 +113,38 @@ jobs:
         uses: softprops/action-gh-release@v3.0.1
         with:
           files: release-asset/*
+
+  publish-winget:
+    name: Publish to Winget
+    runs-on: windows-latest
+    needs: build-cli
+    steps:
+      - name: Submit to Winget
+        uses: vedantmgoyal2009/winget-releaser@v2
+        with:
+          identifier: dev-ette.jsonette
+          installers-regex: '\.zip$'
+          token: ${{ secrets.RELEASE_GITHUB_TOKEN }}
+
+  publish-aur:
+    name: Publish to AUR
+    runs-on: ubuntu-latest
+    needs: build-cli
+    steps:
+      - uses: actions/checkout@v7.0.0
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install cargo-aur
+        run: cargo install cargo-aur
+      - name: Generate AUR Package
+        run: cargo aur
+      - name: Deploy to AUR
+        uses: KSXGitHub/github-actions-deploy-aur@v2.7.2
+        with:
+          pkgname: jsonette-bin
+          pkgbuild: ./target/cargo-aur/PKGBUILD
+          commit_username: ${{ secrets.AUR_USERNAME }}
+          commit_email: maintainer@dev-ette.org
+          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          commit_message: "Update AUR package for ${{ github.ref_name }}"
+          ssh_keyscan_types: rsa,ecdsa,ed25519
