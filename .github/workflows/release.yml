@@ -93,8 +93,10 @@ jobs:
           
           # Generate .rpm
           strip target/${{ matrix.target }}/release/${{ matrix.binary_name }}
-          cargo generate-rpm -p jsonette
-          cp target/generate-rpm/*.rpm release-asset/
+          cd cli
+          cargo generate-rpm
+          cd ..
+          cp target/generate-rpm/*.rpm release-asset/ || cp target/${{ matrix.target }}/generate-rpm/*.rpm release-asset/
 
       - name: Generate Checksums
         shell: bash
