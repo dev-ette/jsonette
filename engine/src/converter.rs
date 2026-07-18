@@ -158,6 +158,16 @@ pub fn convert(input: &str, from: DataFormat, to: DataFormat) -> Result<String, 
     }
 }
 
+/// Parses an XML element into a serde_json::Value.
+///
+/// # Arguments
+///
+/// * `reader` - The XML reader instance.
+/// * `buf` - A mutable byte buffer used for reading events.
+///
+/// # Returns
+///
+/// The parsed JSON Value representing the XML element.
 fn parse_xml_element(reader: &mut quick_xml::Reader<&[u8]>, buf: &mut Vec<u8>) -> Result<serde_json::Value, String> {
     let mut map = serde_json::Map::new();
     let mut text_content = String::new();
@@ -221,6 +231,17 @@ fn parse_xml_element(reader: &mut quick_xml::Reader<&[u8]>, buf: &mut Vec<u8>) -
     }
 }
 
+/// Writes a serde_json::Value as XML elements.
+///
+/// # Arguments
+///
+/// * `writer` - The XML writer instance.
+/// * `name` - The tag name for the current element.
+/// * `value` - The JSON Value to serialize.
+///
+/// # Returns
+///
+/// Empty result or a string error message on failure.
 fn write_json_to_xml(writer: &mut quick_xml::Writer<Vec<u8>>, name: &str, value: &serde_json::Value) -> Result<(), String> {
     use quick_xml::events::{BytesStart, BytesText, Event};
     
