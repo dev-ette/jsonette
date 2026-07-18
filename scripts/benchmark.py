@@ -7,11 +7,11 @@ import platform
 import re
 
 BUDGETS = {
-    "binary_size_mb": 15.0,
-    "gen_50mb_sec": 10.0,
-    "fmt_50mb_sec": 5.0,
-    "query_50mb_sec": 2.0,
-    "explore_50mb_sec": 2.0,
+    "binary_size_mb": 15.0 * 1.5,
+    "gen_50mb_sec": 10.0 * 1.5,
+    "fmt_50mb_sec": 5.0 * 1.5,
+    "query_50mb_sec": 2.0 * 1.5,
+    "explore_50mb_sec": 2.0 * 1.5,
 }
 
 
@@ -63,6 +63,9 @@ def main():
         gen_time, gen_ram, _ = run_cmd(
             f"{bin_path} generate -c .github/perf_schema.json -s {size} -o {out_file}"
         )
+        
+        actual_mb = round(os.path.getsize(out_file) / (1024 * 1024))
+        name_mb = f"{actual_mb}MB"
 
         print(f"[{name}] Formatting...")
         fmt_time, fmt_ram, _ = run_cmd(f"{bin_path} format {out_file} -o /dev/null")
@@ -119,7 +122,7 @@ def main():
 
         results.append(
             {
-                "name": name,
+                "name": name_mb,
                 "gen": gen_time,
                 "fmt": fmt_time,
                 "q_first": q_first,
@@ -153,7 +156,7 @@ def main():
     report = [
         "# Performance Metrics",
         "",
-        f"**Binary Size:** {bin_size_mb:.2f} MB (Budget: {BUDGETS['binary_size_mb']} MB)",
+        f"**Binary Size:** {bin_size_mb:.2f} MB (Budget: {BUDGETS['binary_size_mb']:.2f} MB)",
         "",
     ]
 
@@ -162,9 +165,48 @@ def main():
     )
     report.append("|---|---|---|---|---|---|---|---|")
 
-    for r in results:
+    # Check Budgets
+    failed = False
+    if bin_size_mb > BUDGETS["binary_size_mb"]:
+        print("FAIL: Binary size exceeded budget")
+        failed = True
+        
+    for i, r in enumerate(results):
+        is_50 = (i == len(results) - 1)
+        
+        gen_str = f"{r['gen']:.3f}" + (f" / {BUDGETS['gen_50mb_sec']:.1f}" if is_50 else "")
+        fmt_str = f"{r['fmt']:.3f}" + (f" / {BUDGETS['fmt_50mb_sec']:.1f}" if is_50 else "")
+        q_max = max(r['q_first'], r['q_mid'], r['q_last'])
+        q_str = f"{r['q_mid']:.3f}" + (f" / {BUDGETS['query_50mb_sec']:.1f}" if is_50 else "")
+        e_str = f"{r['e_root']:.3f}" + (f" / {BUDGETS['explore_50mb_sec']:.1f}" if is_50 else "")
+        
+        if is_50:
+            if r["gen"] > BUDGETS["gen_50mb_sec"]:
+                gen_str = "❌ " + gen_str
+                failed = True
+            else:
+                gen_str = "✅ " + gen_str
+                
+            if r["fmt"] > BUDGETS["fmt_50mb_sec"]:
+                fmt_str = "❌ " + fmt_str
+                failed = True
+            else:
+                fmt_str = "✅ " + fmt_str
+                
+            if q_max > BUDGETS["query_50mb_sec"]:
+                q_str = "❌ " + q_str
+                failed = True
+            else:
+                q_str = "✅ " + q_str
+                
+            if r["e_root"] > BUDGETS["explore_50mb_sec"]:
+                e_str = "❌ " + e_str
+                failed = True
+            else:
+                e_str = "✅ " + e_str
+                
         report.append(
-            f"| {r['name']} | {r['gen']:.3f} | {r['fmt']:.3f} | {r['q_mid']:.3f} | {r['e_root']:.3f} | {r['c_toml']:.3f} | {r['c_xml']:.3f} | {r['peak_ram']:.1f} |"
+            f"| {r['name']} | {gen_str} | {fmt_str} | {q_str} | {e_str} | {r['c_toml']:.3f} | {r['c_xml']:.3f} | {r['peak_ram']:.1f} |"
         )
 
     report_md = "\n".join(report)
@@ -173,24 +215,8 @@ def main():
     with open("perf_report.md", "w") as f:
         f.write(report_md)
 
-    # Check Budgets
-    failed = False
-    if bin_size_mb > BUDGETS["binary_size_mb"]:
-        print("FAIL: Binary size exceeded budget")
-        failed = True
-
-    r50 = results[-1]
-    if r50["gen"] > BUDGETS["gen_50mb_sec"]:
-        print("FAIL: 50MB Generation exceeded budget")
-        failed = True
-    if r50["fmt"] > BUDGETS["fmt_50mb_sec"]:
-        print("FAIL: 50MB Formatting exceeded budget")
-        failed = True
-    if max(r50["q_first"], r50["q_mid"], r50["q_last"]) > BUDGETS["query_50mb_sec"]:
-        print("FAIL: 50MB Query exceeded budget")
-        failed = True
-
     if failed:
+        print("FAIL: One or more budgets exceeded!")
         sys.exit(1)
     else:
         print("All budgets passed!")

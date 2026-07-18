@@ -30,9 +30,9 @@ use crate::utils::{print_diagnostics, read_input};
 /// The pipeline is:
 /// 1. Read the input source (file or stdin) using [`read_input`].
 /// 2. Parse the JSON document via the core engine parser.
-/// 3. Validate the JSONPath expression using [`jsonette::diagnostics_for_path`]
+/// 3. Validate the JSONPath expression using [`jsonette_core::diagnostics_for_path`]
 ///    before evaluation to surface actionable error messages on stderr.
-/// 4. Evaluate the JSONPath expression via [`jsonette::evaluate_path`].
+/// 4. Evaluate the JSONPath expression via [`jsonette_core::evaluate_path`].
 /// 5. Print matched nodes as a JSON array to stdout, one formatted node per
 ///    array element. Prints `[]` when no nodes match, consistent with the
 ///    RFC 9535 empty-nodelist convention.
@@ -57,7 +57,7 @@ pub fn handle_query(args: QueryArgs) {
     };
 
     // Parse the JSON document into the engine AST.
-    let node = match jsonette::parse(&input) {
+    let node = match jsonette_core::parse(&input) {
         Ok(node) => node,
         Err(diags) => {
             print_diagnostics(&input, &diags, &label);
@@ -67,7 +67,7 @@ pub fn handle_query(args: QueryArgs) {
 
     // Validate the JSONPath expression syntax before evaluation so that
     // invalid paths produce clear error messages rather than an empty result.
-    let path_diags = jsonette::diagnostics_for_path(&args.query);
+    let path_diags = jsonette_core::diagnostics_for_path(&args.query);
     if !path_diags.is_empty() {
         for diag in &path_diags {
             eprintln!("Error: {}", diag.message);
@@ -76,12 +76,12 @@ pub fn handle_query(args: QueryArgs) {
     }
 
     // Evaluate the JSONPath expression and print the result.
-    match jsonette::evaluate_path(&node, &args.query) {
+    match jsonette_core::evaluate_path(&node, &args.query) {
         Ok(matches) => {
             if matches.is_empty() {
                 println!("[]");
             } else {
-                let formatted: Vec<String> = matches.iter().map(jsonette::format).collect();
+                let formatted: Vec<String> = matches.iter().map(jsonette_core::format).collect();
                 println!("[\n  {}\n]", formatted.join(",\n  ").replace('\n', "\n  "));
             }
         }

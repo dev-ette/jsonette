@@ -20,7 +20,7 @@
 //! Generates random, recursive valid JSON strings to verify core invariants
 //! such as parser correctness, formatter idempotency, and minification equivalence.
 
-use jsonette::{format, minify, parse};
+use jsonette_core::{format, minify, parse};
 use proptest::prelude::*;
 
 /// Generates a strategy that produces arbitrary valid JSON strings.

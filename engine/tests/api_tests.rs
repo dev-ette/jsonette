@@ -1,4 +1,4 @@
-use jsonette::{FoldingStyle, FormatOptions, JsonNode, LineEnding, Span, format, minify, parse};
+use jsonette_core::{FoldingStyle, FormatOptions, JsonNode, LineEnding, Span, format, minify, parse};
 use std::sync::Mutex;
 
 static TEST_LOCK: Mutex<()> = Mutex::new(());
@@ -397,10 +397,10 @@ fn test_api_format_and_minify() {
     let parsed = parse(input).expect("parse input");
 
     // Preserve original global settings and ensure default settings are active
-    let original_settings = jsonette::get_settings();
+    let original_settings = jsonette_core::get_settings();
     let mut default_settings = original_settings;
     default_settings.format = FormatOptions::default();
-    jsonette::update_settings(default_settings).expect("reset global settings");
+    jsonette_core::update_settings(default_settings).expect("reset global settings");
 
     // Test default formatting using the global settings
     let formatted = format(&parsed);
@@ -428,14 +428,14 @@ fn test_api_format_and_minify() {
     // 2. Change global settings via update_settings to use Compact folding
     let mut new_settings = default_settings;
     new_settings.format.folding_style = FoldingStyle::Compact;
-    jsonette::update_settings(new_settings).expect("update global settings");
+    jsonette_core::update_settings(new_settings).expect("update global settings");
 
     // 3. Format -> should now format using the new Compact folding style
     let formatted_compact = format(&parsed);
     assert!(formatted_compact.contains("\"list\": [true, false, null]"));
 
     // Restore original global settings
-    jsonette::update_settings(original_settings).expect("restore global settings");
+    jsonette_core::update_settings(original_settings).expect("restore global settings");
 }
 
 /// **Test Case**: Parser Options Integration
@@ -446,7 +446,7 @@ fn test_api_format_and_minify() {
 #[test]
 fn test_api_parser_options() {
     let _guard = TEST_LOCK.lock().unwrap();
-    let original_settings = jsonette::get_settings();
+    let original_settings = jsonette_core::get_settings();
 
     // --- Part 1: Comments ---
     let comment_json = r#"{
@@ -458,13 +458,13 @@ fn test_api_parser_options() {
     // 1. Comments disabled by default -> should fail to parse
     let mut settings_no_comments = original_settings;
     settings_no_comments.parser.allow_comments = false;
-    jsonette::update_settings(settings_no_comments).unwrap();
+    jsonette_core::update_settings(settings_no_comments).unwrap();
     assert!(parse(comment_json).is_err());
 
     // 2. Enable comments -> should parse successfully
     let mut settings_comments = original_settings;
     settings_comments.parser.allow_comments = true;
-    jsonette::update_settings(settings_comments).unwrap();
+    jsonette_core::update_settings(settings_comments).unwrap();
     let parsed_comments = parse(comment_json).expect("should parse comments");
     assert_eq!(parsed_comments.node_type(), "object");
 
@@ -479,16 +479,16 @@ fn test_api_parser_options() {
     // 1. Trailing commas disabled by default -> should fail to parse
     let mut settings_no_trailing = original_settings;
     settings_no_trailing.parser.allow_trailing_commas = false;
-    jsonette::update_settings(settings_no_trailing).unwrap();
+    jsonette_core::update_settings(settings_no_trailing).unwrap();
     assert!(parse(trailing_comma_json).is_err());
 
     // 2. Enable trailing commas -> should parse successfully
     let mut settings_trailing = original_settings;
     settings_trailing.parser.allow_trailing_commas = true;
-    jsonette::update_settings(settings_trailing).unwrap();
+    jsonette_core::update_settings(settings_trailing).unwrap();
     let parsed_trailing = parse(trailing_comma_json).expect("should parse trailing commas");
     assert_eq!(parsed_trailing.node_type(), "object");
 
     // Restore original settings
-    jsonette::update_settings(original_settings).unwrap();
+    jsonette_core::update_settings(original_settings).unwrap();
 }

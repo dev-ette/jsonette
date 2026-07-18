@@ -23,7 +23,7 @@
 
 use crate::args::ExploreArgs;
 use crate::utils::{print_diagnostics, read_input};
-use jsonette::JsonNode;
+use jsonette_core::JsonNode;
 use regex::Regex;
 
 /// Executes the `jsonette explore` subcommand end-to-end.
@@ -65,7 +65,7 @@ pub fn handle_explore(mut args: ExploreArgs) {
         }
     };
 
-    let node = match jsonette::parse(&input) {
+    let node = match jsonette_core::parse(&input) {
         Ok(node) => node,
         Err(diags) => {
             print_diagnostics(&input, &diags, &label);
@@ -73,7 +73,7 @@ pub fn handle_explore(mut args: ExploreArgs) {
         }
     };
 
-    let path_diags = jsonette::diagnostics_for_path(&args.path);
+    let path_diags = jsonette_core::diagnostics_for_path(&args.path);
     if !path_diags.is_empty() {
         for diag in &path_diags {
             eprintln!("Error: {}", diag.message);
@@ -81,7 +81,7 @@ pub fn handle_explore(mut args: ExploreArgs) {
         std::process::exit(1);
     }
 
-    match jsonette::evaluate_path(&node, &args.path) {
+    match jsonette_core::evaluate_path(&node, &args.path) {
         Ok(matches) => {
             if matches.is_empty() {
                 println!("No nodes matched the path.");

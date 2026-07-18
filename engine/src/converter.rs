@@ -109,9 +109,26 @@ pub fn convert(input: &str, from: DataFormat, to: DataFormat) -> Result<String, 
                 #[serde(rename = "$value")]
                 value: &'a serde_json::Value,
             }
-            quick_xml::se::to_string_with_root("root", &value)
+            let raw_xml = quick_xml::se::to_string_with_root("root", &value)
                 .or_else(|_| quick_xml::se::to_string(&XmlRoot { value: &value }))
-                .map_err(|e| format!("XML Serialize Error: {}", e))
+                .map_err(|e| format!("XML Serialize Error: {}", e))?;
+                
+            // Pretty-print the XML using quick_xml::Writer
+            let mut writer = quick_xml::Writer::new_with_indent(Vec::new(), b' ', 4);
+            let mut reader = quick_xml::Reader::from_str(&raw_xml);
+            reader.config_mut().trim_text(true);
+            loop {
+                match reader.read_event() {
+                    Ok(quick_xml::events::Event::Eof) => break,
+                    Ok(e) => {
+                        let _ = writer.write_event(e);
+                    }
+                    Err(_) => break, // If error occurs during re-parsing, break out
+                }
+            }
+            
+            let pretty_xml = String::from_utf8(writer.into_inner()).unwrap_or(raw_xml);
+            Ok(format!("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n{}", pretty_xml))
         }
     }
 }
