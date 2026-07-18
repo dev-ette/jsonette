@@ -74,7 +74,26 @@ pub fn convert(input: &str, from: DataFormat, to: DataFormat) -> Result<String, 
             toml::from_str(input).map_err(|e| format!("TOML Parse Error: {}", e))?
         }
         DataFormat::Xml => {
-            quick_xml::de::from_str(input).map_err(|e| format!("XML Parse Error: {}", e))?
+            let mut reader = quick_xml::Reader::from_str(input);
+            reader.config_mut().trim_text(true);
+            let mut buf = Vec::new();
+            
+            // Skip to root element
+            loop {
+                match reader.read_event_into(&mut buf) {
+                    Ok(quick_xml::events::Event::Start(ref e)) => {
+                        let name = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                        let mut root = serde_json::Map::new();
+                        let inner = parse_xml_element(&mut reader, &mut buf)
+                            .map_err(|err| format!("XML Parse Error: {}", err))?;
+                        root.insert(name, inner);
+                        break serde_json::Value::Object(root);
+                    }
+                    Ok(quick_xml::events::Event::Eof) => return Err("XML Parse Error: Unexpected EOF".to_string()),
+                    Err(e) => return Err(format!("XML Parse Error: {}", e)),
+                    _ => (), // Skip prolog, DTD, etc.
+                }
+            }
         }
     };
 
@@ -103,32 +122,144 @@ pub fn convert(input: &str, from: DataFormat, to: DataFormat) -> Result<String, 
             toml::to_string_pretty(&toml_value).map_err(|e| format!("TOML Serialize Error: {}", e))
         }
         DataFormat::Xml => {
-            // Wrap the value in a root element so quick-xml can serialize it
-            #[derive(serde::Serialize)]
-            struct XmlRoot<'a> {
-                #[serde(rename = "$value")]
-                value: &'a serde_json::Value,
-            }
-            let raw_xml = quick_xml::se::to_string_with_root("root", &value)
-                .or_else(|_| quick_xml::se::to_string(&XmlRoot { value: &value }))
-                .map_err(|e| format!("XML Serialize Error: {}", e))?;
-                
-            // Pretty-print the XML using quick_xml::Writer
             let mut writer = quick_xml::Writer::new_with_indent(Vec::new(), b' ', 4);
-            let mut reader = quick_xml::Reader::from_str(&raw_xml);
-            reader.config_mut().trim_text(true);
-            loop {
-                match reader.read_event() {
-                    Ok(quick_xml::events::Event::Eof) => break,
-                    Ok(e) => {
-                        let _ = writer.write_event(e);
+            
+            match &value {
+                serde_json::Value::Object(map) if map.len() == 1 => {
+                    let (k, v) = map.iter().next().unwrap();
+                    if v.is_array() {
+                        let start = quick_xml::events::BytesStart::new("root");
+                        writer.write_event(quick_xml::events::Event::Start(start.clone())).unwrap();
+                        write_json_to_xml(&mut writer, k, v)
+                            .map_err(|e| format!("XML Serialize Error: {}", e))?;
+                        writer.write_event(quick_xml::events::Event::End(start.to_end())).unwrap();
+                    } else {
+                        write_json_to_xml(&mut writer, k, v)
+                            .map_err(|e| format!("XML Serialize Error: {}", e))?;
                     }
-                    Err(_) => break, // If error occurs during re-parsing, break out
+                }
+                serde_json::Value::Array(_) => {
+                    // Wrap arrays in a root element so we don't output multiple root elements
+                    let start = quick_xml::events::BytesStart::new("root");
+                    writer.write_event(quick_xml::events::Event::Start(start.clone())).unwrap();
+                    write_json_to_xml(&mut writer, "item", &value)
+                        .map_err(|e| format!("XML Serialize Error: {}", e))?;
+                    writer.write_event(quick_xml::events::Event::End(start.to_end())).unwrap();
+                }
+                _ => {
+                    write_json_to_xml(&mut writer, "root", &value)
+                        .map_err(|e| format!("XML Serialize Error: {}", e))?;
                 }
             }
             
-            let pretty_xml = String::from_utf8(writer.into_inner()).unwrap_or(raw_xml);
+            let pretty_xml = String::from_utf8(writer.into_inner()).unwrap();
             Ok(format!("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n{}", pretty_xml))
         }
     }
+}
+
+fn parse_xml_element(reader: &mut quick_xml::Reader<&[u8]>, buf: &mut Vec<u8>) -> Result<serde_json::Value, String> {
+    let mut map = serde_json::Map::new();
+    let mut text_content = String::new();
+    let mut has_children = false;
+
+    loop {
+        buf.clear();
+        match reader.read_event_into(buf) {
+            Ok(quick_xml::events::Event::Start(ref e)) => {
+                has_children = true;
+                let name = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let child_val = parse_xml_element(reader, buf)?;
+                
+                if let Some(existing) = map.remove(&name) {
+                    if let serde_json::Value::Array(mut arr) = existing {
+                        arr.push(child_val);
+                        map.insert(name, serde_json::Value::Array(arr));
+                    } else {
+                        map.insert(name, serde_json::Value::Array(vec![existing, child_val]));
+                    }
+                } else {
+                    map.insert(name, child_val);
+                }
+            }
+            Ok(quick_xml::events::Event::Empty(ref e)) => {
+                has_children = true;
+                let name = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                if let Some(existing) = map.remove(&name) {
+                    if let serde_json::Value::Array(mut arr) = existing {
+                        arr.push(serde_json::Value::Null);
+                        map.insert(name, serde_json::Value::Array(arr));
+                    } else {
+                        map.insert(name, serde_json::Value::Array(vec![existing, serde_json::Value::Null]));
+                    }
+                } else {
+                    map.insert(name, serde_json::Value::Null);
+                }
+            }
+            Ok(quick_xml::events::Event::Text(e)) => {
+                text_content.push_str(&String::from_utf8_lossy(e.as_ref()));
+            }
+            Ok(quick_xml::events::Event::End(_)) => {
+                if !has_children {
+                    if text_content.is_empty() {
+                        return Ok(serde_json::Value::Null);
+                    }
+                    if let Ok(b) = text_content.parse::<bool>() {
+                        return Ok(serde_json::Value::Bool(b));
+                    }
+                    if let Ok(n) = text_content.parse::<serde_json::Number>() {
+                        return Ok(serde_json::Value::Number(n));
+                    }
+                    return Ok(serde_json::Value::String(text_content));
+                }
+                return Ok(serde_json::Value::Object(map));
+            }
+            Ok(quick_xml::events::Event::Eof) => return Err("Unexpected EOF".to_string()),
+            Err(e) => return Err(e.to_string()),
+            _ => (),
+        }
+    }
+}
+
+fn write_json_to_xml(writer: &mut quick_xml::Writer<Vec<u8>>, name: &str, value: &serde_json::Value) -> Result<(), String> {
+    use quick_xml::events::{BytesStart, BytesText, Event};
+    
+    match value {
+        serde_json::Value::Object(map) => {
+            let start = BytesStart::new(name);
+            writer.write_event(Event::Start(start.clone())).map_err(|e| e.to_string())?;
+            for (k, v) in map {
+                write_json_to_xml(writer, k, v)?;
+            }
+            writer.write_event(Event::End(start.to_end())).map_err(|e| e.to_string())?;
+        }
+        serde_json::Value::Array(arr) => {
+            for item in arr {
+                write_json_to_xml(writer, name, item)?;
+            }
+        }
+        serde_json::Value::String(s) => {
+            let start = BytesStart::new(name);
+            writer.write_event(Event::Start(start.clone())).map_err(|e| e.to_string())?;
+            writer.write_event(Event::Text(BytesText::new(s))).map_err(|e| e.to_string())?;
+            writer.write_event(Event::End(start.to_end())).map_err(|e| e.to_string())?;
+        }
+        serde_json::Value::Number(n) => {
+            let start = BytesStart::new(name);
+            writer.write_event(Event::Start(start.clone())).map_err(|e| e.to_string())?;
+            writer.write_event(Event::Text(BytesText::new(&n.to_string()))).map_err(|e| e.to_string())?;
+            writer.write_event(Event::End(start.to_end())).map_err(|e| e.to_string())?;
+        }
+        serde_json::Value::Bool(b) => {
+            let start = BytesStart::new(name);
+            writer.write_event(Event::Start(start.clone())).map_err(|e| e.to_string())?;
+            writer.write_event(Event::Text(BytesText::new(&b.to_string()))).map_err(|e| e.to_string())?;
+            writer.write_event(Event::End(start.to_end())).map_err(|e| e.to_string())?;
+        }
+        serde_json::Value::Null => {
+            let start = BytesStart::new(name);
+            writer.write_event(Event::Empty(start)).map_err(|e| e.to_string())?;
+        }
+    }
+    Ok(())
 }
