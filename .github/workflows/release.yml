@@ -162,24 +162,6 @@ jobs:
         working-directory: engine
         run: cargo build --release
 
-      - name: Install Apple Certificate
-        env:
-          BUILD_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
-          P12_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          KEYCHAIN_PASSWORD: "temp-password"
-        run: |
-          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
-          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
-
-          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
-
-          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-
-          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
-          security list-keychain -d user -s $KEYCHAIN_PATH
-
       - name: Generate Xcode Project
         working-directory: macos
         run: xcodegen
@@ -192,23 +174,23 @@ jobs:
             -scheme jsonette \
             -destination 'generic/platform=macOS' \
             -archivePath $RUNNER_TEMP/jsonette.xcarchive \
-            CODE_SIGN_IDENTITY="Developer ID Application" \
-            DEVELOPMENT_TEAM=${{ secrets.APPLE_TEAM_ID }} \
-            OTHER_CODE_SIGN_FLAGS="--timestamp" \
-            ENABLE_HARDENED_RUNTIME=YES
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=YES \
+            CODE_SIGNING_ALLOWED=YES
 
       - name: Export Archive
         working-directory: macos
         run: |
+          # Use ad-hoc signing for the export
           cat <<EOF > exportOptions.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
               <key>method</key>
-              <string>developer-id</string>
-              <key>teamID</key>
-              <string>${{ secrets.APPLE_TEAM_ID }}</string>
+              <string>mac-application</string>
+              <key>signingStyle</key>
+              <string>manual</string>
           </dict>
           </plist>
           EOF
@@ -217,27 +199,6 @@ jobs:
             -archivePath $RUNNER_TEMP/jsonette.xcarchive \
             -exportOptionsPlist exportOptions.plist \
             -exportPath $RUNNER_TEMP/export
-
-      - name: Notarize App
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: |
-          # Create a ZIP of the app for notarization
-          cd $RUNNER_TEMP/export
-          /usr/bin/ditto -c -k --keepParent jsonette.app jsonette.zip
-          
-          xcrun notarytool submit jsonette.zip \
-            --apple-id "$APPLE_ID" \
-            --password "$APPLE_ID_PASSWORD" \
-            --team-id "$APPLE_TEAM_ID" \
-            --wait \
-            --timeout 10m
-
-      - name: Staple App
-        run: |
-          xcrun stapler staple $RUNNER_TEMP/export/jsonette.app
 
       - name: Create DMG
         run: |
