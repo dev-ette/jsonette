@@ -17,17 +17,17 @@ See the License for the licenses.
 
 # UniFFI Multi-Language Bridge Reference
 
-This document provides a guide to generating, compiling, and verifying the FFI bindings for the `jsonette` Rust engine across **Swift, Python, C/C++, Kotlin, Java, and Node.js**.
+This document provides a guide to generating, compiling, and verifying the FFI bindings for the `jsonette-core` Rust engine across **Swift, Python, C/C++, Kotlin, Java, and Node.js**.
 
 ---
 
 ## 🛠️ Setup & Architecture
 
 The `jsonette` core engine compiles to:
-*   `libjsonette.a` (static library for iOS/macOS Xcode linking)
-*   `libjsonette.dylib` (dynamic library for local testing on macOS)
-*   `libjsonette.so` (dynamic library for Linux testing)
-*   `libjsonette.rlib` (standard Rust library for workspace dependencies)
+*   `libjsonette_core.a` (static library for iOS/macOS Xcode linking)
+*   `libjsonette_core.dylib` (dynamic library for local testing on macOS)
+*   `libjsonette_core.so` (dynamic library for Linux testing)
+*   `libjsonette_core.rlib` (standard Rust library for workspace dependencies)
 
 We use UniFFI's **procedural macro-only setup** (supported in UniFFI 0.28+), which avoids maintaining a separate UDL file.
 
@@ -47,19 +47,19 @@ cargo build
 Generate the Swift bindings, C header, and Clang modulemap:
 ```bash
 cargo run --bin uniffi-bindgen -- generate \
-  --library target/debug/libjsonette.dylib \
+  --library target/debug/libjsonette_core.dylib \
   --language swift \
   --out-dir bridge-spike/
 
-mv bridge-spike/jsonetteFFI.modulemap bridge-spike/module.modulemap
+mv bridge-spike/jsonette_coreFFI.modulemap bridge-spike/module.modulemap
 ```
 
 Compile and run the smoke test:
 ```bash
 swiftc -I bridge-spike \
        -L target/debug \
-       -ljsonette \
-       bridge-spike/jsonette.swift \
+       -ljsonette_core \
+       bridge-spike/jsonette_core.swift \
        bridge-spike/main.swift \
        -o bridge-spike/main
 
@@ -73,7 +73,7 @@ DYLD_LIBRARY_PATH=target/debug/ ./bridge-spike/main
 Generate the Python bindings:
 ```bash
 cargo run --bin uniffi-bindgen -- generate \
-  --library target/debug/libjsonette.dylib \
+  --library target/debug/libjsonette_core.dylib \
   --language python \
   --out-dir bridge-spike/
 ```
@@ -91,7 +91,7 @@ Compile the C smoke test directly linking against the generated C header and Rus
 ```bash
 clang -I bridge-spike/ \
       -L target/debug/ \
-      -ljsonette \
+      -ljsonette_core \
       bridge-spike/main.c \
       -o bridge-spike/main_c
 
@@ -105,12 +105,12 @@ DYLD_LIBRARY_PATH=target/debug/ ./bridge-spike/main_c
 Generate the Kotlin bindings:
 ```bash
 cargo run --bin uniffi-bindgen -- generate \
-  --library target/debug/libjsonette.dylib \
+  --library target/debug/libjsonette_core.dylib \
   --language kotlin \
   --out-dir bridge-spike/
 ```
 
-This generates `bridge-spike/jsonette.kt`. 
+This generates `bridge-spike/jsonette_core.kt`.
 
 To compile and run Kotlin/Java, we need the `jna-5.14.0.jar` (Java Native Access) dependency:
 ```bash
@@ -119,7 +119,7 @@ curl -Lo bridge-spike/jna.jar https://repo1.maven.org/maven2/net/java/dev/jna/jn
 
 # Compile Kotlin bindings and test script
 kotlinc -classpath bridge-spike/jna.jar \
-        bridge-spike/jsonette.kt \
+        bridge-spike/jsonette_core.kt \
         bridge-spike/Main.kt \
         -d bridge-spike/MainKt.jar
 
