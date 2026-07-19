@@ -1012,4 +1012,69 @@ mod private_tests {
             JsonNode::Object(vec![], Span { start: 0, end: 2 })
         );
     }
+
+    /// **Test Case**: Strict Whitespace and Comments Handling
+    ///
+    /// ### Description
+    /// Verifies strict parser handling of standard whitespaces and enabled comments.
+    ///
+    /// ### Test Procedure
+    /// 1. Parse a valid input with line/block comments.
+    /// 2. Parse unterminated block comments.
+    /// 3. Parse unterminated line comments.
+    ///
+    /// ### Expected Result
+    /// Parsing succeeds with valid comments and appropriately errors on unterminated sequences.
+    #[test]
+    fn test_strict_whitespace_and_comments() {
+        let mut opts = crate::types::ParserOptions::default();
+        opts.allow_comments = true;
+
+        let mut parser = Parser::new(" // line \n /* block */ \n\t\r 123 \n ", opts.clone());
+        assert!(parser.parse_value().is_ok());
+
+        let mut parser = Parser::new("/* block without end", opts.clone());
+        assert!(parser.parse_value().is_err());
+
+        let mut parser = Parser::new("// line without end", opts.clone());
+        assert!(parser.parse_value().is_err());
+    }
+
+    /// **Test Case**: Strict Partial Keywords
+    ///
+    /// ### Description
+    /// Verifies the parser rejects incorrectly formed partial `null`, `true`, and `false` literals.
+    ///
+    /// ### Test Procedure
+    /// 1. Feed partial variants like `nuxl` or `falsx`.
+    ///
+    /// ### Expected Result
+    /// Parser predictably identifies character anomalies and fails.
+    #[test]
+    fn test_strict_partial_keywords() {
+        assert!(Parser::new_test("nuxl").parse_value().is_err());
+        assert!(Parser::new_test("nul").parse_value().is_err());
+        assert!(Parser::new_test("nx").parse_value().is_err());
+
+        assert!(Parser::new_test("trux").parse_value().is_err());
+        assert!(Parser::new_test("trx").parse_value().is_err());
+        assert!(Parser::new_test("falsx").parse_value().is_err());
+        assert!(Parser::new_test("falx").parse_value().is_err());
+    }
+
+    /// **Test Case**: Strict Invalid UTF8 Escapes
+    ///
+    /// ### Description
+    /// Verifies strict handling of invalid surrogate pairs.
+    ///
+    /// ### Test Procedure
+    /// 1. Parse an escaped sequence representing two high surrogates (`\uD83D\uD83D`).
+    ///
+    /// ### Expected Result
+    /// Correctly errors expecting a low surrogate.
+    #[test]
+    fn test_strict_invalid_utf8_escapes() {
+        // Two high surrogates will cause an error
+        assert!(Parser::new_test(r#""\uD83D\uD83D""#).parse_value().is_err());
+    }
 }

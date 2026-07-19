@@ -52,7 +52,7 @@ pub fn handle_format(args: FormatArgs) {
     };
 
     // Load default/current configuration and apply any overrides
-    let mut settings = jsonette::get_settings();
+    let mut settings = jsonette_core::get_settings();
     if let Some(sort_keys) = args.sort_keys {
         settings.format.sort_keys = sort_keys;
     }
@@ -64,24 +64,24 @@ pub fn handle_format(args: FormatArgs) {
     }
     if let Some(line_ending) = &args.line_ending {
         settings.format.line_ending = match line_ending.as_str() {
-            "lf" => jsonette::LineEnding::LF,
-            "crlf" => jsonette::LineEnding::CRLF,
+            "lf" => jsonette_core::LineEnding::LF,
+            "crlf" => jsonette_core::LineEnding::CRLF,
             _ => unreachable!(),
         };
     }
     if let Some(folding_style) = &args.folding_style {
         settings.format.folding_style = match folding_style.as_str() {
-            "expanded" => jsonette::FoldingStyle::Expanded,
-            "compact" => jsonette::FoldingStyle::Compact,
+            "expanded" => jsonette_core::FoldingStyle::Expanded,
+            "compact" => jsonette_core::FoldingStyle::Compact,
             _ => unreachable!(),
         };
     }
 
     // Set settings in-memory only (do not write to disk during single command format run)
-    jsonette::set_in_memory_settings(settings);
+    jsonette_core::set_in_memory_settings(settings);
 
     // Parse the JSON
-    let node = match jsonette::parse(&input) {
+    let node = match jsonette_core::parse(&input) {
         Ok(node) => node,
         Err(diags) => {
             print_diagnostics(&input, &diags, &label);
@@ -91,9 +91,9 @@ pub fn handle_format(args: FormatArgs) {
 
     // Format or minify
     let output = if args.minify {
-        jsonette::minify(&node)
+        jsonette_core::minify(&node)
     } else {
-        jsonette::format(&node)
+        jsonette_core::format(&node)
     };
 
     // Output result

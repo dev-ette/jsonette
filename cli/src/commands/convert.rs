@@ -37,7 +37,7 @@ pub fn handle_convert(args: ConvertArgs) {
         }
     };
 
-    let from_fmt = match jsonette::converter::DataFormat::from_str(&args.from) {
+    let from_fmt = match jsonette_core::converter::DataFormat::from_str(&args.from) {
         Ok(f) => f,
         Err(e) => {
             eprintln!("Error: {}", e);
@@ -45,7 +45,7 @@ pub fn handle_convert(args: ConvertArgs) {
         }
     };
 
-    let to_fmt = match jsonette::converter::DataFormat::from_str(&args.to) {
+    let to_fmt = match jsonette_core::converter::DataFormat::from_str(&args.to) {
         Ok(f) => f,
         Err(e) => {
             eprintln!("Error: {}", e);
@@ -53,9 +53,16 @@ pub fn handle_convert(args: ConvertArgs) {
         }
     };
 
-    match jsonette::converter::convert(&input, from_fmt, to_fmt) {
+    match jsonette_core::converter::convert(&input, from_fmt, to_fmt) {
         Ok(output) => {
-            println!("{}", output);
+            if let Some(out_path) = &args.output {
+                if let Err(e) = std::fs::write(out_path, output) {
+                    eprintln!("Error writing output file: {}", e);
+                    std::process::exit(1);
+                }
+            } else {
+                println!("{}", output);
+            }
         }
         Err(e) => {
             eprintln!("Conversion error: {}", e);

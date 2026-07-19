@@ -40,7 +40,7 @@ pub use types::{
 pub use completion::completions_at;
 pub use formatter::{format, minify};
 pub use parser::{diagnostics, parse, tolerant_parse};
-pub use query::{diagnostics_for_path, evaluate_path};
+pub use query::{diagnostics_for_path, evaluate_path, evaluate_path_on_str};
 pub use settings::{Settings, get_settings, set_in_memory_settings, update_settings};
 
 uniffi::setup_scaffolding!();
@@ -63,11 +63,31 @@ pub fn ping(input: String) -> String {
 mod ffi_tests {
     use super::*;
 
+    /// **Test Case**: Ping returns pong prefix
+    ///
+    /// ### Description
+    /// Validates the FFI bindings return a formatted ping response.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `ping("world")`.
+    ///
+    /// ### Expected Result
+    /// Result is `pong: world`.
     #[test]
     fn test_ping_returns_pong_prefix() {
         assert_eq!(ping("world".to_string()), "pong: world");
     }
 
+    /// **Test Case**: Ping empty string
+    ///
+    /// ### Description
+    /// Validates the FFI bindings process an empty payload safely.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `ping("")`.
+    ///
+    /// ### Expected Result
+    /// Result is `pong: `.
     #[test]
     fn test_ping_empty_string() {
         assert_eq!(ping(String::new()), "pong: ");

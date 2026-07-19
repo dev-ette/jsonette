@@ -18,8 +18,8 @@
 //! Handles the `generate` subcommand for dummy JSON data creation.
 
 use crate::args::GenerateArgs;
-use jsonette::generator::{GeneratorOptions, generate_from_schema};
-use jsonette::parser::parse;
+use jsonette_core::generator::{GeneratorOptions, generate_from_schema};
+use jsonette_core::parser::parse;
 use std::fs;
 use std::io::{self, Write};
 
@@ -88,9 +88,9 @@ pub fn handle_generate(args: GenerateArgs) {
 
     // 4. Format
     let formatted = if args.minify {
-        jsonette::minify(&generated_node)
+        jsonette_core::minify(&generated_node)
     } else {
-        jsonette::format(&generated_node)
+        jsonette_core::format(&generated_node)
     };
 
     // 5. Output

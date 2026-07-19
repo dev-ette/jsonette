@@ -108,7 +108,13 @@ impl Settings {
                     s.contains("/deps/") || s.contains("\\deps\\")
                 })
                 .unwrap_or(false);
+        Self::get_settings_path_impl(is_test)
+    }
 
+    /// * `is_test` - If true, resolves to a temporary test path.
+    ///
+    /// Gets the path to the settings file.
+    fn get_settings_path_impl(is_test: bool) -> Option<PathBuf> {
         if is_test {
             let mut path = std::env::temp_dir();
             path.push(format!(
@@ -230,4 +236,82 @@ pub fn set_in_memory_settings(settings: AppSettings) {
     let lock = Settings::get_settings_lock();
     let mut write_guard = lock.write().expect("Failed to acquire settings write lock");
     *write_guard = settings;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// **Test Case**: Get Home Directory Fallback
+    ///
+    /// ### Description
+    /// Validates the OS-specific home directory resolution logic safely resolves an appropriate path.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `get_home_dir`.
+    ///
+    /// ### Expected Result
+    /// Resolves an `Option<PathBuf>` representing the user's home folder.
+    #[test]
+    fn test_get_home_dir() {
+        assert!(Settings::get_home_dir().is_some());
+    }
+
+    /// **Test Case**: Settings Path Implementation Logic
+    ///
+    /// ### Description
+    /// Tests both normal and test path generation logic used by settings loader.
+    ///
+    /// ### Test Procedure
+    /// 1. Request test isolation paths (`is_test = true`).
+    /// 2. Request production file paths (`is_test = false`).
+    ///
+    /// ### Expected Result
+    /// Safely resolves path buffers regardless of configuration context.
+    #[test]
+    fn test_get_settings_path_impl() {
+        assert!(Settings::get_settings_path_impl(true).is_some());
+        assert!(Settings::get_settings_path_impl(false).is_some());
+    }
+
+    /// **Test Case**: Settings Read Failure with Invalid JSON
+    ///
+    /// ### Description
+    /// Verifies loading correctly reports failures if settings.json is malformed on disk.
+    ///
+    /// ### Test Procedure
+    /// 1. Write an invalid JSON block to the settings file path.
+    /// 2. Execute `load_settings_from_disk`.
+    ///
+    /// ### Expected Result
+    /// `load_settings_from_disk` safely propagates the parsing error.
+    #[test]
+    fn test_load_settings_invalid_json() {
+        let path = Settings::get_settings_path().unwrap();
+        // Write invalid json
+        std::fs::write(&path, "{ invalid").unwrap();
+        let result = Settings::load_settings_from_disk();
+        assert!(result.is_err());
+        // Clean up
+        let _ = std::fs::remove_file(path);
+    }
+
+    /// **Test Case**: Setting Modifications in Memory
+    ///
+    /// ### Description
+    /// Validates single-command execution updates settings only in-memory (skipping disk writes).
+    ///
+    /// ### Test Procedure
+    /// 1. Clone settings and override a formatting param (`indent = 99`).
+    /// 2. Push overrides to the global `set_in_memory_settings` store.
+    ///
+    /// ### Expected Result
+    /// Values read from `get_settings()` instantly reflect the overrides without disk writes.
+    #[test]
+    fn test_set_in_memory_settings() {
+        let mut settings = get_settings();
+        settings.format.indent = 99;
+        set_in_memory_settings(settings);
+        assert_eq!(get_settings().format.indent, 99);
+    }
 }

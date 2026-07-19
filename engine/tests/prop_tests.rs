@@ -20,7 +20,7 @@
 //! Generates random, recursive valid JSON strings to verify core invariants
 //! such as parser correctness, formatter idempotency, and minification equivalence.
 
-use jsonette::{format, minify, parse};
+use jsonette_core::{format, minify, parse};
 use proptest::prelude::*;
 
 /// Generates a strategy that produces arbitrary valid JSON strings.
@@ -59,9 +59,18 @@ fn arb_json() -> impl Strategy<Value = String> {
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(50))]
 
-    /// **Property**: Formatting is faithful.
+    /// **Test Case**: Parse Format Roundtrip
     ///
+    /// ### Description
     /// For any valid JSON structure, parsing the formatted output results in the exact same AST structure (except spans).
+    ///
+    /// ### Test Procedure
+    /// 1. Parse an arbitrary valid JSON document.
+    /// 2. Format it.
+    /// 3. Parse it again and format again.
+    ///
+    /// ### Expected Result
+    /// The formatted strings identically match, proving the structure was preserved.
     #[test]
     fn test_parse_format_roundtrip(input in arb_json()) {
         let parsed = parse(&input).expect("Generated JSON must be valid");
@@ -72,9 +81,17 @@ proptest! {
         assert_eq!(format(&parsed), format(&parsed_formatted));
     }
 
-    /// **Property**: Formatting is idempotent.
+    /// **Test Case**: Formatter Idempotence
     ///
+    /// ### Description
     /// For any valid JSON structure, `format(format(x)) == format(x)`.
+    ///
+    /// ### Test Procedure
+    /// 1. Format a parsed JSON document.
+    /// 2. Parse the output and format it again.
+    ///
+    /// ### Expected Result
+    /// The output of the second format is byte-for-byte identical to the first.
     #[test]
     fn test_formatter_idempotence(input in arb_json()) {
         let parsed = parse(&input).expect("Generated JSON must be valid");
@@ -84,10 +101,17 @@ proptest! {
         assert_eq!(formatted_1, formatted_2);
     }
 
-    /// **Property**: Minification is equivalent and parseable.
+    /// **Test Case**: Minify Parsability
     ///
-    /// For any valid JSON structure, parsing minified output and minifying it again
-    /// results in the exact same minified string.
+    /// ### Description
+    /// For any valid JSON structure, parsing minified output and minifying it again results in the exact same minified string.
+    ///
+    /// ### Test Procedure
+    /// 1. Minify a parsed JSON document.
+    /// 2. Parse the minified document and minify it again.
+    ///
+    /// ### Expected Result
+    /// Both minified strings are identically matched.
     #[test]
     fn test_minify_parsability(input in arb_json()) {
         let parsed = parse(&input).expect("Generated JSON must be valid");

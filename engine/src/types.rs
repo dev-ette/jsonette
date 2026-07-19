@@ -74,6 +74,11 @@ pub struct FormatOptions {
 }
 
 impl Default for FormatOptions {
+    /// Returns the default formatting settings.
+    ///
+    /// # Returns
+    ///
+    /// The default `FormatOptions`.
     fn default() -> Self {
         Self {
             use_tabs: false,
@@ -115,6 +120,11 @@ pub struct LintOptions {
 }
 
 impl Default for LintOptions {
+    /// Returns the default linting settings.
+    ///
+    /// # Returns
+    ///
+    /// The default `LintOptions`.
     fn default() -> Self {
         Self {
             duplicate_keys_severity: Severity::Warning,

@@ -87,13 +87,13 @@ pub fn byte_offset_to_line_col(input: &str, offset: usize) -> (usize, usize) {
 /// # Arguments
 ///
 /// * `input` - The source text containing errors.
-/// * `diagnostics` - A slice of `jsonette::Diagnostic` instances representing the errors.
+/// * `diagnostics` - A slice of `jsonette_core::Diagnostic` instances representing the errors.
 /// * `file_label` - A string label representing the source input (file path or `<stdin>`).
 ///
 /// # Returns
 ///
 /// Nothing.
-pub fn print_diagnostics(input: &str, diagnostics: &[jsonette::Diagnostic], file_label: &str) {
+pub fn print_diagnostics(input: &str, diagnostics: &[jsonette_core::Diagnostic], file_label: &str) {
     for diag in diagnostics {
         let (line, col) = byte_offset_to_line_col(input, diag.span.start);
         eprintln!("Error in {}:{}:{}: {}", file_label, line, col, diag.message);

@@ -167,29 +167,29 @@ jobs:
         run: cargo build
 
       - name: Generate Swift Bindings
-        run: cargo run --bin uniffi-bindgen -- generate --library target/debug/libjsonette.dylib --language swift --out-dir bridge-spike/
+        run: cargo run --bin uniffi-bindgen -- generate --library target/debug/libjsonette_core.dylib --language swift --out-dir bridge-spike/
 
       - name: Rename Swift Modulemap
-        run: mv bridge-spike/jsonetteFFI.modulemap bridge-spike/module.modulemap
+        run: mv bridge-spike/jsonette_coreFFI.modulemap bridge-spike/module.modulemap
 
       - name: Verify Swift Bridge
         run: |
-          swiftc -I bridge-spike -L target/debug -ljsonette bridge-spike/jsonette.swift bridge-spike/main.swift -o bridge-spike/main
+          swiftc -I bridge-spike -L target/debug -ljsonette_core bridge-spike/jsonette_core.swift bridge-spike/main.swift -o bridge-spike/main
           DYLD_LIBRARY_PATH=target/debug/ ./bridge-spike/main
 
       - name: Generate Python Bindings
-        run: cargo run --bin uniffi-bindgen -- generate --library target/debug/libjsonette.dylib --language python --out-dir bridge-spike/
+        run: cargo run --bin uniffi-bindgen -- generate --library target/debug/libjsonette_core.dylib --language python --out-dir bridge-spike/
 
       - name: Verify Python Bridge
         run: DYLD_LIBRARY_PATH=target/debug/ python3 bridge-spike/main.py
 
       - name: Verify C Bridge
         run: |
-          clang -I bridge-spike/ -L target/debug/ -ljsonette bridge-spike/main.c -o bridge-spike/main_c
+          clang -I bridge-spike/ -L target/debug/ -ljsonette_core bridge-spike/main.c -o bridge-spike/main_c
           DYLD_LIBRARY_PATH=target/debug/ ./bridge-spike/main_c
 
       - name: Generate Kotlin Bindings
-        run: cargo run --bin uniffi-bindgen -- generate --library target/debug/libjsonette.dylib --language kotlin --out-dir bridge-spike/
+        run: cargo run --bin uniffi-bindgen -- generate --library target/debug/libjsonette_core.dylib --language kotlin --out-dir bridge-spike/
 
   # -------------------------------------------------------------------------- #
   publish:

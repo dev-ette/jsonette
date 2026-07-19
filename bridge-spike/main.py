@@ -19,7 +19,7 @@ import os
 # Add bridge-spike directory to import search path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-import jsonette
+import jsonette_core as jsonette
 
 print("Calling Rust ping from Python...")
 result = jsonette.ping("world")

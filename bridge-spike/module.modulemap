@@ -1,5 +1,5 @@
-module jsonetteFFI {
-    header "jsonetteFFI.h"
+module jsonette_coreFFI {
+    header "jsonette_coreFFI.h"
     export *
     use "Darwin"
     use "_Builtin_stdbool"

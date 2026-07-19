@@ -23,7 +23,7 @@
 
 use crate::args::ExploreArgs;
 use crate::utils::{print_diagnostics, read_input};
-use jsonette::JsonNode;
+use jsonette_core::JsonNode;
 use regex::Regex;
 
 /// Executes the `jsonette explore` subcommand end-to-end.
@@ -65,15 +65,7 @@ pub fn handle_explore(mut args: ExploreArgs) {
         }
     };
 
-    let node = match jsonette::parse(&input) {
-        Ok(node) => node,
-        Err(diags) => {
-            print_diagnostics(&input, &diags, &label);
-            std::process::exit(1);
-        }
-    };
-
-    let path_diags = jsonette::diagnostics_for_path(&args.path);
+    let path_diags = jsonette_core::diagnostics_for_path(&args.path);
     if !path_diags.is_empty() {
         for diag in &path_diags {
             eprintln!("Error: {}", diag.message);
@@ -81,7 +73,7 @@ pub fn handle_explore(mut args: ExploreArgs) {
         std::process::exit(1);
     }
 
-    match jsonette::evaluate_path(&node, &args.path) {
+    match jsonette_core::evaluate_path_on_str(&input, &args.path) {
         Ok(matches) => {
             if matches.is_empty() {
                 println!("No nodes matched the path.");
@@ -162,28 +154,40 @@ pub fn handle_explore(mut args: ExploreArgs) {
             page_output(&output);
         }
         Err(err) => {
-            eprintln!("Error evaluating JSONPath: {}", err);
-            std::process::exit(1);
+            if err.starts_with("Invalid JSON") {
+                if let Err(diags) = jsonette_core::parse(&input) {
+                    print_diagnostics(&input, &diags, &label);
+                } else {
+                    eprintln!("{}", err);
+                }
+                std::process::exit(1);
+            } else {
+                eprintln!("Error evaluating JSONPath: {}", err);
+                std::process::exit(1);
+            }
         }
     }
 }
 
 /// Helper to pipe string output to `less`, or fallback to stdout if unavailable.
 fn page_output(output: &str) {
-    use std::io::{IsTerminal, Write};
-    use std::process::{Command, Stdio};
-
-    if std::io::stdout().is_terminal()
-        && let Ok(mut child) = Command::new("less")
-            .args(["-F", "-R", "-X"])
-            .stdin(Stdio::piped())
-            .spawn()
+    #[cfg(not(test))]
     {
-        if let Some(mut stdin) = child.stdin.take() {
-            let _ = stdin.write_all(output.as_bytes());
+        use std::io::{IsTerminal, Write};
+        use std::process::{Command, Stdio};
+
+        if std::io::stdout().is_terminal()
+            && let Ok(mut child) = Command::new("less")
+                .args(["-F", "-R", "-X"])
+                .stdin(Stdio::piped())
+                .spawn()
+        {
+            if let Some(mut stdin) = child.stdin.take() {
+                let _ = stdin.write_all(output.as_bytes());
+            }
+            let _ = child.wait();
+            return;
         }
-        let _ = child.wait();
-        return;
     }
 
     print!("{}", output);

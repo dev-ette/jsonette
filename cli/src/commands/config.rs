@@ -21,7 +21,7 @@
 //! shared user configuration file on disk.
 
 use crate::args::{ConfigArgs, ConfigCommands};
-use jsonette::{AppSettings, FoldingStyle, LineEnding, Severity};
+use jsonette_core::{AppSettings, FoldingStyle, LineEnding, Severity};
 
 /// Executes the global configuration settings command.
 ///
@@ -33,7 +33,7 @@ use jsonette::{AppSettings, FoldingStyle, LineEnding, Severity};
 ///
 /// Nothing.
 pub fn handle_config(args: ConfigArgs) {
-    let mut settings = jsonette::get_settings();
+    let mut settings = jsonette_core::get_settings();
     match args.command {
         ConfigCommands::List => match serde_json::to_string_pretty(&settings) {
             Ok(json) => println!("{}", json),
@@ -52,7 +52,7 @@ pub fn handle_config(args: ConfigArgs) {
         ConfigCommands::Set { key, value } => {
             match set_setting_value(&mut settings, &key, &value) {
                 Ok(()) => {
-                    if let Err(e) = jsonette::update_settings(settings) {
+                    if let Err(e) = jsonette_core::update_settings(settings) {
                         eprintln!("Error saving configuration: {}", e);
                         std::process::exit(1);
                     }

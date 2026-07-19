@@ -194,4 +194,8 @@ pub struct ConvertArgs {
 
     /// Input file path. If omitted, the tool reads from standard input.
     pub file: Option<PathBuf>,
+
+    /// Write the output to a specific file instead of standard output.
+    #[arg(short = 'o', long)]
+    pub output: Option<PathBuf>,
 }
