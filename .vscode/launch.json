@@ -1,0 +1,106 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug 'jsonette' (CLI)",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=jsonette",
+          "--package=jsonette"
+        ],
+        "filter": {
+          "name": "jsonette",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug 'jsonette' (CLI) with args",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=jsonette",
+          "--package=jsonette"
+        ],
+        "filter": {
+          "name": "jsonette",
+          "kind": "bin"
+        }
+      },
+      "args": ["${input:launchArgs}"],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Run 'jsonette' (CLI) with args (No Debug)",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=jsonette",
+          "--package=jsonette"
+        ],
+        "filter": {
+          "name": "jsonette",
+          "kind": "bin"
+        }
+      },
+      "args": ["${input:launchArgs}"],
+      "cwd": "${workspaceFolder}",
+      "noDebug": true
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug Unit Tests in 'jsonette-core'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--lib",
+          "--package=jsonette-core"
+        ],
+        "filter": {
+          "name": "jsonette-core",
+          "kind": "lib"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug Unit Tests in 'jsonette'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--bin=jsonette",
+          "--package=jsonette"
+        ],
+        "filter": {
+          "name": "jsonette",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "launchArgs",
+      "type": "promptString",
+      "description": "Arguments to pass to the CLI when debugging (e.g., format file.json)",
+      "default": ""
+    }
+  ]
+}

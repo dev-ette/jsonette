@@ -1,4 +1,6 @@
-use jsonette_core::{FoldingStyle, FormatOptions, JsonNode, LineEnding, Span, format, minify, parse};
+use jsonette_core::{
+    FoldingStyle, FormatOptions, JsonNode, LineEnding, Span, format, minify, parse,
+};
 use std::sync::Mutex;
 
 static TEST_LOCK: Mutex<()> = Mutex::new(());
@@ -17,13 +19,13 @@ static TEST_LOCK: Mutex<()> = Mutex::new(());
 #[test]
 fn test_format_options_default() {
     let opts = FormatOptions::default();
-    assert_eq!(opts.use_tabs, false);
+    assert!(!opts.use_tabs);
     assert_eq!(opts.indent, 2);
     assert_eq!(opts.line_ending, LineEnding::LF);
     assert_eq!(opts.folding_style, FoldingStyle::Expanded);
-    assert_eq!(opts.sort_keys, false);
-    assert_eq!(opts.space_after_colon, true);
-    assert_eq!(opts.space_after_comma, true);
+    assert!(!opts.sort_keys);
+    assert!(opts.space_after_colon);
+    assert!(opts.space_after_comma);
 }
 
 /// **Test Case**: JSON AST Node Helpers
