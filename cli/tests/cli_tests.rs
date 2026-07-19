@@ -39,6 +39,15 @@ fn jsonette_cmd(temp_dir: &TempDir) -> Command {
 }
 
 /// **Test Case**: Pipeline formatting via standard input.
+///
+/// ### Description
+/// Validates pipeline formatting via standard input.
+///
+/// ### Test Procedure
+/// 1. Provide input via stdin.
+///
+/// ### Expected Result
+/// Validates correct formatting on stdout.
 #[test]
 fn test_cli_format_stdin() {
     let temp_dir = TempDir::new().unwrap();
@@ -53,6 +62,15 @@ fn test_cli_format_stdin() {
 }
 
 /// **Test Case**: Key sorting override on formatting.
+///
+/// ### Description
+/// Tests format parameter overrides for sorting object keys.
+///
+/// ### Test Procedure
+/// 1. Run format with `--sort-keys true`.
+///
+/// ### Expected Result
+/// Validates sorted keys in stdout.
 #[test]
 fn test_cli_format_sort_keys() {
     let temp_dir = TempDir::new().unwrap();
@@ -69,6 +87,15 @@ fn test_cli_format_sort_keys() {
 }
 
 /// **Test Case**: Minified JSON output.
+///
+/// ### Description
+/// Validates minification pipeline.
+///
+/// ### Test Procedure
+/// 1. Run format with `--minify`.
+///
+/// ### Expected Result
+/// Output is correctly stripped of whitespace.
 #[test]
 fn test_cli_format_minify() {
     let temp_dir = TempDir::new().unwrap();
@@ -88,6 +115,15 @@ fn test_cli_format_minify() {
 }
 
 /// **Test Case**: Formatting an input file.
+///
+/// ### Description
+/// Tests formatting when provided a discrete file path.
+///
+/// ### Test Procedure
+/// 1. Run format with file target.
+///
+/// ### Expected Result
+/// Output is correctly formatted JSON.
 #[test]
 fn test_cli_format_file() {
     let temp_dir = TempDir::new().unwrap();
@@ -104,6 +140,15 @@ fn test_cli_format_file() {
 }
 
 /// **Test Case**: In-place formatting of files.
+///
+/// ### Description
+/// Validates inplace file modification safely formats and persists data.
+///
+/// ### Test Procedure
+/// 1. Execute format with `--in-place` flag.
+///
+/// ### Expected Result
+/// File is overwritten with correct payload and no stdout prints.
 #[test]
 fn test_cli_format_inplace() {
     let temp_dir = TempDir::new().unwrap();
@@ -124,6 +169,15 @@ fn test_cli_format_inplace() {
 }
 
 /// **Test Case**: Compiler-style error diagnostic pointing.
+///
+/// ### Description
+/// Ensures invalid payloads print precise span-based errors pointing to failures.
+///
+/// ### Test Procedure
+/// 1. Provide invalid JSON to format.
+///
+/// ### Expected Result
+/// Returns non-zero exit code and diagnostic arrows pointing at the exact syntax error.
 #[test]
 fn test_cli_format_invalid_json() {
     let temp_dir = TempDir::new().unwrap();
@@ -141,6 +195,17 @@ fn test_cli_format_invalid_json() {
 }
 
 /// **Test Case**: Config list, config set, and config get pipeline.
+///
+/// ### Description
+/// Evaluates entire config state machine for persistent CLI configuration.
+///
+/// ### Test Procedure
+/// 1. Execute config list.
+/// 2. Modify config set.
+/// 3. Read back with config get.
+///
+/// ### Expected Result
+/// Writes persist efficiently between CLI executions.
 #[test]
 fn test_cli_config_management() {
     let temp_dir = TempDir::new().unwrap();
@@ -191,6 +256,15 @@ fn test_cli_config_management() {
 }
 
 /// **Test Case**: Output option generating formatted output to a new file.
+///
+/// ### Description
+/// Tests formatting JSON directly to an output path instead of stdout.
+///
+/// ### Test Procedure
+/// 1. Execute `jsonette format --output <file>`.
+///
+/// ### Expected Result
+/// File is created containing the formatted payload.
 #[test]
 fn test_cli_format_output() {
     let temp_dir = TempDir::new().unwrap();
@@ -210,6 +284,15 @@ fn test_cli_format_output() {
 }
 
 /// **Test Case**: Conflicting output and in-place arguments.
+///
+/// ### Description
+/// Validates error when both output configurations are provided.
+///
+/// ### Test Procedure
+/// 1. Provide `--output` and `--in-place` together.
+///
+/// ### Expected Result
+/// Prevents execution safely with stderr error.
 #[test]
 fn test_cli_format_output_and_inplace_conflict() {
     let temp_dir = TempDir::new().unwrap();
@@ -228,6 +311,15 @@ fn test_cli_format_output_and_inplace_conflict() {
 }
 
 /// **Test Case**: Generation of shell autocompletion scripts.
+///
+/// ### Description
+/// Evaluates the generation of zsh autocompletion logic.
+///
+/// ### Test Procedure
+/// 1. Execute `jsonette completions zsh`.
+///
+/// ### Expected Result
+/// Standard output contains `compdef jsonette`.
 #[test]
 fn test_cli_completions() {
     let temp_dir = TempDir::new().unwrap();
@@ -541,6 +633,12 @@ fn test_cli_explore_object_regex_filter() {
 ///
 /// ### Description
 /// Verifies that an invalid regular expression string passed to `--regex` exits with an error.
+///
+/// ### Test Procedure
+/// 1. Execute explore with malformed regex `[invalid`.
+///
+/// ### Expected Result
+/// Errors gracefully showing "Invalid regex".
 #[test]
 fn test_cli_explore_invalid_regex_error() {
     let temp_dir = TempDir::new().unwrap();
@@ -559,6 +657,15 @@ fn test_cli_explore_invalid_regex_error() {
 }
 
 /// **Test Case**: Explore With Invalid JSONPath Reports Error
+///
+/// ### Description
+/// Tests handling of invalid JSONPath expressions.
+///
+/// ### Test Procedure
+/// 1. Provide `NOT_A_PATH` to explore.
+///
+/// ### Expected Result
+/// Command halts execution with parsing failure.
 #[test]
 fn test_cli_explore_invalid_jsonpath_error() {
     let temp_dir = TempDir::new().unwrap();
@@ -575,6 +682,15 @@ fn test_cli_explore_invalid_jsonpath_error() {
 }
 
 /// **Test Case**: Explore Where No Nodes Match
+///
+/// ### Description
+/// Validates explore behavior when no matching keys exist.
+///
+/// ### Test Procedure
+/// 1. Evaluate missing path `$.b`.
+///
+/// ### Expected Result
+/// Standard output mentions "No nodes matched".
 #[test]
 fn test_cli_explore_no_match() {
     let temp_dir = TempDir::new().unwrap();
@@ -591,6 +707,15 @@ fn test_cli_explore_no_match() {
 }
 
 /// **Test Case**: Explore Matching a Primitive Node
+///
+/// ### Description
+/// Evaluates execution behavior targeting primitive string or integer elements directly.
+///
+/// ### Test Procedure
+/// 1. Explore to a direct property node containing `42`.
+///
+/// ### Expected Result
+/// Command correctly alerts the user it "Matched a number node".
 #[test]
 fn test_cli_explore_primitive_node() {
     let temp_dir = TempDir::new().unwrap();
@@ -606,7 +731,80 @@ fn test_cli_explore_primitive_node() {
         .stdout(predicate::str::contains("Matched a number node"));
 }
 
+/// **Test Case**: Explore Multiple Matches Separator
+///
+/// ### Description
+/// Verifies the explore command correctly handles and separates outputs when JSONPath matches multiple root items.
+///
+/// ### Test Procedure
+/// 1. Run `explore '$.*'` on a file with multiple array fields.
+///
+/// ### Expected Result
+/// Prints `--- Match 1 ---` and `--- Match 2 ---` dividers.
+#[test]
+fn test_cli_explore_multiple_matches() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("test.json");
+    fs::write(&json_file, r#"{"a": [1, 2], "b": [3, 4]}"#).unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("explore")
+        .arg("$.*")
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("--- Match 1 ---"))
+        .stdout(predicate::str::contains("--- Match 2 ---"));
+}
+
+/// **Test Case**: Explore Grep Filtering
+///
+/// ### Description
+/// Tests string retention in explore output via the `--grep` option.
+///
+/// ### Test Procedure
+/// 1. Filter a JSON object containing keys `apple`, `banana` with `--grep app`.
+/// 2. Test an unmatchable grep string to evaluate the empty fallbacks.
+///
+/// ### Expected Result
+/// Output trims unmatched entries and correctly falls back to "No keys found".
+#[test]
+fn test_cli_explore_grep_filter_and_empty() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("test.json");
+    fs::write(&json_file, r#"{"apple": 1, "banana": 2, "cherry": 3}"#).unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("explore")
+        .arg("--grep")
+        .arg("app")
+        .arg("$")
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("apple").and(predicate::str::contains("banana").not()));
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("explore")
+        .arg("--grep")
+        .arg("zzz")
+        .arg("$")
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("No keys found"));
+}
+
 /// **Test Case**: Explore With Invalid JSON Reports Error
+///
+/// ### Description
+/// Validates invalid JSON payloads fail correctly before path exploration.
+///
+/// ### Test Procedure
+/// 1. Pass `NOT VALID JSON`.
+///
+/// ### Expected Result
+/// Fails and prints internal compilation diagnostics to stderr.
 #[test]
 fn test_cli_explore_invalid_json_reports_error() {
     let temp_dir = TempDir::new().unwrap();
@@ -658,4 +856,712 @@ fn test_cli_explore_object_limit() {
         .assert()
         .success()
         .stdout(predicate::str::contains("a\n... and 2 more keys"));
+}
+
+// ──────────────────────────── convert subcommand ──────────────────────────────
+
+/// **Test Case**: Cli Convert Json To Yaml
+///
+/// ### Description
+/// Validates cli convert json to yaml functionality.
+///
+/// ### Test Procedure
+/// 1. Execute `test_cli_convert_json_to_yaml`.
+///
+/// ### Expected Result
+/// Completes successfully meeting all assertions.
+#[test]
+fn test_cli_convert_json_to_yaml() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("test.json");
+    fs::write(&json_file, r#"{"a": 1}"#).unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("convert")
+        .arg("--from")
+        .arg("json")
+        .arg("--to")
+        .arg("yaml")
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("a: 1"));
+}
+
+/// **Test Case**: Cli Convert Missing File
+///
+/// ### Description
+/// Validates cli convert missing file functionality.
+///
+/// ### Test Procedure
+/// 1. Execute `test_cli_convert_missing_file`.
+///
+/// ### Expected Result
+/// Completes successfully meeting all assertions.
+#[test]
+fn test_cli_convert_missing_file() {
+    let temp_dir = TempDir::new().unwrap();
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("convert")
+        .arg("--from")
+        .arg("json")
+        .arg("--to")
+        .arg("yaml")
+        .arg("nonexistent.json")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Error reading input"));
+}
+
+/// **Test Case**: Cli Convert Invalid From Format
+///
+/// ### Description
+/// Validates cli convert invalid from format functionality.
+///
+/// ### Test Procedure
+/// 1. Execute `test_cli_convert_invalid_from_format`.
+///
+/// ### Expected Result
+/// Completes successfully meeting all assertions.
+#[test]
+fn test_cli_convert_invalid_from_format() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("test.json");
+    fs::write(&json_file, r#"{"a": 1}"#).unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("convert")
+        .arg("--from")
+        .arg("unknown")
+        .arg("--to")
+        .arg("yaml")
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Unsupported format: unknown"));
+}
+
+/// **Test Case**: Cli Convert Invalid To Format
+///
+/// ### Description
+/// Validates cli convert invalid to format functionality.
+///
+/// ### Test Procedure
+/// 1. Execute `test_cli_convert_invalid_to_format`.
+///
+/// ### Expected Result
+/// Completes successfully meeting all assertions.
+#[test]
+fn test_cli_convert_invalid_to_format() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("test.json");
+    fs::write(&json_file, r#"{"a": 1}"#).unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("convert")
+        .arg("--from")
+        .arg("json")
+        .arg("--to")
+        .arg("unknown")
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Unsupported format: unknown"));
+}
+
+/// **Test Case**: Cli Convert Output File
+///
+/// ### Description
+/// Validates cli convert output file functionality.
+///
+/// ### Test Procedure
+/// 1. Execute `test_cli_convert_output_file`.
+///
+/// ### Expected Result
+/// Completes successfully meeting all assertions.
+#[test]
+fn test_cli_convert_output_file() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("test.json");
+    fs::write(&json_file, r#"{"a": 1}"#).unwrap();
+    let out_file = temp_dir.path().join("out.yaml");
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("convert")
+        .arg("--from")
+        .arg("json")
+        .arg("--to")
+        .arg("yaml")
+        .arg("--output")
+        .arg(out_file.to_str().unwrap())
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .success();
+
+    let content = fs::read_to_string(out_file).unwrap();
+    assert!(content.contains("a: 1"));
+}
+
+/// **Test Case**: Cli Convert Conversion Error
+///
+/// ### Description
+/// Validates cli convert conversion error functionality.
+///
+/// ### Test Procedure
+/// 1. Execute `test_cli_convert_conversion_error`.
+///
+/// ### Expected Result
+/// Completes successfully meeting all assertions.
+#[test]
+fn test_cli_convert_conversion_error() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("test.json");
+    fs::write(&json_file, r#"NOT VALID JSON"#).unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("convert")
+        .arg("--from")
+        .arg("json")
+        .arg("--to")
+        .arg("yaml")
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Conversion error"));
+}
+
+/// **Test Case**: Convert Command Bad Output Path Error
+///
+/// ### Description
+/// Asserts convert command correctly flags output destination failures.
+///
+/// ### Test Procedure
+/// 1. Pass a directory path to the `--output` parameter rather than a file.
+///
+/// ### Expected Result
+/// Safely errors out with `Error writing output file`.
+#[test]
+fn test_cli_convert_output_error() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("test.json");
+    fs::write(&json_file, r#"{"a": 1}"#).unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("convert")
+        .arg("--from")
+        .arg("json")
+        .arg("--to")
+        .arg("yaml")
+        .arg("--output")
+        .arg(temp_dir.path().to_str().unwrap()) // Directory, should fail
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Error writing output file"));
+}
+
+// ──────────────────────────── generate subcommand ──────────────────────────────
+
+/// **Test Case**: Cli Generate Default Schema
+///
+/// ### Description
+/// Validates cli generate default schema functionality.
+///
+/// ### Test Procedure
+/// 1. Execute `test_cli_generate_default_schema`.
+///
+/// ### Expected Result
+/// Completes successfully meeting all assertions.
+#[test]
+fn test_cli_generate_default_schema() {
+    let temp_dir = TempDir::new().unwrap();
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("generate")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("\"id\":"));
+}
+
+/// **Test Case**: Cli Generate With Schema
+///
+/// ### Description
+/// Validates cli generate with schema functionality.
+///
+/// ### Test Procedure
+/// 1. Execute `test_cli_generate_with_schema`.
+///
+/// ### Expected Result
+/// Completes successfully meeting all assertions.
+#[test]
+fn test_cli_generate_with_schema() {
+    let temp_dir = TempDir::new().unwrap();
+    let schema_file = temp_dir.path().join("schema.json");
+    fs::write(
+        &schema_file,
+        r#"{"test_val": { "@type": "integer", "@start": 1, "@step": 0 }}"#,
+    )
+    .unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("generate")
+        .arg("--schema")
+        .arg(schema_file.to_str().unwrap())
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("\"test_val\": 1"));
+}
+
+/// **Test Case**: Cli Generate Invalid Schema
+///
+/// ### Description
+/// Validates cli generate invalid schema functionality.
+///
+/// ### Test Procedure
+/// 1. Execute `test_cli_generate_invalid_schema`.
+///
+/// ### Expected Result
+/// Completes successfully meeting all assertions.
+#[test]
+fn test_cli_generate_invalid_schema() {
+    let temp_dir = TempDir::new().unwrap();
+    let schema_file = temp_dir.path().join("schema.json");
+    fs::write(&schema_file, r#"{"test_val": "#).unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("generate")
+        .arg("--schema")
+        .arg(schema_file.to_str().unwrap())
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Error parsing schema JSON:"));
+}
+
+/// **Test Case**: Cli Generate Missing Schema
+///
+/// ### Description
+/// Validates cli generate missing schema functionality.
+///
+/// ### Test Procedure
+/// 1. Execute `test_cli_generate_missing_schema`.
+///
+/// ### Expected Result
+/// Completes successfully meeting all assertions.
+#[test]
+fn test_cli_generate_missing_schema() {
+    let temp_dir = TempDir::new().unwrap();
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("generate")
+        .arg("--schema")
+        .arg("missing.json")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Error reading schema file"));
+}
+
+/// **Test Case**: Cli Generate Evaluation Error
+///
+/// ### Description
+/// Validates cli generate evaluation error functionality.
+///
+/// ### Test Procedure
+/// 1. Execute `test_cli_generate_evaluation_error`.
+///
+/// ### Expected Result
+/// Completes successfully meeting all assertions.
+#[test]
+fn test_cli_generate_evaluation_error() {
+    let temp_dir = TempDir::new().unwrap();
+    let schema_file = temp_dir.path().join("schema.json");
+    // Invalid generator instruction
+    fs::write(&schema_file, r#"{"test_val": { "@type": "unknown_type" }}"#).unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("generate")
+        .arg("--schema")
+        .arg(schema_file.to_str().unwrap())
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Schema evaluation errors:"));
+}
+
+/// **Test Case**: Cli Generate Output File
+///
+/// ### Description
+/// Validates cli generate output file functionality.
+///
+/// ### Test Procedure
+/// 1. Execute `test_cli_generate_output_file`.
+///
+/// ### Expected Result
+/// Completes successfully meeting all assertions.
+#[test]
+fn test_cli_generate_output_file() {
+    let temp_dir = TempDir::new().unwrap();
+    let out_file = temp_dir.path().join("out.json");
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("generate")
+        .arg("--output")
+        .arg(out_file.to_str().unwrap())
+        .assert()
+        .success();
+
+    let content = fs::read_to_string(out_file).unwrap();
+    assert!(content.contains("\"id\":"));
+}
+
+/// **Test Case**: Generate Command Bad Output Path Error
+///
+/// ### Description
+/// Tests validation handling for generate file writing targets.
+///
+/// ### Test Procedure
+/// 1. Attempt schema generation into a raw system temp directory folder rather than a discrete file.
+///
+/// ### Expected Result
+/// Returns `Error writing output file`.
+#[test]
+fn test_cli_generate_output_file_error() {
+    let temp_dir = TempDir::new().unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("generate")
+        .arg("--output")
+        .arg(temp_dir.path().to_str().unwrap()) // Directory, should fail
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Error writing output file"));
+}
+
+/// **Test Case**: Cli Generate Minify
+///
+/// ### Description
+/// Validates cli generate minify functionality.
+///
+/// ### Test Procedure
+/// 1. Execute `test_cli_generate_minify`.
+///
+/// ### Expected Result
+/// Completes successfully meeting all assertions.
+#[test]
+fn test_cli_generate_minify() {
+    let temp_dir = TempDir::new().unwrap();
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("generate")
+        .arg("--minify")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("\n").not());
+}
+
+// ──────────────────────────── more config subcommand tests ──────────────────────────────
+
+/// **Test Case**: Cli Config All Keys
+///
+/// ### Description
+/// Validates cli config all keys functionality.
+///
+/// ### Test Procedure
+/// 1. Execute `test_cli_config_all_keys`.
+///
+/// ### Expected Result
+/// Completes successfully meeting all assertions.
+#[test]
+fn test_cli_config_all_keys() {
+    let temp_dir = TempDir::new().unwrap();
+
+    let settings = [
+        ("format.use_tabs", "true", "true"),
+        ("format.indent", "8", "8"),
+        ("format.line_ending", "crlf", "crlf"),
+        ("format.folding_style", "compact", "compact"),
+        ("format.sort_keys", "true", "true"),
+        ("format.space_after_colon", "false", "false"),
+        ("format.space_after_comma", "false", "false"),
+        ("parser.allow_comments", "true", "true"),
+        ("parser.allow_trailing_commas", "true", "true"),
+        ("lint.duplicate_keys_severity", "ignore", "ignore"),
+    ];
+
+    for (key, val, expected) in settings.iter() {
+        // Set
+        jsonette_cmd(&temp_dir)
+            .arg("config")
+            .arg("set")
+            .arg(key)
+            .arg(val)
+            .assert()
+            .success();
+
+        // Get
+        jsonette_cmd(&temp_dir)
+            .arg("config")
+            .arg("get")
+            .arg(key)
+            .assert()
+            .success()
+            .stdout(predicate::str::contains(*expected));
+    }
+}
+
+/// **Test Case**: Cli Config Invalid Keys
+///
+/// ### Description
+/// Validates cli config invalid keys functionality.
+///
+/// ### Test Procedure
+/// 1. Execute `test_cli_config_invalid_keys`.
+///
+/// ### Expected Result
+/// Completes successfully meeting all assertions.
+#[test]
+fn test_cli_config_invalid_keys() {
+    let temp_dir = TempDir::new().unwrap();
+
+    // Invalid Get
+    jsonette_cmd(&temp_dir)
+        .arg("config")
+        .arg("get")
+        .arg("unknown.key")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Unknown configuration key"));
+
+    // Invalid Set
+    jsonette_cmd(&temp_dir)
+        .arg("config")
+        .arg("set")
+        .arg("unknown.key")
+        .arg("value")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Unknown configuration key"));
+}
+
+/// **Test Case**: Cli Config Invalid Values
+///
+/// ### Description
+/// Validates cli config invalid values functionality.
+///
+/// ### Test Procedure
+/// 1. Execute `test_cli_config_invalid_values`.
+///
+/// ### Expected Result
+/// Completes successfully meeting all assertions.
+#[test]
+fn test_cli_config_invalid_values() {
+    let temp_dir = TempDir::new().unwrap();
+
+    // Bool err
+    jsonette_cmd(&temp_dir)
+        .arg("config")
+        .arg("set")
+        .arg("format.use_tabs")
+        .arg("notabool")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Value must be a boolean"));
+
+    // Number err
+    jsonette_cmd(&temp_dir)
+        .arg("config")
+        .arg("set")
+        .arg("format.indent")
+        .arg("notanumber")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Value must be a number"));
+
+    // Line ending err
+    jsonette_cmd(&temp_dir)
+        .arg("config")
+        .arg("set")
+        .arg("format.line_ending")
+        .arg("invalid")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Value must be 'lf' or 'crlf'"));
+
+    // Folding style err
+    jsonette_cmd(&temp_dir)
+        .arg("config")
+        .arg("set")
+        .arg("format.folding_style")
+        .arg("invalid")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            "Value must be 'expanded' or 'compact'",
+        ));
+
+    // Severity err
+    jsonette_cmd(&temp_dir)
+        .arg("config")
+        .arg("set")
+        .arg("lint.duplicate_keys_severity")
+        .arg("invalid")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            "Value must be 'error', 'warning', or 'ignore'",
+        ));
+}
+
+/// **Test Case**: Config List Output
+///
+/// ### Description
+/// Evaluates the `config list` sub-command default execution.
+///
+/// ### Test Procedure
+/// 1. Run `jsonette config list`.
+///
+/// ### Expected Result
+/// Validates stdout prints configuration properties containing expected keys like `format`.
+#[test]
+fn test_cli_config_list() {
+    let temp_dir = TempDir::new().unwrap();
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("config")
+        .arg("list")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("format"));
+}
+
+/// **Test Case**: Config Set Write Permissions
+///
+/// ### Description
+/// Checks if the CLI intercepts OS-level file permission errors when updating local configs.
+///
+/// ### Test Procedure
+/// 1. Mock the settings folder structure and set read-only permissions `0o444`.
+/// 2. Try executing `config set format.indent 4`.
+///
+/// ### Expected Result
+/// Evaluates internal branches without throwing uncontrolled Rust panics.
+#[test]
+fn test_cli_config_set_error() {
+    let temp_dir = TempDir::new().unwrap();
+
+    // Create a read-only settings file to cause an error
+    let settings_dir = temp_dir.path().join("jsonette");
+    fs::create_dir_all(&settings_dir).unwrap();
+    let settings_file = settings_dir.join("settings.json");
+    fs::write(&settings_file, "{}").unwrap();
+
+    // On Unix, make it read-only
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&settings_file, fs::Permissions::from_mode(0o444)).unwrap();
+    }
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("config")
+        .arg("set")
+        .arg("format.indent")
+        .arg("4")
+        .assert();
+}
+
+/// **Test Case**: Format Output Write Permissions
+///
+/// ### Description
+/// Evaluates robust failures when formatted strings fail to write to destination `--output`.
+///
+/// ### Test Procedure
+/// 1. Send the `--output` format parameter a directory path instead of a file.
+///
+/// ### Expected Result
+/// Validates error `Error writing output file` prints to stderr cleanly.
+#[test]
+fn test_cli_format_output_file_error() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("test.json");
+    fs::write(&json_file, r#"{"a": 1}"#).unwrap();
+
+    // Output to a directory, which should fail
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("format")
+        .arg("--output")
+        .arg(temp_dir.path().to_str().unwrap())
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Error writing output file"));
+}
+
+/// **Test Case**: Format Conflict In Place from Stdin
+///
+/// ### Description
+/// Validates format rejects `--in-place` modification when files are missing (stdin).
+///
+/// ### Test Procedure
+/// 1. Pipe json into standard input and provide `--in-place` flag.
+///
+/// ### Expected Result
+/// Prevents execution printing `Cannot perform in-place`.
+#[test]
+fn test_cli_format_inplace_error() {
+    let temp_dir = TempDir::new().unwrap();
+    // Cannot inplace format stdin
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("format")
+        .arg("--in-place")
+        .write_stdin(r#"{"a": 1}"#)
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Cannot perform in-place"));
+}
+
+/// **Test Case**: Format Custom Overrides
+///
+/// ### Description
+/// Evaluates CLI overriding settings config behavior dynamically without disk persistence.
+///
+/// ### Test Procedure
+/// 1. Pipe formatting options `--use-tabs`, `--indent`, `--line-ending crlf`, and `--folding-style expanded` directly to the `format` sub-command.
+///
+/// ### Expected Result
+/// Test exits successfully parsing the format string correctly.
+#[test]
+fn test_cli_format_options() {
+    let temp_dir = TempDir::new().unwrap();
+    let json_file = temp_dir.path().join("test.json");
+    fs::write(&json_file, r#"{"a": 1}"#).unwrap();
+
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("format")
+        .arg("--use-tabs")
+        .arg("true")
+        .arg("--indent")
+        .arg("4")
+        .arg("--line-ending")
+        .arg("crlf")
+        .arg("--folding-style")
+        .arg("expanded")
+        .arg(json_file.to_str().unwrap())
+        .assert()
+        .success();
+}
+
+/// **Test Case**: Format Invalid Input Error Output
+///
+/// ### Description
+/// Verifies graceful degradation for file open operations.
+///
+/// ### Test Procedure
+/// 1. Point `format` to a non-existent `missing.json` file.
+///
+/// ### Expected Result
+/// Safely stops with `Error reading input`.
+#[test]
+fn test_cli_format_invalid_file_reports_error() {
+    let temp_dir = TempDir::new().unwrap();
+    let mut cmd = jsonette_cmd(&temp_dir);
+    cmd.arg("format")
+        .arg("missing.json")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Error reading input"));
 }

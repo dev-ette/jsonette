@@ -296,6 +296,16 @@ mod tests {
         result
     }
 
+    /// **Test Case**: Format primitives
+    ///
+    /// ### Description
+    /// Validates base primitives are formatted correctly.
+    ///
+    /// ### Test Procedure
+    /// 1. Parse and format `null`, `true`, `false`, `123`, and string primitives.
+    ///
+    /// ### Expected Result
+    /// Standard formatting output equals the input identity.
     #[test]
     fn test_format_primitives() {
         let _guard = TEST_LOCK.lock().unwrap();
@@ -320,6 +330,16 @@ mod tests {
         assert_eq!(minify(&str_node), "\"hello ☺ world\"");
     }
 
+    /// **Test Case**: Format empty nodes
+    ///
+    /// ### Description
+    /// Validates empty objects and arrays do not collapse spacing incorrectly.
+    ///
+    /// ### Test Procedure
+    /// 1. Parse and format `{}` and `[]`.
+    ///
+    /// ### Expected Result
+    /// Result identically matches without newlines.
     #[test]
     fn test_format_empty() {
         let _guard = TEST_LOCK.lock().unwrap();
@@ -332,6 +352,16 @@ mod tests {
         assert_eq!(minify(&empty_obj), "{}");
     }
 
+    /// **Test Case**: Format expanded array
+    ///
+    /// ### Description
+    /// Validates expanded line wrapping for array elements.
+    ///
+    /// ### Test Procedure
+    /// 1. Provide an array with primitive elements.
+    ///
+    /// ### Expected Result
+    /// Output contains line breaks per array property.
     #[test]
     fn test_format_expanded_array() {
         let _guard = TEST_LOCK.lock().unwrap();
@@ -342,6 +372,16 @@ mod tests {
         assert_eq!(minify(&node), "[1,true,null]");
     }
 
+    /// **Test Case**: Format expanded object
+    ///
+    /// ### Description
+    /// Validates expanded line wrapping for object properties.
+    ///
+    /// ### Test Procedure
+    /// 1. Provide an object with primitive values.
+    ///
+    /// ### Expected Result
+    /// Output contains line breaks and indentations per key-value pair.
     #[test]
     fn test_format_expanded_object() {
         let _guard = TEST_LOCK.lock().unwrap();
@@ -352,6 +392,16 @@ mod tests {
         assert_eq!(minify(&node), "{\"a\":1,\"b\":true}");
     }
 
+    /// **Test Case**: Format compact folding
+    ///
+    /// ### Description
+    /// Tests compact folding logic where children nodes collapse on the same line.
+    ///
+    /// ### Test Procedure
+    /// 1. Enable `compact` folding and parse objects and arrays.
+    ///
+    /// ### Expected Result
+    /// The formatted output contains no newlines.
     #[test]
     fn test_format_compact_folding() {
         let _guard = TEST_LOCK.lock().unwrap();
@@ -370,6 +420,16 @@ mod tests {
         assert_eq!(res_obj, "{\"a\": 1, \"b\": true}");
     }
 
+    /// **Test Case**: Format sort keys
+    ///
+    /// ### Description
+    /// Tests key sorting during formatting.
+    ///
+    /// ### Test Procedure
+    /// 1. Enable key sorting and format an object with unordered keys.
+    ///
+    /// ### Expected Result
+    /// Keys are ordered alphabetically.
     #[test]
     fn test_format_sort_keys() {
         let _guard = TEST_LOCK.lock().unwrap();

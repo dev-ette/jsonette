@@ -63,11 +63,31 @@ pub fn ping(input: String) -> String {
 mod ffi_tests {
     use super::*;
 
+    /// **Test Case**: Ping returns pong prefix
+    ///
+    /// ### Description
+    /// Validates the FFI bindings return a formatted ping response.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `ping("world")`.
+    ///
+    /// ### Expected Result
+    /// Result is `pong: world`.
     #[test]
     fn test_ping_returns_pong_prefix() {
         assert_eq!(ping("world".to_string()), "pong: world");
     }
 
+    /// **Test Case**: Ping empty string
+    ///
+    /// ### Description
+    /// Validates the FFI bindings process an empty payload safely.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `ping("")`.
+    ///
+    /// ### Expected Result
+    /// Result is `pong: `.
     #[test]
     fn test_ping_empty_string() {
         assert_eq!(ping(String::new()), "pong: ");

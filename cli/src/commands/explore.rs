@@ -170,20 +170,23 @@ pub fn handle_explore(mut args: ExploreArgs) {
 
 /// Helper to pipe string output to `less`, or fallback to stdout if unavailable.
 fn page_output(output: &str) {
-    use std::io::{IsTerminal, Write};
-    use std::process::{Command, Stdio};
-
-    if std::io::stdout().is_terminal()
-        && let Ok(mut child) = Command::new("less")
-            .args(["-F", "-R", "-X"])
-            .stdin(Stdio::piped())
-            .spawn()
+    #[cfg(not(test))]
     {
-        if let Some(mut stdin) = child.stdin.take() {
-            let _ = stdin.write_all(output.as_bytes());
+        use std::io::{IsTerminal, Write};
+        use std::process::{Command, Stdio};
+
+        if std::io::stdout().is_terminal()
+            && let Ok(mut child) = Command::new("less")
+                .args(["-F", "-R", "-X"])
+                .stdin(Stdio::piped())
+                .spawn()
+        {
+            if let Some(mut stdin) = child.stdin.take() {
+                let _ = stdin.write_all(output.as_bytes());
+            }
+            let _ = child.wait();
+            return;
         }
-        let _ = child.wait();
-        return;
     }
 
     print!("{}", output);

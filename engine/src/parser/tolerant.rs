@@ -103,7 +103,7 @@ impl<'a> Parser<'a> {
     /// Skips any ASCII whitespace characters (spaces, tabs, newlines, carriage returns)
     /// and single-line/multi-line comments if they are allowed in configuration.
     fn skip_whitespace(&mut self) {
-        let allow_comments = false; // crate::settings::get_settings().parser.allow_comments;
+        let allow_comments = crate::settings::get_settings().parser.allow_comments;
         loop {
             let start = self.cursor;
             // 1. Skip standard whitespace
@@ -772,5 +772,406 @@ mod tolerant_tests {
         let (node, diagnostics) = parse(r#"{"#);
         assert!(node.is_some());
         assert!(!diagnostics.is_empty());
+    }
+
+    /// **Test Case**: Tolerant Trailing Characters
+    ///
+    /// ### Description
+    /// Validates tolerant trailing characters functionality.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `test_tolerant_trailing_characters`.
+    ///
+    /// ### Expected Result
+    /// Completes successfully meeting all assertions.
+    #[test]
+    fn test_tolerant_trailing_characters() {
+        let (node, diags) = parse("123 xyz");
+        assert!(node.is_some());
+        assert!(
+            diags
+                .iter()
+                .any(|d| d.message.contains("Unexpected trailing characters"))
+        );
+    }
+
+    /// **Test Case**: Tolerant Unexpected Eof
+    ///
+    /// ### Description
+    /// Validates tolerant unexpected eof functionality.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `test_tolerant_unexpected_eof`.
+    ///
+    /// ### Expected Result
+    /// Completes successfully meeting all assertions.
+    #[test]
+    fn test_tolerant_unexpected_eof() {
+        let (node, diags) = parse("");
+        assert!(node.is_none());
+        assert!(
+            diags
+                .iter()
+                .any(|d| d.message.contains("Unexpected end of input"))
+        );
+    }
+
+    /// **Test Case**: Tolerant Unexpected Char
+    ///
+    /// ### Description
+    /// Validates tolerant unexpected char functionality.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `test_tolerant_unexpected_char`.
+    ///
+    /// ### Expected Result
+    /// Completes successfully meeting all assertions.
+    #[test]
+    fn test_tolerant_unexpected_char() {
+        let (node, diags) = parse("x");
+        assert!(node.is_none());
+        assert!(
+            diags
+                .iter()
+                .any(|d| d.message.contains("Unexpected character"))
+        );
+    }
+
+    /// **Test Case**: Tolerant Null Errors
+    ///
+    /// ### Description
+    /// Validates tolerant null errors functionality.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `test_tolerant_null_errors`.
+    ///
+    /// ### Expected Result
+    /// Completes successfully meeting all assertions.
+    #[test]
+    fn test_tolerant_null_errors() {
+        let (node, diags) = parse("nul");
+        assert!(node.is_none());
+        assert!(diags.iter().any(|d| d.message.contains("Expected 'null'")));
+    }
+
+    /// **Test Case**: Tolerant Bool Errors
+    ///
+    /// ### Description
+    /// Validates tolerant bool errors functionality.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `test_tolerant_bool_errors`.
+    ///
+    /// ### Expected Result
+    /// Completes successfully meeting all assertions.
+    #[test]
+    fn test_tolerant_bool_errors() {
+        let (node, diags) = parse("tru");
+        assert!(node.is_none());
+        assert!(
+            diags
+                .iter()
+                .any(|d| d.message.contains("Expected boolean value"))
+        );
+
+        let (node2, diags2) = parse("fals");
+        assert!(node2.is_none());
+        assert!(
+            diags2
+                .iter()
+                .any(|d| d.message.contains("Expected boolean value"))
+        );
+    }
+
+    /// **Test Case**: Tolerant String Errors
+    ///
+    /// ### Description
+    /// Validates tolerant string errors functionality.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `test_tolerant_string_errors`.
+    ///
+    /// ### Expected Result
+    /// Completes successfully meeting all assertions.
+    #[test]
+    fn test_tolerant_string_errors() {
+        // missing quote
+        let (node, diags) = parse("\"test");
+        assert!(node.is_some());
+        assert!(
+            diags
+                .iter()
+                .any(|d| d.message.contains("Unterminated string"))
+        );
+
+        // bad escape
+        let (_, diags) = parse(r#""\x""#);
+        assert!(
+            diags
+                .iter()
+                .any(|d| d.message.contains("Invalid escape character"))
+        );
+
+        // unterminated escape
+        let (_, diags) = parse(r#""\"#);
+        assert!(
+            diags
+                .iter()
+                .any(|d| d.message.contains("Unterminated string escape"))
+        );
+
+        // bad unicode hex
+        let (_, diags) = parse(r#""\uZZZZ""#);
+        assert!(
+            diags
+                .iter()
+                .any(|d| d.message.contains("Invalid hex in unicode escape"))
+        );
+
+        // incomplete unicode escape
+        let (_, diags) = parse(r#""\u12""#);
+        assert!(
+            diags
+                .iter()
+                .any(|d| d.message.contains("Invalid unicode escape sequence"))
+        );
+
+        // control char
+        let (_, diags) = parse("\"\x00\"");
+        assert!(
+            diags
+                .iter()
+                .any(|d| d.message.contains("Control characters must be escaped"))
+        );
+
+        // invalid surrogate - missing low
+        let (_, diags) = parse(r#""\uD83D""#);
+        assert!(diags.iter().any(|d| {
+            d.message
+                .contains("Expected low surrogate after high surrogate")
+        }));
+
+        // invalid surrogate - not \u
+        let (_, diags) = parse(r#""\uD83Dx""#);
+        assert!(diags.iter().any(|d| {
+            d.message
+                .contains("Expected low surrogate after high surrogate")
+        }));
+
+        // invalid surrogate - bad hex
+        let (_, diags) = parse(r#""\uD83D\uZZZZ""#);
+        assert!(
+            diags
+                .iter()
+                .any(|d| d.message.contains("Invalid hex in low surrogate"))
+        );
+
+        // invalid surrogate - bad range
+        let (_, diags) = parse(r#""\uD83D\u1234""#);
+        assert!(diags.iter().any(|d| {
+            d.message
+                .contains("Expected low surrogate after high surrogate")
+        }));
+
+        // invalid surrogate - just low
+        let (_, diags) = parse(r#""\uDE00""#);
+        assert!(diags.iter().any(|d| {
+            d.message
+                .contains("Unexpected low surrogate without high surrogate")
+        }));
+
+        // expected quote at start
+        let mut p = Parser::new("123");
+        assert!(p.parse_string_raw().is_none());
+    }
+
+    /// **Test Case**: Tolerant Number Errors
+    ///
+    /// ### Description
+    /// Validates tolerant number errors functionality.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `test_tolerant_number_errors`.
+    ///
+    /// ### Expected Result
+    /// Completes successfully meeting all assertions.
+    #[test]
+    fn test_tolerant_number_errors() {
+        // digit expected
+        let (node, diags) = parse("-x");
+        assert!(node.is_none());
+        assert!(
+            diags
+                .iter()
+                .any(|d| d.message.contains("Expected digit for number"))
+        );
+
+        // just minus is an error, but it fails to parse digit
+        let (node, diags) = parse("-");
+        assert!(node.is_none());
+
+        // fraction part ok
+        let (node, diags) = parse("1.2");
+        assert!(node.is_some() && diags.is_empty());
+
+        // fraction without digits
+        let (node, diags) = parse("1.");
+        assert!(node.is_some()); // actually parsed as 1
+
+        // exponent without digits
+        let (node, diags) = parse("1e");
+        assert!(node.is_some());
+
+        // exponent with sign
+        let (node, diags) = parse("1e+1");
+        assert!(node.is_some());
+    }
+
+    /// **Test Case**: Tolerant Array Errors
+    ///
+    /// ### Description
+    /// Validates tolerant array errors functionality.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `test_tolerant_array_errors`.
+    ///
+    /// ### Expected Result
+    /// Completes successfully meeting all assertions.
+    #[test]
+    fn test_tolerant_array_errors() {
+        let (node, diags) = parse("[1 2]");
+        assert!(
+            diags
+                .iter()
+                .any(|d| d.message.contains("Expected ',' or ']'"))
+        );
+
+        let (node, diags) = parse("[1,");
+        assert!(
+            diags
+                .iter()
+                .any(|d| d.message.contains("Unexpected end of input"))
+        );
+
+        let (node, diags) = parse("]");
+        assert!(
+            diags
+                .iter()
+                .any(|d| d.message.contains("Unexpected character"))
+        );
+    }
+
+    /// **Test Case**: Tolerant Object Errors
+    ///
+    /// ### Description
+    /// Validates tolerant object errors functionality.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `test_tolerant_object_errors`.
+    ///
+    /// ### Expected Result
+    /// Completes successfully meeting all assertions.
+    #[test]
+    fn test_tolerant_object_errors() {
+        // missing key string
+        let (node, diags) = parse("{ 1: 2 }");
+        assert!(
+            diags
+                .iter()
+                .any(|d| d.message.contains("Expected string key in object"))
+        );
+
+        // missing colon
+        let (node, diags) = parse(r#"{"a" 2}"#);
+        assert!(
+            diags
+                .iter()
+                .any(|d| d.message.contains("Expected ':' after key"))
+        );
+
+        // missing comma
+        let (node, diags) = parse(r#"{"a": 1 "b": 2}"#);
+        assert!(
+            diags
+                .iter()
+                .any(|d| d.message.contains("Expected ',' or '}'"))
+        );
+
+        // unterminated
+        let (node, diags) = parse(r#"{"a": 1, "#);
+        assert!(
+            diags
+                .iter()
+                .any(|d| d.message.contains("Expected string key in object"))
+        );
+    }
+
+    /// **Test Case**: Tolerant Whitespace and Comments Handling
+    ///
+    /// ### Description
+    /// Verifies tolerant parser capability to skip standard whitespaces and enabled comments.
+    ///
+    /// ### Test Procedure
+    /// 1. Enable `allow_comments` settings.
+    /// 2. Parse a valid input with line/block comments.
+    /// 3. Parse unterminated block/line comments.
+    ///
+    /// ### Expected Result
+    /// Valid sequences parse cleanly. Unterminated comments fail safely.
+    #[test]
+    fn test_tolerant_whitespace_and_comments() {
+        let mut settings = crate::settings::get_settings();
+        settings.parser.allow_comments = true;
+        crate::settings::update_settings(settings).unwrap();
+
+        let (node, diags) = parse(" // line \n /* block */ \n\t\r 123 \n ");
+        assert!(node.is_some() && diags.is_empty());
+
+        let (node, _) = parse("/* block without end");
+        assert!(node.is_none());
+
+        let (node, _) = parse("// line without end");
+        assert!(node.is_none());
+    }
+
+    /// **Test Case**: Tolerant Partial Keywords
+    ///
+    /// ### Description
+    /// Verifies tolerant parsing behavior on partially formed identifiers.
+    ///
+    /// ### Test Procedure
+    /// 1. Attempt parsing strings like `nuxl`, `trux`.
+    ///
+    /// ### Expected Result
+    /// Returns `None` to gracefully recover.
+    #[test]
+    fn test_tolerant_partial_keywords() {
+        // null variants
+        assert!(parse("nuxl").0.is_none());
+        assert!(parse("nul").0.is_none());
+        assert!(parse("nx").0.is_none());
+
+        // bool variants
+        assert!(parse("trux").0.is_none());
+        assert!(parse("trx").0.is_none());
+        assert!(parse("falsx").0.is_none());
+        assert!(parse("falx").0.is_none());
+    }
+
+    /// **Test Case**: Tolerant Invalid UTF8 Handling
+    ///
+    /// ### Description
+    /// Ensures tolerant parser correctly aborts invalid surrogate pair evaluation.
+    ///
+    /// ### Test Procedure
+    /// 1. Pass double high surrogate sequences.
+    ///
+    /// ### Expected Result
+    /// Safely propagates the error resulting in `None`.
+    #[test]
+    fn test_tolerant_invalid_utf8() {
+        // Two high surrogates will cause an error
+        let (node, _) = parse(r#""\uD83D\uD83D""#);
+        assert!(node.is_none());
     }
 }

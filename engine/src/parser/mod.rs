@@ -70,6 +70,16 @@ pub fn diagnostics(input: &str) -> Vec<Diagnostic> {
 mod stub_tests {
     use super::*;
 
+    /// **Test Case**: Tolerant parse is implemented
+    ///
+    /// ### Description
+    /// Validates the tolerant parser is exposed and returns a node.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `tolerant_parse("{}")`.
+    ///
+    /// ### Expected Result
+    /// Node is returned indicating successful traversal.
     #[test]
     fn test_tolerant_parse_is_implemented() {
         let (node, _) = tolerant_parse("{}");

@@ -352,9 +352,25 @@ fn test_parse_multibyte_error_inside_object() {
 /// ### Description
 /// Verifies public API format and minify functions, including round-trip parity,
 /// idempotence, and nested structure preservation.
+///
+/// ### Test Procedure
+/// 1. Validate AST equivalence between minified and formatted properties.
+///
+/// ### Expected Result
+/// Structure is equivalent.
 #[test]
 fn test_api_format_and_minify() {
     let _guard = TEST_LOCK.lock().unwrap();
+    /// Compares two ASTs for semantic equivalence, ignoring physical token spans.
+    ///
+    /// # Arguments
+    ///
+    /// * `a` - The first node.
+    /// * `b` - The second node.
+    ///
+    /// # Returns
+    ///
+    /// True if the nodes are equivalent.
     fn eq_ignore_span(a: &JsonNode, b: &JsonNode) -> bool {
         match (a, b) {
             (JsonNode::Null(_), JsonNode::Null(_)) => true,
@@ -445,6 +461,12 @@ fn test_api_format_and_minify() {
 /// ### Description
 /// Verifies that parser settings for comments and trailing commas dynamically
 /// affect strict parsing behavior.
+///
+/// ### Test Procedure
+/// 1. Provide an input containing standard non-JSON extensions like comments and trailing commas.
+///
+/// ### Expected Result
+/// Success or failure toggles accurately reflecting the parsing options applied.
 #[test]
 fn test_api_parser_options() {
     let _guard = TEST_LOCK.lock().unwrap();

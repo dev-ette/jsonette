@@ -444,4 +444,219 @@ mod tests {
             panic!("Expected object");
         }
     }
+
+    /// **Test Case**: Generator Float And Bool
+    ///
+    /// ### Description
+    /// Validates generator float and bool functionality.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `test_generator_float_and_bool`.
+    ///
+    /// ### Expected Result
+    /// Completes successfully meeting all assertions.
+    #[test]
+    fn test_generator_float_and_bool() {
+        let schema_str = r#"{
+            "f": { "@type": "float", "@min": 10, "@max": 20 },
+            "b": { "@type": "bool" }
+        }"#;
+        let schema = parse(schema_str).unwrap();
+        let opts = GeneratorOptions {
+            target_size_bytes: None,
+            target_count: None,
+        };
+        let result = generate_from_schema(&schema, &opts).unwrap();
+
+        if let JsonNode::Object(pairs, _) = result {
+            let f_node = pairs.iter().find(|p| p.key == "f").unwrap();
+            let b_node = pairs.iter().find(|p| p.key == "b").unwrap();
+
+            if let JsonNode::Number(val, _, _) = f_node.value {
+                assert!(val >= 10.0 && val <= 20.0);
+            } else {
+                panic!("Expected Number for float");
+            }
+
+            assert!(matches!(b_node.value, JsonNode::Bool(_, _)));
+        } else {
+            panic!("Expected Object");
+        }
+    }
+
+    /// **Test Case**: Generator String Pool And Template
+    ///
+    /// ### Description
+    /// Validates generator string pool and template functionality.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `test_generator_string_pool_and_template`.
+    ///
+    /// ### Expected Result
+    /// Completes successfully meeting all assertions.
+    #[test]
+    fn test_generator_string_pool_and_template() {
+        let schema_str = r#"{
+            "p": { "@type": "string", "@pool": ["A", "B"] },
+            "t": { 
+                "@type": "string", 
+                "@template": "Hello {name} {age} {flag}", 
+                "@vars": { 
+                    "name": "World",
+                    "age": { "@type": "integer", "@start": 42, "@step": 0 },
+                    "flag": { "@type": "bool" }
+                }
+            },
+            "dummy": { "@type": "string" }
+        }"#;
+        let schema = parse(schema_str).unwrap();
+        let opts = GeneratorOptions {
+            target_size_bytes: None,
+            target_count: None,
+        };
+        let result = generate_from_schema(&schema, &opts).unwrap();
+
+        if let JsonNode::Object(pairs, _) = result {
+            let p_node = pairs.iter().find(|p| p.key == "p").unwrap();
+            let t_node = pairs.iter().find(|p| p.key == "t").unwrap();
+            let dummy_node = pairs.iter().find(|p| p.key == "dummy").unwrap();
+
+            if let JsonNode::String(s, _) = &p_node.value {
+                assert!(s == "A" || s == "B");
+            } else {
+                panic!("Expected String");
+            }
+
+            if let JsonNode::String(s, _) = &t_node.value {
+                assert!(s.starts_with("Hello World 42"));
+            } else {
+                panic!("Expected String");
+            }
+
+            if let JsonNode::String(s, _) = &dummy_node.value {
+                assert_eq!(s, "dummy");
+            } else {
+                panic!("Expected String");
+            }
+        } else {
+            panic!("Expected Object");
+        }
+    }
+
+    /// **Test Case**: Generator Array Instruction
+    ///
+    /// ### Description
+    /// Validates generator array instruction functionality.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `test_generator_array_instruction`.
+    ///
+    /// ### Expected Result
+    /// Completes successfully meeting all assertions.
+    #[test]
+    fn test_generator_array_instruction() {
+        let schema_str = r#"{
+            "arr": { 
+                "@type": "array", 
+                "@count": 3, 
+                "@item": { "@type": "integer", "@start": 1, "@step": 1 } 
+            }
+        }"#;
+        let schema = parse(schema_str).unwrap();
+        let opts = GeneratorOptions {
+            target_size_bytes: None,
+            target_count: None,
+        };
+        let result = generate_from_schema(&schema, &opts).unwrap();
+
+        if let JsonNode::Object(pairs, _) = result {
+            let arr_node = &pairs[0].value;
+            if let JsonNode::Array(items, _) = arr_node {
+                assert_eq!(items.len(), 3);
+            } else {
+                panic!("Expected Array");
+            }
+        } else {
+            panic!("Expected Object");
+        }
+    }
+
+    /// **Test Case**: Generator Target Size
+    ///
+    /// ### Description
+    /// Validates generator target size functionality.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `test_generator_target_size`.
+    ///
+    /// ### Expected Result
+    /// Completes successfully meeting all assertions.
+    #[test]
+    fn test_generator_target_size() {
+        let schema_str = r#"{ "a": 1 }"#;
+        let schema = parse(schema_str).unwrap();
+        let opts = GeneratorOptions {
+            target_size_bytes: Some(100),
+            target_count: None,
+        };
+        let result = generate_from_schema(&schema, &opts).unwrap();
+
+        if let JsonNode::Array(items, _) = result {
+            // estimate_size({"a": 1}) = 1 + 4 + 1(for 1) + 2 = 8 bytes
+            // So to get 100 bytes, we need around 100 / 8 = 12 items
+            assert!(items.len() >= 10);
+        } else {
+            panic!("Expected Array");
+        }
+    }
+
+    /// **Test Case**: Generator Target Size With Error
+    ///
+    /// ### Description
+    /// Validates generator target size with error functionality.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `test_generator_target_size_with_error`.
+    ///
+    /// ### Expected Result
+    /// Completes successfully meeting all assertions.
+    #[test]
+    fn test_generator_target_size_with_error() {
+        let schema_str = r#"{ "a": { "@type": "unknown" } }"#;
+        let schema = parse(schema_str).unwrap();
+        let opts = GeneratorOptions {
+            target_size_bytes: Some(100),
+            target_count: None,
+        };
+        let result = generate_from_schema(&schema, &opts);
+
+        assert!(result.is_err());
+    }
+
+    /// **Test Case**: Estimate Size All Nodes
+    ///
+    /// ### Description
+    /// Validates estimate size all nodes functionality.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `test_estimate_size_all_nodes`.
+    ///
+    /// ### Expected Result
+    /// Completes successfully meeting all assertions.
+    #[test]
+    fn test_estimate_size_all_nodes() {
+        use crate::types::Span;
+        let span = Span::default();
+        assert_eq!(estimate_size(&JsonNode::Null(span.clone())), 4);
+        assert_eq!(estimate_size(&JsonNode::Bool(true, span.clone())), 4);
+        assert_eq!(
+            estimate_size(&JsonNode::Number(1.0, "1.0".to_string(), span.clone())),
+            3
+        );
+        assert_eq!(
+            estimate_size(&JsonNode::String("abc".to_string(), span.clone())),
+            5
+        );
+        assert_eq!(estimate_size(&JsonNode::Array(vec![], span.clone())), 2);
+    }
 }

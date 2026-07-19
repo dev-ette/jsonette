@@ -38,10 +38,17 @@ fn uniffi_bindgen_bin() -> std::path::PathBuf {
     path.join("uniffi-bindgen")
 }
 
-/// **Test Case**: `uniffi-bindgen --help` prints usage and exits cleanly.
+/// **Test Case**: UniFFI bindgen help exits cleanly
 ///
+/// ### Description
 /// UniFFI's `uniffi_bindgen_main()` honours `--help` and exits with code 0.
 /// Spawning the process gives llvm-cov a hook into the binary's `main()`.
+///
+/// ### Test Procedure
+/// 1. Spawn `uniffi-bindgen --help`.
+///
+/// ### Expected Result
+/// Exits with success.
 #[test]
 fn test_uniffi_bindgen_help_exits_cleanly() {
     let bin = uniffi_bindgen_bin();

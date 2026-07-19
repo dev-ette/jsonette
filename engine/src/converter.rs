@@ -39,6 +39,15 @@ pub enum DataFormat {
 impl FromStr for DataFormat {
     type Err = String;
 
+    /// Parses a string slice into a `DataFormat`.
+    ///
+    /// # Arguments
+    ///
+    /// * `s` - The string payload.
+    ///
+    /// # Returns
+    ///
+    /// Result containing the resolved format or an error.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "json" => Ok(DataFormat::Json),
@@ -342,4 +351,250 @@ fn write_json_to_xml(
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// **Test Case**: Data Format From Str
+    ///
+    /// ### Description
+    /// Validates data format from str functionality.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `test_data_format_from_str`.
+    ///
+    /// ### Expected Result
+    /// Completes successfully meeting all assertions.
+    #[test]
+    fn test_data_format_from_str() {
+        assert_eq!("json".parse::<DataFormat>().unwrap(), DataFormat::Json);
+        assert_eq!("JSON".parse::<DataFormat>().unwrap(), DataFormat::Json);
+        assert_eq!("yaml".parse::<DataFormat>().unwrap(), DataFormat::Yaml);
+        assert_eq!("YML".parse::<DataFormat>().unwrap(), DataFormat::Yaml);
+        assert_eq!("toml".parse::<DataFormat>().unwrap(), DataFormat::Toml);
+        assert_eq!("xml".parse::<DataFormat>().unwrap(), DataFormat::Xml);
+        assert!("invalid".parse::<DataFormat>().is_err());
+    }
+
+    /// **Test Case**: Convert Json To Others
+    ///
+    /// ### Description
+    /// Validates convert json to others functionality.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `test_convert_json_to_others`.
+    ///
+    /// ### Expected Result
+    /// Completes successfully meeting all assertions.
+    #[test]
+    fn test_convert_json_to_others() {
+        let json = r#"{"key": "value", "arr": [1, 2], "b": true, "n": null}"#;
+
+        let yaml = convert(json, DataFormat::Json, DataFormat::Yaml).unwrap();
+        assert!(yaml.contains("key: value"));
+
+        let toml_json = r#"{"key": "value", "arr": [1, 2], "b": true}"#;
+        let toml = convert(toml_json, DataFormat::Json, DataFormat::Toml).unwrap();
+        assert!(toml.contains("key = \"value\""));
+
+        let xml = convert(json, DataFormat::Json, DataFormat::Xml).unwrap();
+        assert!(xml.contains("<key>value</key>"));
+
+        // json to json (formatting)
+        let formatted = convert(json, DataFormat::Json, DataFormat::Json).unwrap();
+        assert!(formatted.contains("\"key\": \"value\""));
+    }
+
+    /// **Test Case**: Convert Yaml To Others
+    ///
+    /// ### Description
+    /// Validates convert yaml to others functionality.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `test_convert_yaml_to_others`.
+    ///
+    /// ### Expected Result
+    /// Completes successfully meeting all assertions.
+    #[test]
+    fn test_convert_yaml_to_others() {
+        let yaml = "key: value\narr:\n  - 1\n  - 2";
+        let json = convert(yaml, DataFormat::Yaml, DataFormat::Json).unwrap();
+        assert!(json.contains("\"key\""));
+    }
+
+    /// **Test Case**: Convert Toml To Others
+    ///
+    /// ### Description
+    /// Validates convert toml to others functionality.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `test_convert_toml_to_others`.
+    ///
+    /// ### Expected Result
+    /// Completes successfully meeting all assertions.
+    #[test]
+    fn test_convert_toml_to_others() {
+        let toml = "key = \"value\"\narr = [1, 2]";
+        let json = convert(toml, DataFormat::Toml, DataFormat::Json).unwrap();
+        assert!(json.contains("\"key\""));
+
+        // toml from array value
+        let json_arr = r#"[1, 2]"#;
+        let toml_out = convert(json_arr, DataFormat::Json, DataFormat::Toml).unwrap();
+        assert!(toml_out.contains("data = ["));
+    }
+
+    /// **Test Case**: Convert Xml To Others
+    ///
+    /// ### Description
+    /// Validates convert xml to others functionality.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `test_convert_xml_to_others`.
+    ///
+    /// ### Expected Result
+    /// Completes successfully meeting all assertions.
+    #[test]
+    fn test_convert_xml_to_others() {
+        let xml = "<root><key>value</key><arr>1</arr><arr>2</arr><empty></empty></root>";
+        let json = convert(xml, DataFormat::Xml, DataFormat::Json).unwrap();
+        assert!(json.contains("\"key\""));
+
+        // array wrapped in root
+        let json_arr = r#"[1, 2]"#;
+        let xml_out = convert(json_arr, DataFormat::Json, DataFormat::Xml).unwrap();
+        assert!(xml_out.contains("<item>1</item>"));
+
+        // test parse error xml eof
+        let xml_err = "<root><key>value</key>";
+        assert!(convert(xml_err, DataFormat::Xml, DataFormat::Json).is_err());
+    }
+
+    /// **Test Case**: Convert Parse Errors
+    ///
+    /// ### Description
+    /// Validates convert parse errors functionality.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `test_convert_parse_errors`.
+    ///
+    /// ### Expected Result
+    /// Completes successfully meeting all assertions.
+    #[test]
+    fn test_convert_parse_errors() {
+        assert!(convert("invalid json", DataFormat::Json, DataFormat::Json).is_err());
+        assert!(convert("{ invalid yaml", DataFormat::Yaml, DataFormat::Json).is_err());
+        assert!(convert("invalid toml", DataFormat::Toml, DataFormat::Json).is_err());
+    }
+
+    /// **Test Case**: Write Json To Xml Cases
+    ///
+    /// ### Description
+    /// Validates write json to xml cases functionality.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `test_write_json_to_xml_cases`.
+    ///
+    /// ### Expected Result
+    /// Completes successfully meeting all assertions.
+    #[test]
+    fn test_write_json_to_xml_cases() {
+        // Test single object
+        let json_obj = r#"{"a": 1}"#;
+        let xml = convert(json_obj, DataFormat::Json, DataFormat::Xml).unwrap();
+        assert!(xml.contains("<a>1</a>"));
+
+        // Test primitive string
+        let json_str = r#""string""#;
+        let xml = convert(json_str, DataFormat::Json, DataFormat::Xml).unwrap();
+        assert!(xml.contains("<root>string</root>"));
+
+        // Test primitive number
+        let json_num = r#"42"#;
+        let xml = convert(json_num, DataFormat::Json, DataFormat::Xml).unwrap();
+        assert!(xml.contains("<root>42</root>"));
+
+        // Test bool
+        let json_bool = r#"true"#;
+        let xml = convert(json_bool, DataFormat::Json, DataFormat::Xml).unwrap();
+        assert!(xml.contains("<root>true</root>"));
+
+        // Test null
+        let json_null = r#"null"#;
+        let xml = convert(json_null, DataFormat::Json, DataFormat::Xml).unwrap();
+        assert!(xml.contains("<root/>"));
+
+        // Test array with nested
+        let json_complex = r#"{"item": [1, {"b": 2}]}"#;
+        let xml = convert(json_complex, DataFormat::Json, DataFormat::Xml).unwrap();
+        assert!(xml.contains("<item>1</item>"));
+        assert!(xml.contains("<b>2</b>"));
+    }
+
+    /// **Test Case**: Parse XML Edge Cases
+    ///
+    /// ### Description
+    /// Verifies the correct handling of complex or edge-case XML structures during parsing.
+    ///
+    /// ### Test Procedure
+    /// 1. Convert an XML string with an empty element (`<empty/>`).
+    /// 2. Convert an XML string with adjacent child tags of the same name.
+    /// 3. Convert an XML string containing multiple root elements.
+    /// 4. Convert XML sequences causing empty arrays and unexpected EOF errors.
+    ///
+    /// ### Expected Result
+    /// The XML structures correctly evaluate to their respective fallback JSON forms (`null`, populated arrays/objects, or errors).
+    #[test]
+    fn test_parse_xml_edge_cases() {
+        // Testing empty element conversion
+        let xml = "<root><empty/></root>";
+        let json = convert(xml, DataFormat::Xml, DataFormat::Json).unwrap();
+        assert!(json.contains("null"));
+
+        let xml2 = "<root><k>1</k><k><empty/></k></root>";
+        let json2 = convert(xml2, DataFormat::Xml, DataFormat::Json).unwrap();
+        assert!(json2.contains("\"k\""));
+
+        // Testing unwrap single object
+        let xml3 = "<item>1</item><item>2</item>";
+        let json3 = convert(
+            &format!("<root>{}</root>", xml3),
+            DataFormat::Xml,
+            DataFormat::Json,
+        )
+        .unwrap();
+        assert!(json3.contains("["));
+
+        // Testing numbers and bools in text
+        let xml4 = "<root><n>42</n><b>true</b><f>false</f></root>";
+        let json4 = convert(xml4, DataFormat::Xml, DataFormat::Json).unwrap();
+        assert!(json4.contains("42"));
+        assert!(json4.contains("true"));
+        assert!(json4.contains("false"));
+
+        // Testing multiple root elements which hits lines 99-101
+        let xml_multiple = "<root><a>1</a><b>2</b></root>";
+        let json_multiple = convert(xml_multiple, DataFormat::Xml, DataFormat::Json).unwrap();
+        assert!(json_multiple.contains("\"a\": 1"));
+        assert!(json_multiple.contains("\"b\": 2"));
+
+        // Testing array existing handling in Start and Empty
+        let xml_array_start = "<root><a>1</a><a>2</a><a>3</a></root>";
+        let json_arr = convert(xml_array_start, DataFormat::Xml, DataFormat::Json).unwrap();
+        assert!(json_arr.contains("["));
+
+        let xml_array_empty = "<root><a/><a/><a/></root>";
+        let json_arr_empty = convert(xml_array_empty, DataFormat::Xml, DataFormat::Json).unwrap();
+        assert!(json_arr_empty.contains("null"));
+
+        // Testing EOF inside parse_xml_element
+        let xml_eof = "<root><a>";
+        assert!(convert(xml_eof, DataFormat::Xml, DataFormat::Json).is_err());
+
+        // Testing Unexpected EOF at start
+        let xml_empty = "";
+        assert!(convert(xml_empty, DataFormat::Xml, DataFormat::Json).is_err());
+    }
 }
