@@ -89,6 +89,35 @@
       "command": "cargo publish -p jsonette-core && cargo publish -p jsonette",
       "problemMatcher": ["$rustc"],
       "detail": "Publishes core library first, then the CLI tool."
+    },
+    {
+      "label": "macOS: Generate Xcode Project",
+      "type": "shell",
+      "command": "xcodegen",
+      "options": {
+        "cwd": "${workspaceFolder}/macos"
+      },
+      "group": "build"
+    },
+    {
+      "label": "macOS: Build App",
+      "type": "shell",
+      "command": "xcodebuild build -project jsonette.xcodeproj -scheme jsonette -destination 'platform=macOS' SYMROOT=\"${workspaceFolder}/macos/build\" CODE_SIGN_IDENTITY=\"\" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO",
+      "options": {
+        "cwd": "${workspaceFolder}/macos"
+      },
+      "group": "build",
+      "dependsOn": "macOS: Generate Xcode Project"
+    },
+    {
+      "label": "macOS: Run Tests",
+      "type": "shell",
+      "command": "xcodebuild test -project jsonette.xcodeproj -scheme jsonette -destination 'platform=macOS' SYMROOT=\"${workspaceFolder}/macos/build\" CODE_SIGN_IDENTITY=\"\" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO",
+      "options": {
+        "cwd": "${workspaceFolder}/macos"
+      },
+      "group": "test",
+      "dependsOn": "macOS: Build App"
     }
   ]
 }

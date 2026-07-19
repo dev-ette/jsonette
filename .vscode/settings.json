@@ -12,5 +12,17 @@
   "rust-analyzer.runnables.extraEnv": {
     "RUST_BACKTRACE": "1"
   },
-  "rust-analyzer.debug.engine": "vadimcn.vscode-lldb"
+  "rust-analyzer.debug.engine": "vadimcn.vscode-lldb",
+  "swift.swiftSDK": "",
+  "swift.path": "/usr/bin",
+  "swift.buildArguments": [
+    "-Xswiftc",
+    "-sdk",
+    "-Xswiftc",
+    "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
+  ],
+  "[swift]": {
+    "editor.defaultFormatter": "vknabel.vscode-swiftlint",
+    "editor.formatOnSave": true
+  }
 }

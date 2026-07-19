@@ -63,8 +63,27 @@ The CLI is a binary shell. If you add command-line overrides, parsing logic, or 
 
 ### 3. Working on the macOS Shell (`/macos`)
 
-- Open the Xcode workspace under `/macos`.
-- The macOS project is configured to link the Rust engine via UniFFI. Setting up and compiling the project automatically runs the UniFFI bridge compiler.
+The macOS project is managed using `xcodegen` and links to the Rust engine via UniFFI.
+
+**Prerequisites:**
+
+- Xcode 16+
+- Rust stable toolchain
+- Homebrew
+
+**Setup Instructions:**
+
+1. Install `xcodegen` via Homebrew:
+   ```bash
+   brew install xcodegen
+   ```
+2. Generate the Xcode project:
+   ```bash
+   cd macos
+   xcodegen
+   ```
+3. Open `macos/jsonette.xcodeproj` in Xcode and select the `jsonette` scheme.
+4. The project is configured to automatically build the Rust engine static library and generate the UniFFI Swift bindings during the "Run Script" build phase.
 
 ### 4. Documentation
 

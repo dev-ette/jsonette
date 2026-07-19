@@ -1,0 +1,55 @@
+name: jsonette
+options:
+  bundleIdPrefix: dev.ette
+targets:
+  jsonette:
+    type: application
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: Sources
+      - path: Generated
+        optional: true
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: dev.ette.jsonette
+      INFOPLIST_KEY_LSMinimumSystemVersion: "14.0"
+      INFOPLIST_KEY_NSHumanReadableCopyright: "Copyright © 2026 DevEtte"
+      LIBRARY_SEARCH_PATHS: "$(PROJECT_DIR)/../target/release"
+      SWIFT_INCLUDE_PATHS: "$(PROJECT_DIR)/Generated"
+      OTHER_LDFLAGS:
+        - -ljsonette_core
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDocumentTypes:
+          - CFBundleTypeExtensions:
+              - json
+            CFBundleTypeName: JSON
+            CFBundleTypeRole: Editor
+            LSHandlerRank: Default
+    preBuildScripts:
+      - name: Build Rust Engine & Bridge
+        script: |
+          cd "$PROJECT_DIR/.."
+          # Build static library for macOS
+          cargo build --release --manifest-path engine/Cargo.toml
+          
+          # Generate Swift bindings
+          mkdir -p macos/Generated
+          cargo run --release --bin uniffi-bindgen --manifest-path engine/Cargo.toml -- generate \
+            --library target/release/libjsonette_core.dylib \
+            --language swift \
+            --out-dir macos/Generated
+          
+          if [ -f "macos/Generated/jsonette_coreFFI.modulemap" ]; then
+            mv "macos/Generated/jsonette_coreFFI.modulemap" "macos/Generated/module.modulemap"
+          fi
+
+  jsonetteTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: Tests
+    dependencies:
+      - target: jsonette

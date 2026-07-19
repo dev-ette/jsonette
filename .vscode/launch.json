@@ -93,6 +93,15 @@
       },
       "args": [],
       "cwd": "${workspaceFolder}"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug macOS App",
+      "program": "${workspaceFolder}/macos/build/Debug/jsonette.app/Contents/MacOS/jsonette",
+      "args": [],
+      "cwd": "${workspaceFolder}/macos",
+      "preLaunchTask": "macOS: Build App"
     }
   ],
   "inputs": [

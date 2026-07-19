@@ -1,0 +1,75 @@
+name: macOS CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'macos/**'
+      - 'engine/**'
+      - '.github/workflows/macos-ci.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'macos/**'
+      - 'engine/**'
+      - '.github/workflows/macos-ci.yml'
+
+jobs:
+  lint-and-format:
+    name: Lint & Format (SwiftLint)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v7.0.0
+      - name: Install SwiftLint
+        run: brew install swiftlint
+      - name: Run SwiftLint
+        working-directory: macos
+        # Run SwiftLint in strict mode to fail on warnings
+        run: swiftlint lint --strict
+
+  build-and-test:
+    name: Build & Test macOS App
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      - name: Build Rust Engine
+        working-directory: engine
+        run: cargo build
+
+      - name: Generate Xcode Project
+        working-directory: macos
+        run: xcodegen
+
+      - name: Build macOS App
+        working-directory: macos
+        run: |
+          xcodebuild build \
+            -project jsonette.xcodeproj \
+            -scheme jsonette \
+            -destination 'platform=macOS' \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Run Unit Tests & Coverage
+        working-directory: macos
+        run: |
+          xcodebuild test \
+            -project jsonette.xcodeproj \
+            -scheme jsonette \
+            -destination 'platform=macOS' \
+            -enableCodeCoverage YES \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO

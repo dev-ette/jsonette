@@ -59,6 +59,39 @@ pub fn ping(input: String) -> String {
     format!("pong: {}", input)
 }
 
+/// A UniFFI-compatible diagnostic record containing error boundaries and a message.
+#[derive(uniffi::Record)]
+pub struct FFIDiagnostic {
+    /// The starting byte offset in the string (inclusive).
+    pub start: u64,
+    /// The ending byte offset in the string (exclusive).
+    pub end: u64,
+    /// A human-readable message describing the syntax error.
+    pub message: String,
+}
+
+/// Checks the syntax of a given JSON string and returns a list of diagnostics.
+///
+/// # Arguments
+///
+/// * `input` - The JSON string to validate.
+///
+/// # Returns
+///
+/// A `Vec<FFIDiagnostic>` representing all structural or syntax errors encountered.
+/// If the input is valid, returns an empty vector.
+#[uniffi::export]
+pub fn check_syntax(input: String) -> Vec<FFIDiagnostic> {
+    diagnostics(&input)
+        .into_iter()
+        .map(|d| FFIDiagnostic {
+            start: d.span.start as u64,
+            end: d.span.end as u64,
+            message: d.message,
+        })
+        .collect()
+}
+
 #[cfg(test)]
 mod ffi_tests {
     use super::*;
@@ -91,5 +124,36 @@ mod ffi_tests {
     #[test]
     fn test_ping_empty_string() {
         assert_eq!(ping(String::new()), "pong: ");
+    }
+
+    /// **Test Case**: Check syntax returns empty on valid JSON
+    ///
+    /// ### Description
+    /// Validates that a correctly formatted JSON string produces no diagnostics.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `check_syntax("{}")`.
+    ///
+    /// ### Expected Result
+    /// Result is an empty vector.
+    #[test]
+    fn test_check_syntax_valid() {
+        assert!(check_syntax("{}".to_string()).is_empty());
+    }
+
+    /// **Test Case**: Check syntax returns diagnostic on invalid JSON
+    ///
+    /// ### Description
+    /// Validates that an incorrectly formatted JSON string produces diagnostic errors.
+    ///
+    /// ### Test Procedure
+    /// 1. Execute `check_syntax("{")`.
+    ///
+    /// ### Expected Result
+    /// Result contains at least one `FFIDiagnostic`.
+    #[test]
+    fn test_check_syntax_invalid() {
+        let diags = check_syntax("{".to_string());
+        assert!(!diags.is_empty());
     }
 }

@@ -9,10 +9,8 @@ engine/Cargo.lock
 Cargo.lock
 
 # Xcode / Swift
-macos/*.xcodeproj/xcuserdata/
-macos/*.xcodeproj/project.xcworkspace/xcuserdata/
-macos/*.xcworkspace/xcuserdata/
-macos/*.xcworkspace/xcshareddata/
+macos/*.xcodeproj
+macos/*.xcworkspace
 **/DerivedData/
 *.ipa
 *.xcarchive
@@ -31,9 +29,9 @@ macos/.build/
 .idea/httpRequests/
 .idea/copilot/
 *.iml
-.vscode/
 
 # Generated UniFFI bindings
+macos/Generated/
 macos/generated/
 bridge-spike/jsonette.swift
 bridge-spike/jsonetteFFI.h

@@ -473,7 +473,7 @@ mod tests {
             let b_node = pairs.iter().find(|p| p.key == "b").unwrap();
 
             if let JsonNode::Number(val, _, _) = f_node.value {
-                assert!(val >= 10.0 && val <= 20.0);
+                assert!((10.0..=20.0).contains(&val));
             } else {
                 panic!("Expected Number for float");
             }
@@ -498,10 +498,10 @@ mod tests {
     fn test_generator_string_pool_and_template() {
         let schema_str = r#"{
             "p": { "@type": "string", "@pool": ["A", "B"] },
-            "t": { 
-                "@type": "string", 
-                "@template": "Hello {name} {age} {flag}", 
-                "@vars": { 
+            "t": {
+                "@type": "string",
+                "@template": "Hello {name} {age} {flag}",
+                "@vars": {
                     "name": "World",
                     "age": { "@type": "integer", "@start": 42, "@step": 0 },
                     "flag": { "@type": "bool" }
@@ -556,10 +556,10 @@ mod tests {
     #[test]
     fn test_generator_array_instruction() {
         let schema_str = r#"{
-            "arr": { 
-                "@type": "array", 
-                "@count": 3, 
-                "@item": { "@type": "integer", "@start": 1, "@step": 1 } 
+            "arr": {
+                "@type": "array",
+                "@count": 3,
+                "@item": { "@type": "integer", "@start": 1, "@step": 1 }
             }
         }"#;
         let schema = parse(schema_str).unwrap();

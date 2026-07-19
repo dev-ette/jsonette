@@ -141,3 +141,109 @@ jobs:
           ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
           commit_message: "Update AUR package for ${{ github.ref_name }}"
           ssh_keyscan_types: rsa,ecdsa,ed25519
+
+  build-macos-app:
+    needs: create-release
+    name: Build macOS App
+    runs-on: macos-15
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7.0.0
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+      
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      - name: Build Engine
+        working-directory: engine
+        run: cargo build --release
+
+      - name: Install Apple Certificate
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: "temp-password"
+        run: |
+          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+
+          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+
+      - name: Generate Xcode Project
+        working-directory: macos
+        run: xcodegen
+
+      - name: Archive App
+        working-directory: macos
+        run: |
+          xcodebuild archive \
+            -project jsonette.xcodeproj \
+            -scheme jsonette \
+            -destination 'generic/platform=macOS' \
+            -archivePath $RUNNER_TEMP/jsonette.xcarchive \
+            CODE_SIGN_IDENTITY="Developer ID Application" \
+            DEVELOPMENT_TEAM=${{ secrets.APPLE_TEAM_ID }} \
+            OTHER_CODE_SIGN_FLAGS="--timestamp" \
+            ENABLE_HARDENED_RUNTIME=YES
+
+      - name: Export Archive
+        working-directory: macos
+        run: |
+          cat <<EOF > exportOptions.plist
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>developer-id</string>
+              <key>teamID</key>
+              <string>${{ secrets.APPLE_TEAM_ID }}</string>
+          </dict>
+          </plist>
+          EOF
+          
+          xcodebuild -exportArchive \
+            -archivePath $RUNNER_TEMP/jsonette.xcarchive \
+            -exportOptionsPlist exportOptions.plist \
+            -exportPath $RUNNER_TEMP/export
+
+      - name: Notarize App
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          # Create a ZIP of the app for notarization
+          cd $RUNNER_TEMP/export
+          /usr/bin/ditto -c -k --keepParent jsonette.app jsonette.zip
+          
+          xcrun notarytool submit jsonette.zip \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_ID_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait \
+            --timeout 10m
+
+      - name: Staple App
+        run: |
+          xcrun stapler staple $RUNNER_TEMP/export/jsonette.app
+
+      - name: Create DMG
+        run: |
+          hdiutil create -volname jsonette -srcfolder $RUNNER_TEMP/export/jsonette.app -ov -format UDZO jsonette.dmg
+
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v3.0.1
+        with:
+          files: jsonette.dmg

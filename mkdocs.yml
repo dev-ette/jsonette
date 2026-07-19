@@ -72,6 +72,7 @@ nav:
     - 0007 - Licensing: architecture/decisions/0007-licensing.md
     - 0008 - CLI and Workspace: architecture/decisions/0008-cli-application-via-cargo-workspace.md
   - Command Line Interface (CLI): cli.md
+  - macOS App: macos-app.md
   - System Architecture Blueprint: architecture/blueprint.md
   - Rust Engine API Reference: engine-api.md
 

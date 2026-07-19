@@ -1027,16 +1027,18 @@ mod private_tests {
     /// Parsing succeeds with valid comments and appropriately errors on unterminated sequences.
     #[test]
     fn test_strict_whitespace_and_comments() {
-        let mut opts = crate::types::ParserOptions::default();
-        opts.allow_comments = true;
+        let opts = crate::types::ParserOptions {
+            allow_comments: true,
+            ..Default::default()
+        };
 
-        let mut parser = Parser::new(" // line \n /* block */ \n\t\r 123 \n ", opts.clone());
+        let mut parser = Parser::new(" // line \n /* block */ \n\t\r 123 \n ", opts);
         assert!(parser.parse_value().is_ok());
 
-        let mut parser = Parser::new("/* block without end", opts.clone());
+        let mut parser = Parser::new("/* block without end", opts);
         assert!(parser.parse_value().is_err());
 
-        let mut parser = Parser::new("// line without end", opts.clone());
+        let mut parser = Parser::new("// line without end", opts);
         assert!(parser.parse_value().is_err());
     }
 
