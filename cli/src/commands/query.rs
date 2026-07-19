@@ -56,15 +56,6 @@ pub fn handle_query(args: QueryArgs) {
         }
     };
 
-    // Parse the JSON document into the engine AST.
-    let node = match jsonette_core::parse(&input) {
-        Ok(node) => node,
-        Err(diags) => {
-            print_diagnostics(&input, &diags, &label);
-            std::process::exit(1);
-        }
-    };
-
     // Validate the JSONPath expression syntax before evaluation so that
     // invalid paths produce clear error messages rather than an empty result.
     let path_diags = jsonette_core::diagnostics_for_path(&args.query);
@@ -75,8 +66,8 @@ pub fn handle_query(args: QueryArgs) {
         std::process::exit(1);
     }
 
-    // Evaluate the JSONPath expression and print the result.
-    match jsonette_core::evaluate_path(&node, &args.query) {
+    // Evaluate the JSONPath expression using the optimized string parser.
+    match jsonette_core::evaluate_path_on_str(&input, &args.query) {
         Ok(matches) => {
             if matches.is_empty() {
                 println!("[]");
@@ -86,8 +77,18 @@ pub fn handle_query(args: QueryArgs) {
             }
         }
         Err(err) => {
-            eprintln!("Error evaluating JSONPath: {}", err);
-            std::process::exit(1);
+            if err.starts_with("Invalid JSON") {
+                // The input is not valid JSON. Parse with the engine AST to get and print diagnostics.
+                if let Err(diags) = jsonette_core::parse(&input) {
+                    print_diagnostics(&input, &diags, &label);
+                } else {
+                    eprintln!("{}", err);
+                }
+                std::process::exit(1);
+            } else {
+                eprintln!("Error evaluating JSONPath: {}", err);
+                std::process::exit(1);
+            }
         }
     }
 }

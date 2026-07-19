@@ -40,7 +40,7 @@ pub use types::{
 pub use completion::completions_at;
 pub use formatter::{format, minify};
 pub use parser::{diagnostics, parse, tolerant_parse};
-pub use query::{diagnostics_for_path, evaluate_path};
+pub use query::{diagnostics_for_path, evaluate_path, evaluate_path_on_str};
 pub use settings::{Settings, get_settings, set_in_memory_settings, update_settings};
 
 uniffi::setup_scaffolding!();

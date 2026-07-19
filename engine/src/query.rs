@@ -140,6 +140,28 @@ pub fn evaluate_path(node: &JsonNode, path: &str) -> Result<Vec<JsonNode>, Strin
     Ok(results)
 }
 
+/// Evaluates a JSONPath expression against a raw JSON string directly, bypassing
+/// the span-aware parser and full AST construction overhead. This is significantly
+/// faster and uses much less memory for large documents.
+///
+/// # Arguments
+///
+/// * `json_string` - The raw JSON string.
+/// * `path` - The RFC 9535 JSONPath expression string.
+///
+/// # Returns
+///
+/// * `Ok(Vec<JsonNode>)` - Nodes matched by the expression.
+/// * `Err(String)` - Parse error description.
+pub fn evaluate_path_on_str(json_string: &str, path: &str) -> Result<Vec<JsonNode>, String> {
+    let json_path = JsonPath::parse(path).map_err(|e| format!("Invalid JSONPath '{path}': {e}"))?;
+    let value: Value =
+        serde_json::from_str(json_string).map_err(|e| format!("Invalid JSON: {e}"))?;
+    let node_list = json_path.query(&value);
+    let results = node_list.iter().map(|v| value_to_node(v)).collect();
+    Ok(results)
+}
+
 /// Validates a JSONPath expression syntactically without evaluating it against
 /// any document. Intended for live editor feedback where the user is still
 /// composing a query and no document context is available or needed.

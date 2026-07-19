@@ -1461,7 +1461,8 @@ fn test_cli_config_set_error() {
         .arg("set")
         .arg("format.indent")
         .arg("4")
-        .assert();
+        .assert()
+        .failure();
 }
 
 /// **Test Case**: Format Output Write Permissions

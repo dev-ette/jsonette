@@ -34,7 +34,9 @@ use crate::types::LineEnding;
 /// The pretty-printed JSON string representation of the node.
 pub fn format(node: &JsonNode) -> String {
     let opts = crate::settings::get_settings().format;
-    format_impl(node, 0, &opts)
+    let mut result = String::with_capacity(1024);
+    format_impl(node, 0, &opts, &mut result);
+    result
 }
 
 /// Minifies the JSON node, stripping all whitespace and formatting.
@@ -47,7 +49,9 @@ pub fn format(node: &JsonNode) -> String {
 ///
 /// A single-line JSON string representation of the node without any unnecessary whitespace.
 pub fn minify(node: &JsonNode) -> String {
-    minify_impl(node)
+    let mut result = String::with_capacity(1024);
+    minify_impl(node, &mut result);
+    result
 }
 
 /// Computes the indentation prefix string for a given level of nesting.
@@ -156,60 +160,66 @@ fn format_inline(node: &JsonNode, opts: &crate::types::FormatOptions) -> Option<
 ///
 /// * `node` - A reference to the `JsonNode` to format.
 /// * `level` - The current indentation depth level.
-///
-/// # Returns
-///
-/// The pretty-printed string representation of the sub-tree.
-fn format_impl(node: &JsonNode, level: usize, opts: &crate::types::FormatOptions) -> String {
+/// * `opts` - Formatting options.
+/// * `out` - Mutable string buffer to append formatted output.
+fn format_impl(
+    node: &JsonNode,
+    level: usize,
+    opts: &crate::types::FormatOptions,
+    out: &mut String,
+) {
     match node {
-        JsonNode::Null(_) => "null".to_string(),
-        JsonNode::Bool(b, _) => if *b { "true" } else { "false" }.to_string(),
-        JsonNode::Number(_, raw, _) => raw.clone(),
-        JsonNode::String(s, _) => serde_json::to_string(s).unwrap(),
+        JsonNode::Null(_) => out.push_str("null"),
+        JsonNode::Bool(b, _) => out.push_str(if *b { "true" } else { "false" }),
+        JsonNode::Number(_, raw, _) => out.push_str(raw),
+        JsonNode::String(s, _) => out.push_str(&serde_json::to_string(s).unwrap()),
         JsonNode::Array(elements, _) => {
             if elements.is_empty() {
-                return "[]".to_string();
+                out.push_str("[]");
+                return;
             }
-            if let (crate::types::FoldingStyle::Compact, Some(inline)) =
-                (&opts.folding_style, format_inline(node, opts))
+            if let crate::types::FoldingStyle::Compact = opts.folding_style
+                && let Some(inline) = format_inline(node, opts)
             {
-                return inline;
+                out.push_str(&inline);
+                return;
             }
 
             let line_ending = get_line_ending(opts);
             let next_indent = get_indent(level + 1, opts);
             let current_indent = get_indent(level, opts);
 
-            let mut result = String::new();
-            result.push('[');
-            result.push_str(line_ending);
+            out.push('[');
+            out.push_str(line_ending);
 
             for (i, elem) in elements.iter().enumerate() {
-                result.push_str(&next_indent);
-                result.push_str(&format_impl(elem, level + 1, opts));
+                out.push_str(&next_indent);
+                format_impl(elem, level + 1, opts, out);
                 if i + 1 < elements.len() {
-                    result.push(',');
+                    out.push(',');
                 }
-                result.push_str(line_ending);
+                out.push_str(line_ending);
             }
 
-            result.push_str(&current_indent);
-            result.push(']');
-            result
+            out.push_str(&current_indent);
+            out.push(']');
         }
         JsonNode::Object(pairs, _) => {
             if pairs.is_empty() {
-                return "{}".to_string();
+                out.push_str("{}");
+                return;
             }
-            if let (crate::types::FoldingStyle::Compact, Some(inline)) =
-                (&opts.folding_style, format_inline(node, opts))
+            if let crate::types::FoldingStyle::Compact = opts.folding_style
+                && let Some(inline) = format_inline(node, opts)
             {
-                return inline;
+                out.push_str(&inline);
+                return;
             }
 
-            let mut pairs = pairs.clone();
+            // Note: we might want to avoid cloning pairs just to sort, but let's keep it functionally equivalent.
+            let mut pairs_ref: Vec<_> = pairs.iter().collect();
             if opts.sort_keys {
-                pairs.sort_by(|a, b| a.key.cmp(&b.key));
+                pairs_ref.sort_by(|a, b| a.key.cmp(&b.key));
             }
 
             let line_ending = get_line_ending(opts);
@@ -217,24 +227,22 @@ fn format_impl(node: &JsonNode, level: usize, opts: &crate::types::FormatOptions
             let current_indent = get_indent(level, opts);
             let colon_str = if opts.space_after_colon { ": " } else { ":" };
 
-            let mut result = String::new();
-            result.push('{');
-            result.push_str(line_ending);
+            out.push('{');
+            out.push_str(line_ending);
 
-            for (i, pair) in pairs.iter().enumerate() {
-                result.push_str(&next_indent);
-                result.push_str(&serde_json::to_string(&pair.key).unwrap());
-                result.push_str(colon_str);
-                result.push_str(&format_impl(&pair.value, level + 1, opts));
+            for (i, pair) in pairs_ref.iter().enumerate() {
+                out.push_str(&next_indent);
+                out.push_str(&serde_json::to_string(&pair.key).unwrap());
+                out.push_str(colon_str);
+                format_impl(&pair.value, level + 1, opts, out);
                 if i + 1 < pairs.len() {
-                    result.push(',');
+                    out.push(',');
                 }
-                result.push_str(line_ending);
+                out.push_str(line_ending);
             }
 
-            result.push_str(&current_indent);
-            result.push('}');
-            result
+            out.push_str(&current_indent);
+            out.push('}');
         }
     }
 }
@@ -244,31 +252,34 @@ fn format_impl(node: &JsonNode, level: usize, opts: &crate::types::FormatOptions
 /// # Arguments
 ///
 /// * `node` - A reference to the `JsonNode` to minify.
-///
-/// # Returns
-///
-/// The minified string representation of the sub-tree.
-fn minify_impl(node: &JsonNode) -> String {
+/// * `out` - Mutable string buffer to append minified output.
+fn minify_impl(node: &JsonNode, out: &mut String) {
     match node {
-        JsonNode::Null(_) => "null".to_string(),
-        JsonNode::Bool(b, _) => if *b { "true" } else { "false" }.to_string(),
-        JsonNode::Number(_, raw, _) => raw.clone(),
-        JsonNode::String(s, _) => serde_json::to_string(s).unwrap(),
+        JsonNode::Null(_) => out.push_str("null"),
+        JsonNode::Bool(b, _) => out.push_str(if *b { "true" } else { "false" }),
+        JsonNode::Number(_, raw, _) => out.push_str(raw),
+        JsonNode::String(s, _) => out.push_str(&serde_json::to_string(s).unwrap()),
         JsonNode::Array(elements, _) => {
-            let mut parts = Vec::with_capacity(elements.len());
-            for elem in elements {
-                parts.push(minify_impl(elem));
+            out.push('[');
+            for (i, elem) in elements.iter().enumerate() {
+                if i > 0 {
+                    out.push(',');
+                }
+                minify_impl(elem, out);
             }
-            format!("[{}]", parts.join(","))
+            out.push(']');
         }
         JsonNode::Object(pairs, _) => {
-            let mut parts = Vec::with_capacity(pairs.len());
-            for pair in pairs {
-                let val_str = minify_impl(&pair.value);
-                let key_str = serde_json::to_string(&pair.key).unwrap();
-                parts.push(format!("{}:{}", key_str, val_str));
+            out.push('{');
+            for (i, pair) in pairs.iter().enumerate() {
+                if i > 0 {
+                    out.push(',');
+                }
+                out.push_str(&serde_json::to_string(&pair.key).unwrap());
+                out.push(':');
+                minify_impl(&pair.value, out);
             }
-            format!("{{{}}}", parts.join(","))
+            out.push('}');
         }
     }
 }

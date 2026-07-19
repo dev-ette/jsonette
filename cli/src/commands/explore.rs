@@ -65,14 +65,6 @@ pub fn handle_explore(mut args: ExploreArgs) {
         }
     };
 
-    let node = match jsonette_core::parse(&input) {
-        Ok(node) => node,
-        Err(diags) => {
-            print_diagnostics(&input, &diags, &label);
-            std::process::exit(1);
-        }
-    };
-
     let path_diags = jsonette_core::diagnostics_for_path(&args.path);
     if !path_diags.is_empty() {
         for diag in &path_diags {
@@ -81,7 +73,7 @@ pub fn handle_explore(mut args: ExploreArgs) {
         std::process::exit(1);
     }
 
-    match jsonette_core::evaluate_path(&node, &args.path) {
+    match jsonette_core::evaluate_path_on_str(&input, &args.path) {
         Ok(matches) => {
             if matches.is_empty() {
                 println!("No nodes matched the path.");
@@ -162,8 +154,17 @@ pub fn handle_explore(mut args: ExploreArgs) {
             page_output(&output);
         }
         Err(err) => {
-            eprintln!("Error evaluating JSONPath: {}", err);
-            std::process::exit(1);
+            if err.starts_with("Invalid JSON") {
+                if let Err(diags) = jsonette_core::parse(&input) {
+                    print_diagnostics(&input, &diags, &label);
+                } else {
+                    eprintln!("{}", err);
+                }
+                std::process::exit(1);
+            } else {
+                eprintln!("Error evaluating JSONPath: {}", err);
+                std::process::exit(1);
+            }
         }
     }
 }
