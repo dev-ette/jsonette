@@ -18,10 +18,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "jsonetteFFI.h"
+#include "jsonette_coreFFI.h"
 
 // Helper to convert C string to RustBuffer (UniFFI standard layout)
-RustBuffer make_rust_buffer(const char *str) {
+RustBuffer make_rust_buffer(const char *str)
+{
     RustBuffer buf;
     buf.len = strlen(str);
     buf.capacity = buf.len;
@@ -30,7 +31,8 @@ RustBuffer make_rust_buffer(const char *str) {
     return buf;
 }
 
-int main() {
+int main()
+{
     printf("Calling Rust ping from C...\n");
 
     RustCallStatus status;
@@ -38,9 +40,10 @@ int main() {
 
     // Call FFI ping function
     RustBuffer input = make_rust_buffer("world");
-    RustBuffer output = uniffi_jsonette_fn_func_ping(input, &status);
+    RustBuffer output = uniffi_jsonette_core_fn_func_ping(input, &status);
 
-    if (status.code != 0) {
+    if (status.code != 0)
+    {
         printf("FFI call failed with code %d\n", status.code);
         return 1;
     }
@@ -57,12 +60,15 @@ int main() {
     // Free returned output buffer (Rust took ownership and freed the input buffer)
     RustCallStatus free_status;
     free_status.code = 0;
-    ffi_jsonette_rustbuffer_free(output, &free_status);
+    ffi_jsonette_core_rustbuffer_free(output, &free_status);
 
-    if (success) {
+    if (success)
+    {
         printf("UniFFI C bridge OK\n");
         return 0;
-    } else {
+    }
+    else
+    {
         printf("Bridge failed: unexpected result\n");
         return 1;
     }
