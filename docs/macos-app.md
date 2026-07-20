@@ -10,6 +10,10 @@ The `jsonette` macOS application is a native shell built using SwiftUI and AppKi
 - **Core Engine Bridge**: `UniFFI` is used to automatically generate Swift language bindings (`macos/Generated/jsonette_core.swift`) from the Rust engine FFI exports.
 - **State Management**: Uses native Combine and `@Published` properties within `ObservableObject` wrappers to marshal data out of the Rust engine.
 
+### UI/UX Design Direction
+The user experience and component layout are strictly governed by our [Visionary UI/UX Blueprint](design/ui-ux-blueprint.md).
+The architectural decision to transition to this fluid, multi-modal layout is recorded in [ADR 0009](architecture/decisions/0009-visionary-macos-ui-ux-blueprint.md).
+
 ---
 
 ## 🛠️ Local Development & VSCode Setup

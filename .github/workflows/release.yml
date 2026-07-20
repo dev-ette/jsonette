@@ -164,7 +164,7 @@ jobs:
 
       - name: Generate Xcode Project
         working-directory: macos
-        run: xcodegen
+        run: chmod +x setup.sh && ./setup.sh
 
       - name: Archive App
         working-directory: macos
@@ -176,7 +176,8 @@ jobs:
             -archivePath $RUNNER_TEMP/jsonette.xcarchive \
             CODE_SIGN_IDENTITY="-" \
             CODE_SIGNING_REQUIRED=YES \
-            CODE_SIGNING_ALLOWED=YES
+            CODE_SIGNING_ALLOWED=YES \
+            -skipPackagePluginValidation
 
       - name: Export Archive
         working-directory: macos

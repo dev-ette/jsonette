@@ -77,13 +77,22 @@ The macOS project is managed using `xcodegen` and links to the Rust engine via U
    ```bash
    brew install xcodegen
    ```
-2. Generate the Xcode project:
+2. Generate the FFI bindings and the Xcode project using the setup script:
    ```bash
    cd macos
-   xcodegen
+   ./setup.sh
    ```
 3. Open `macos/jsonette.xcodeproj` in Xcode and select the `jsonette` scheme.
-4. The project is configured to automatically build the Rust engine static library and generate the UniFFI Swift bindings during the "Run Script" build phase.
+4. The project is configured to automatically build the Rust engine static library and refresh the UniFFI Swift bindings during the "Run Script" build phase.
+
+**macOS Coding Standards:**
+
+- **UI Framework:** Use SwiftUI for all views. Avoid AppKit (`NSView`, `NSViewController`) unless wrapping a highly specialized component (like `CodeEditSourceEditor`).
+- **Formatting:** We use `SwiftLint`. Run `swiftlint` in the `/macos` directory to ensure compliance. Avoid force unwrapping (`!`) and favor `guard let` or `if let`.
+- **Testing:** XCTest is used for macOS shell testing.
+  - View logic should be heavily mocked.
+  - Avoid testing Rust engine logic via XCTest; those should be covered in the Rust `engine` tests. Focus XCTest on UI state and navigation logic.
+- **Documentation:** Use standard Swift `///` docstrings for public views, models, and methods. Generate macOS docs via `swift doc` or integrate into the MkDocs pipeline.
 
 ### 4. Documentation
 

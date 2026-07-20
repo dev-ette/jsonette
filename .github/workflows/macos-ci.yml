@@ -49,7 +49,7 @@ jobs:
 
       - name: Generate Xcode Project
         working-directory: macos
-        run: xcodegen
+        run: chmod +x setup.sh && ./setup.sh
 
       - name: Build macOS App
         working-directory: macos
@@ -60,7 +60,8 @@ jobs:
             -destination 'platform=macOS' \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO \
+            -skipPackagePluginValidation
 
       - name: Run Unit Tests & Coverage
         working-directory: macos
@@ -72,4 +73,5 @@ jobs:
             -enableCodeCoverage YES \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO \
+            -skipPackagePluginValidation

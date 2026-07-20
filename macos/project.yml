@@ -9,27 +9,34 @@ targets:
     sources:
       - path: Sources
       - path: Generated
-        optional: true
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: dev.ette.jsonette
       INFOPLIST_KEY_LSMinimumSystemVersion: "14.0"
       INFOPLIST_KEY_NSHumanReadableCopyright: "Copyright © 2026 DevEtte"
+      MARKETING_VERSION: 0.4.1
+      CURRENT_PROJECT_VERSION: 1
       LIBRARY_SEARCH_PATHS: "$(PROJECT_DIR)/../target/release"
       SWIFT_INCLUDE_PATHS: "$(PROJECT_DIR)/Generated"
+      ENABLE_USER_SCRIPT_SANDBOXING: NO
       OTHER_LDFLAGS:
         - -ljsonette_core
     info:
       path: Info.plist
       properties:
         CFBundleDocumentTypes:
-          - CFBundleTypeExtensions:
-              - json
-            CFBundleTypeName: JSON
+          - CFBundleTypeName: JSON
             CFBundleTypeRole: Editor
             LSHandlerRank: Default
+            LSItemContentTypes:
+              - public.json
     preBuildScripts:
       - name: Build Rust Engine & Bridge
+        basedOnDependencyAnalysis: false
         script: |
+          set -e
+          export PATH="$HOME/.cargo/bin:/opt/homebrew/opt/rustup/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
+          echo "Building from: $(pwd)"
+          echo "Cargo path: $(which cargo)"
           cd "$PROJECT_DIR/.."
           # Build static library for macOS
           cargo build --release --manifest-path engine/Cargo.toml
@@ -53,3 +60,5 @@ targets:
       - path: Tests
     dependencies:
       - target: jsonette
+    settings:
+      SWIFT_INCLUDE_PATHS: "$(PROJECT_DIR)/Generated"
