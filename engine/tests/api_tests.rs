@@ -1,5 +1,7 @@
 use jsonette_core::{
-    FoldingStyle, FormatOptions, JsonNode, LineEnding, Span, format, minify, parse,
+    FoldingStyle, FormatOptions, JsonNode, LineEnding, QueryOptions, SchemaOptions, Span,
+    evaluate_path_bounded, evaluate_path_on_str_bounded, format, inspect_schema_from_str, minify,
+    parse, summarize_schema_from_str,
 };
 use std::sync::Mutex;
 
@@ -515,4 +517,59 @@ fn test_api_parser_options() {
 
     // Restore original settings
     jsonette_core::update_settings(original_settings).unwrap();
+}
+
+/// **Test Case**: Bounded Query Public API Integration
+///
+/// ### Description
+/// Verifies that public re-exports for bounded query work correctly through the crate root.
+///
+/// ### Test Procedure
+/// 1. Evaluate JSONPath on string with bounds (limit, offset).
+/// 2. Evaluate JSONPath on parsed `JsonNode` with byte bounds.
+///
+/// ### Expected Result
+/// Both bounded queries succeed with matching counts and truncation flags.
+#[test]
+fn test_api_bounded_query() {
+    let json = r#"{"users": [{"name": "A"}, {"name": "B"}, {"name": "C"}]}"#;
+    let opts = QueryOptions {
+        limit: Some(2),
+        offset: Some(1),
+        max_bytes: None,
+    };
+    let res = evaluate_path_on_str_bounded(json, "$.users[*].name", &opts).unwrap();
+    assert_eq!(res.total_matches, 3);
+    assert_eq!(res.matches.len(), 2);
+    assert_eq!(res.omitted, 1);
+    assert!(res.is_truncated);
+
+    let doc = parse(json).unwrap();
+    let node_res = evaluate_path_bounded(&doc, "$.users[*]", &QueryOptions::default()).unwrap();
+    assert_eq!(node_res.total_matches, 3);
+    assert_eq!(node_res.matches.len(), 3);
+    assert!(!node_res.is_truncated);
+}
+
+/// **Test Case**: Schema Inspection Public API Integration
+///
+/// ### Description
+/// Verifies public schema inspection functions re-exported at crate root.
+///
+/// ### Test Procedure
+/// 1. Inspect schema from string using default options.
+/// 2. Summarize schema from string using outline formatting.
+///
+/// ### Expected Result
+/// Structural schema is accurately inferred and outline string contains expected types.
+#[test]
+fn test_api_schema_inspection() {
+    let json = r#"{"name": "test", "items": [1, 2, 3]}"#;
+    let opts = SchemaOptions::default();
+    let schema = inspect_schema_from_str(json, &opts).unwrap();
+    assert!(matches!(schema, jsonette_core::SchemaNode::Object { .. }));
+
+    let summary = summarize_schema_from_str(json, &opts).unwrap();
+    assert!(summary.contains(".name: string"));
+    assert!(summary.contains(".items: array[3] of number"));
 }

@@ -27,6 +27,7 @@ pub mod generator;
 pub mod json_node;
 pub mod parser;
 pub mod query;
+pub mod schema;
 pub mod settings;
 pub mod types;
 
@@ -40,7 +41,13 @@ pub use types::{
 pub use completion::completions_at;
 pub use formatter::{format, minify};
 pub use parser::{diagnostics, parse, tolerant_parse};
-pub use query::{diagnostics_for_path, evaluate_path, evaluate_path_on_str};
+pub use query::{
+    BoundedQueryResult, QueryOptions, diagnostics_for_path, evaluate_path, evaluate_path_bounded,
+    evaluate_path_on_str, evaluate_path_on_str_bounded,
+};
+pub use schema::{
+    SchemaNode, SchemaOptions, inspect_schema, inspect_schema_from_str, summarize_schema_from_str,
+};
 pub use settings::{Settings, get_settings, set_in_memory_settings, update_settings};
 
 uniffi::setup_scaffolding!();
