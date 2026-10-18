@@ -166,7 +166,7 @@ where
         let json_node = value_to_node(val);
         if let Some(max_b) = options.max_bytes {
             let byte_size = crate::formatter::minify(&json_node).len();
-            if current_bytes + byte_size > max_b && !matches.is_empty() {
+            if current_bytes + byte_size > max_b {
                 hit_byte_limit = true;
                 break;
             }
@@ -705,6 +705,40 @@ mod jsonpath_tests {
         assert!(res.is_truncated);
     }
 
+    /// **Test Case**: Bounded Query Max Bytes Smaller Than First Match
+    ///
+    /// ### Description
+    /// Verifies that if `max_bytes` is 0 or smaller than the first serialized match,
+    /// no matches are returned, `omitted` equals `total_matches`, and `is_truncated` is true.
+    ///
+    /// ### Expected Result
+    /// Zero matches returned, contract strictly enforced.
+    #[test]
+    fn test_evaluate_path_bounded_max_bytes_smaller_than_first_match() {
+        let json = r#"["first_long_element", "second"]"#;
+        let opts = QueryOptions {
+            limit: None,
+            offset: None,
+            max_bytes: Some(5), // "first_long_element" is 20 bytes minified
+        };
+        let res = evaluate_path_on_str_bounded(json, "$[*]", &opts).unwrap();
+        assert_eq!(res.total_matches, 2);
+        assert_eq!(res.matches.len(), 0);
+        assert_eq!(res.omitted, 2);
+        assert!(res.is_truncated);
+
+        let opts_zero = QueryOptions {
+            limit: None,
+            offset: None,
+            max_bytes: Some(0),
+        };
+        let res_zero = evaluate_path_on_str_bounded(json, "$[*]", &opts_zero).unwrap();
+        assert_eq!(res_zero.total_matches, 2);
+        assert_eq!(res_zero.matches.len(), 0);
+        assert_eq!(res_zero.omitted, 2);
+        assert!(res_zero.is_truncated);
+    }
+
     /// **Test Case**: Offset Past Result Length
     ///
     /// ### Description
@@ -833,9 +867,13 @@ mod jsonpath_tests {
     ///
     /// ### Test Procedure
     /// 1. Query `["hello_world_long_string", "second_item"]` with `max_bytes: Some(1)`.
+    /// **Test Case**: First Item Exceeding Byte Budget Is Not Returned
+    ///
+    /// ### Description
+    /// Verifies that if the first match exceeds `max_bytes`, it is excluded to honor the budget.
     ///
     /// ### Expected Result
-    /// First item is returned; second item is excluded.
+    /// `matches.len() == 0`, `omitted == 2`, `is_truncated == true`.
     #[test]
     fn test_evaluate_path_bounded_first_item_byte_budget() {
         let json = r#"["hello_world_long_string", "second_item"]"#;
@@ -846,8 +884,8 @@ mod jsonpath_tests {
         };
         let res = evaluate_path_on_str_bounded(json, "$[*]", &opts).unwrap();
         assert_eq!(res.total_matches, 2);
-        assert_eq!(res.matches.len(), 1);
-        assert_eq!(res.omitted, 1);
+        assert_eq!(res.matches.len(), 0);
+        assert_eq!(res.omitted, 2);
         assert!(res.is_truncated);
     }
 }

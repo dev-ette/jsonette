@@ -64,7 +64,7 @@ pub enum SchemaNode {
     Number {
         /// An optional sample numeric value observed in the document.
         #[serde(skip_serializing_if = "Option::is_none")]
-        sample: Option<f64>,
+        sample: Option<serde_json::Number>,
     },
     /// A JSON string.
     String {
@@ -196,9 +196,11 @@ fn inspect_impl(node: &JsonNode, depth: usize, options: &SchemaOptions) -> Schem
                 None
             },
         },
-        JsonNode::Number(num, _, _) => SchemaNode::Number {
+        JsonNode::Number(num, raw, _) => SchemaNode::Number {
             sample: if options.include_samples {
-                Some(*num)
+                raw.parse::<serde_json::Number>()
+                    .ok()
+                    .or_else(|| serde_json::Number::from_f64(*num))
             } else {
                 None
             },
@@ -218,8 +220,7 @@ fn inspect_impl(node: &JsonNode, depth: usize, options: &SchemaOptions) -> Schem
         },
         JsonNode::Array(items, _) => {
             let length = items.len();
-            let sample_limit = options.sample_array_items.max(1);
-            let samples: Vec<&JsonNode> = items.iter().take(sample_limit).collect();
+            let samples: Vec<&JsonNode> = items.iter().take(options.sample_array_items).collect();
 
             let item_schema = if samples.is_empty() {
                 None
@@ -334,7 +335,12 @@ mod tests {
     fn test_inspect_primitives() {
         let opts = SchemaOptions::default();
         let res = inspect_schema_from_str("42", &opts).unwrap();
-        assert_eq!(res, SchemaNode::Number { sample: Some(42.0) });
+        assert_eq!(
+            res,
+            SchemaNode::Number {
+                sample: Some(serde_json::Number::from(42))
+            }
+        );
 
         let res = inspect_schema_from_str("\"hello\"", &opts).unwrap();
         assert_eq!(
@@ -658,5 +664,64 @@ mod tests {
 
         let err = summarize_schema_from_str("INVALID", &opts);
         assert!(err.is_err());
+    }
+
+    /// **Test Case**: Lossless Integer Precision in Numeric Schema Samples
+    ///
+    /// ### Description
+    /// Verifies that integer samples larger than 2^53 (e.g. 9007199254740993) preserve exact
+    /// precision from the raw lexeme rather than losing precision via f64.
+    ///
+    /// ### Expected Result
+    /// Sample retains exact value 9007199254740993.
+    #[test]
+    fn test_inspect_large_integer_lossless() {
+        let opts = SchemaOptions::default();
+        let json = r#"{"big": 9007199254740993}"#;
+        let schema = inspect_schema_from_str(json, &opts).unwrap();
+
+        if let SchemaNode::Object { keys } = &schema {
+            let num_node = keys.get("big").unwrap();
+            if let SchemaNode::Number { sample } = num_node {
+                let sample_num = sample.as_ref().unwrap();
+                assert_eq!(sample_num.to_string(), "9007199254740993");
+            } else {
+                panic!("Expected number node");
+            }
+        } else {
+            panic!("Expected object");
+        }
+
+        let summary = schema.to_summary_string();
+        assert!(summary.contains("sample: 9007199254740993"));
+        assert!(!summary.contains("9007199254740992"));
+    }
+
+    /// **Test Case**: Array Inspection With sample_array_items Zero
+    ///
+    /// ### Description
+    /// Verifies that when `sample_array_items` is explicitly 0, array sampling is disabled
+    /// and `item_schema` is None, while the array length is still reported.
+    ///
+    /// ### Expected Result
+    /// `length` is 3, `item_schema` is None.
+    #[test]
+    fn test_inspect_array_sample_zero() {
+        let opts = SchemaOptions {
+            sample_array_items: 0,
+            ..Default::default()
+        };
+        let json = r#"[1, 2, 3]"#;
+        let schema = inspect_schema_from_str(json, &opts).unwrap();
+        assert_eq!(
+            schema,
+            SchemaNode::Array {
+                length: 3,
+                item_schema: None,
+            }
+        );
+
+        let summary = schema.to_summary_string();
+        assert_eq!(summary.trim(), "array[3]");
     }
 }
